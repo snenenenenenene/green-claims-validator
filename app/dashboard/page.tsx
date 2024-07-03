@@ -41,11 +41,27 @@ export default function Dashboard() {
     (params: any) => setEdges((eds) => addEdge(params, eds)),
     [setEdges],
   );
+  const chartInstances = [
+    {
+      name: "Default",
+    },
+    {
+      name: "Flow 1",
+    },
+  ];
 
   if (session && session?.user?.role === "admin") {
     return (
       <div className="flex h-full w-full flex-col">
-        <div className="flex h-20 w-full"></div>
+        <div className="flex h-20 w-full py-4 font-display">
+          {chartInstances.map((chart) => (
+            <div key={chart.name} className="flex h-full w-32 flex-col px-1">
+              <button className="rounded-xl p-2 text-2xl hover:bg-[#154620]">
+                {chart.name}
+              </button>
+            </div>
+          ))}
+        </div>
         <ReactFlow
           nodes={nodes}
           edges={edges}
