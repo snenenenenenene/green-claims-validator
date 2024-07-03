@@ -10,6 +10,7 @@ import ReactFlow, {
   addEdge,
 } from "reactflow";
 import "reactflow/dist/style.css";
+import { Session } from "next-auth";
 
 const initialNodes = [
   { id: "1", position: { x: 0, y: 0 }, data: { label: "1" } },
@@ -18,14 +19,16 @@ const initialNodes = [
 const initialEdges = [{ id: "e1-2", source: "1", target: "2" }];
 
 export default function Dashboard() {
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState<
+    (Session & { user: { role: string } }) | null
+  >(null);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   useEffect(() => {
     const fetchSession = async () => {
       const sessionData = await getSession();
-      setSession(sessionData);
+      setSession(sessionData as any);
     };
     fetchSession();
   }, []);
@@ -39,7 +42,7 @@ export default function Dashboard() {
     [setEdges],
   );
 
-  if (session && session.user.role === "admin") {
+  if (session && session?.user?.role === "admin") {
     return (
       <div className="flex h-full w-full flex-col">
         <ReactFlow
@@ -51,6 +54,7 @@ export default function Dashboard() {
         >
           <Controls />
           <MiniMap />
+          {/* @ts-ignore */}
           <Background variant="dots" gap={12} size={1} />
         </ReactFlow>
         <section className="flex w-full pt-4" id="buttons">
