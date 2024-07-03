@@ -3,8 +3,14 @@ import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 
 export function Model(props: any) {
-  const { nodes, materials } = useGLTF("/models/wash_buddy/scene.gltf");
-  const groupRef = useRef();
+  const {
+    nodes,
+    materials,
+  }: {
+    nodes: any;
+    materials: any;
+  } = useGLTF("/models/wash_buddy/scene.gltf");
+  const groupRef: any = useRef();
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   const handleMouseMove = (event: MouseEvent) => {
