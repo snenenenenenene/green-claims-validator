@@ -45,6 +45,7 @@ export default function Dashboard() {
   if (session && session?.user?.role === "admin") {
     return (
       <div className="flex h-full w-full flex-col">
+        <div className="flex h-20 w-full"></div>
         <ReactFlow
           nodes={nodes}
           edges={edges}
