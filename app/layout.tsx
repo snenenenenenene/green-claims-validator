@@ -6,9 +6,9 @@ import { Suspense } from "react";
 import { Analytics as VercelAnalytics } from "@vercel/analytics/react";
 
 export const metadata = {
-  title: "Lutrify - Greenwashing Verification",
+  title: "Green Claims Validator - Greenwashing Verification",
   description:
-    "Lutrify is a platform that verifies the sustainability of products and services.",
+    "Green Claims Validator is a platform that verifies the sustainability of products and services.",
   // metadataBase: new URL("ADD PROD URL"),
 };
 
@@ -19,7 +19,7 @@ export default async function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="flex h-screen w-screen flex-col bg-green text-white">
+      <body className="flex h-screen w-screen flex-col bg-white text-black">
         <Suspense fallback="...">
           <Nav />
         </Suspense>

@@ -21,3 +21,18 @@
   font-family: "Bretish";
   src: url("/fonts/Bretish.otf");
 }
+
+@font-face {
+  font-family: "Ortland";
+  src: url("/fonts/Ortland.otf");
+}
+
+@font-face {
+  font-family: "Poppins";
+  src: url("/fonts/Poppins-Regular.ttf");
+}
+
+@font-face {
+  font-family: "Roboto";
+  src: url("/fonts/Roboto-Bold.ttf");
+}
