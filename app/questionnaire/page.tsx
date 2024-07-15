@@ -7,7 +7,7 @@ export default async function QuestionnairePage() {
     // We need a card for containing questions 
     // And a link to go to the next question
     return ( 
-        <div className="mt-6 px-60 flex flex-col flex-center h-full w-full text-dark-gray">
+        <div className="mt-6 px-60 flex flex-col flex-center h-full w-full overflow-y-scroll text-dark-gray">
             <div className="flex justify-center text-3xl font-roboto">
                 <p>Be a hero, fly carbon zero</p>
             </div>

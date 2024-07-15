@@ -3,7 +3,6 @@
 
 // components/ButtonList.tsx
 import React, { useState } from 'react';
-import '@/styles/globals.css'
 
 interface OptionListProps {
   options: {text:string, target: number}[];
