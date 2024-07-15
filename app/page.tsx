@@ -1,9 +1,6 @@
 "use client";
 import { Suspense } from "react";
-import {
-  Environment,
-  SoftShadows,
-} from "@react-three/drei";
+import { Environment, SoftShadows } from "@react-three/drei";
 import { Canvas } from "react-three-fiber";
 import { Model } from "@/components/home/model";
 import Link from "next/link";
@@ -11,7 +8,7 @@ import { ArrowRightIcon } from "lucide-react";
 
 export default async function Home() {
   return (
-    <div className="relative flex w-full flex-col self-start">
+    <div className="relative flex w-full flex-col self-start px-20">
       <section className="flex h-screen w-full">
         <div className="items-between flex w-1/2 flex-col justify-center py-40">
           <span className="flex flex-col">
@@ -39,7 +36,7 @@ export default async function Home() {
             <Environment preset="sunset" />
 
             <Suspense fallback={null}>
-              <Model scale={1.5} position={[0, 0, 0]} />
+              <Model scale={3} position={[0, 0, 0]} />
             </Suspense>
           </Canvas>
         </span>
