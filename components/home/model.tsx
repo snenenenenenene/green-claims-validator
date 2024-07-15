@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { useGLTF } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import { useFrame } from "react-three-fiber";
+import gsap from "gsap";
 
 export function Model(props: any) {
   const { nodes, materials } = useGLTF("/models/earth.glb");
@@ -11,6 +12,23 @@ export function Model(props: any) {
 
   const [targetPosition, setTargetPosition] = useState([0, 0, 0]);
   const [currentPosition, setCurrentPosition] = useState([0, 0, 0]);
+
+  // Initial animation using GSAP
+  useEffect(() => {
+    if (groupRef.current) {
+      gsap.fromTo(
+        groupRef.current.scale,
+        { x: 0.1, y: 0.1, z: 0.1 },
+        { x: 1, y: 1, z: 1, duration: 2, ease: "power2.out" },
+      );
+
+      gsap.fromTo(
+        groupRef.current.rotation,
+        { y: 0 },
+        { y: Math.PI * 4, duration: 2, ease: "power2.out" },
+      );
+    }
+  }, []);
 
   // Rotation logic
   useFrame(() => {
