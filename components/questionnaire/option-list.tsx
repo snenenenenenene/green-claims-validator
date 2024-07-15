@@ -3,12 +3,14 @@
 
 // components/ButtonList.tsx
 import React, { useState } from 'react';
+import '@/styles/globals.css'
 
 interface OptionListProps {
   options: {text:string, target: number}[];
+  questionIndex: number;
 }
 
-const OptionList: React.FC<OptionListProps> = ({ options }) => {
+const OptionList: React.FC<OptionListProps> = ({ options, questionIndex }) => {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   const handleButtonClick = (index: number) => {
@@ -16,16 +18,21 @@ const OptionList: React.FC<OptionListProps> = ({ options }) => {
   };
 
   return (
-    <ul>
+    <ul className='mt-2'>
       {options.map((option, index) => (
-        <li>
-            <button
-                key={index}
-                onClick={() => handleButtonClick(index)}
-                className={`px-4 py-2 m-2 border ${activeIndex === index ? 'bg-blue-500 text-white' : 'bg-white text-black'}`}
+        <li className='flex items-center' key={index}>
+            <input
+                type="radio"
+                name={`${questionIndex}`}
+                className={`m-2 h-4 w-4 border-2 rounded-full cursor-pointer text-green focus:ring-green bg-white border-gray-300'}`}
+                checked={activeIndex === index}
+                onChange={() => handleButtonClick(index)}
+                id={`option-${questionIndex}-${index}`} // Unique ID for accessibility
             >
-            </button>
-            <label>{option.text}</label>
+            </input>
+          <label htmlFor={`option-${questionIndex}-${index}`} className="cursor-pointer">
+            {option.text}
+          </label>
         </li>
       ))}
     </ul>
