@@ -1,7 +1,5 @@
 import "./globals.css";
-import cx from "classnames";
 import Nav from "@/components/layout/nav";
-import Footer from "@/components/layout/footer";
 import { Suspense } from "react";
 import { Analytics as VercelAnalytics } from "@vercel/analytics/react";
 
@@ -19,7 +17,7 @@ export default async function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="flex h-screen w-screen flex-col bg-green text-white">
+      <body className="flex h-screen w-screen flex-col bg-white text-black">
         <Suspense fallback="...">
           <Nav />
         </Suspense>
