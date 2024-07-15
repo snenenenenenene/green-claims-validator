@@ -9,7 +9,8 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        green: "#195226",
+        primary: "#FFF",
+        green: "#ACE7AC",
         "green-hover": "#195226",
         yellow: "#F3BF62",
         "yellow-hover": "#F3BF62",
@@ -19,6 +20,9 @@ module.exports = {
       fontFamily: {
         display: ["Founders Grotesk Regular"],
         bretish: ["Bretish"],
+        roboto: ["Roboto"],
+        poppins: ["Poppins"],
+        ortland: ["Ortland"],
         default: ["Founders Grotesk Regular"],
         medium: ["Founders Grotesk Medium"],
         bold: ["Founders Grotesk Bold"],

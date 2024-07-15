@@ -18,26 +18,26 @@ export default function UserDropdown({ session }: { session: Session }) {
     <div className="relative inline-block text-left">
       <Popover
         content={
-          <div className="w-full rounded-md bg-green p-2 sm:w-56">
+          <div className="w-full rounded-md bg-primary p-2 sm:w-56">
             <div className="p-2">
               {session?.user?.name && (
-                <p className="truncate font-medium text-sm text-white">
+                <p className="truncate font-medium text-sm">
                   {session?.user?.name}
                 </p>
               )}
-              <p className="truncate text-sm text-white">
+              <p className="truncate text-sm">
                 {session?.user?.email}
               </p>
             </div>
             <Link
               href="/dashboard"
-              className="relative flex w-full items-center justify-start space-x-2 rounded-md p-2 text-left text-sm transition-all duration-75 hover:bg-green-hover"
+              className="hover:bg-primary-hover relative flex w-full items-center justify-start space-x-2 rounded-md p-2 text-left text-sm transition-all duration-75"
             >
               <LayoutDashboard className="h-4 w-4" />
               <p className="text-sm">Dashboard</p>
             </Link>
             <button
-              className="relative flex w-full items-center justify-start space-x-2 rounded-md p-2 text-left text-sm transition-all duration-75 hover:bg-green-hover"
+              className="hover:bg-primary-hover relative flex w-full items-center justify-start space-x-2 rounded-md p-2 text-left text-sm transition-all duration-75"
               onClick={() => signOut()}
             >
               <LogOut className="h-4 w-4" />

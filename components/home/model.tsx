@@ -1,41 +1,97 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useGLTF } from "@react-three/drei";
+import { useThree } from "@react-three/fiber";
+import { useFrame } from "react-three-fiber";
+import gsap from "gsap";
 
 export function Model(props: any) {
-  const { nodes, materials } = useGLTF("/models/wash_buddy/scene.gltf");
+  const { nodes, materials } = useGLTF("/models/earth.glb");
+  const groupRef = useRef();
+  const { size, viewport } = useThree();
+  const aspect = size.width / viewport.width;
+
+  const [targetPosition, setTargetPosition] = useState([0, 0, 0]);
+  const [currentPosition, setCurrentPosition] = useState([0, 0, 0]);
+
+  // Initial animation using GSAP
+  useEffect(() => {
+    if (groupRef.current) {
+      gsap.fromTo(
+        groupRef.current.scale,
+        { x: 0.1, y: 0.1, z: 0.1 },
+        { x: 1, y: 1, z: 1, duration: 2, ease: "power2.out" },
+      );
+
+      gsap.fromTo(
+        groupRef.current.rotation,
+        { y: 0 },
+        { y: Math.PI * 4, duration: 2, ease: "power2.out" },
+      );
+    }
+  }, []);
+
+  // Rotation logic
+  useFrame(() => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y += 0.003; // Adjust the speed of rotation as needed
+
+      // Smooth transition towards the target position
+      const dampingFactor = 0.1;
+      setCurrentPosition((prevPosition) => {
+        const newPosition = prevPosition.map(
+          (coord, index) =>
+            coord + (targetPosition[index] - coord) * dampingFactor,
+        );
+        groupRef.current.position.set(...newPosition);
+        return newPosition;
+      });
+    }
+  });
+
+  // Cursor tracking logic
+  const handleMouseMove = (event) => {
+    const x = ((event.clientX / size.width) * 2 - 1) * 0.1; // Scale down the movement range
+    const y = -((event.clientY / size.height) * 2 - 1) * 0.1; // Scale down the movement range
+    setTargetPosition([x, y, 0]);
+  };
+
+  useEffect(() => {
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, [size.width, size.height]);
+
   return (
-    <group {...props} dispose={null}>
-      <group position={[0, 1, 0]}>
+    <group ref={groupRef} {...props} dispose={null}>
+      <group>
         <mesh
           castShadow
           receiveShadow
-          geometry={nodes.Object_4.geometry}
-          material={materials.Material}
+          geometry={nodes.Sphere002.geometry}
+          material={materials["Material.009"]}
         />
         <mesh
           castShadow
           receiveShadow
-          geometry={nodes.Object_5.geometry}
-          material={materials["Material.001"]}
+          geometry={nodes.Sphere002_1.geometry}
+          material={materials["Material.008"]}
+        />
+        <mesh
+          castShadow
+          receiveShadow
+          geometry={nodes.Sphere002_2.geometry}
+          material={materials["Material.010"]}
+        />
+        <mesh
+          castShadow
+          receiveShadow
+          geometry={nodes.Sphere002_3.geometry}
+          material={materials["Material.005"]}
         />
       </group>
-      <mesh
-        castShadow
-        receiveShadow
-        geometry={nodes.Object_7.geometry}
-        material={materials.Material}
-        position={[0, 0.018, 0.395]}
-      />
-      <mesh
-        castShadow
-        receiveShadow
-        geometry={nodes.Object_9.geometry}
-        material={materials.Material}
-        position={[0, 1.752, 0.971]}
-        rotation={[Math.PI / 2, 0, 0]}
-      />
     </group>
   );
 }
 
-useGLTF.preload("/models/wash_buddy/scene.gltf");
+useGLTF.preload("/models/earth.glb");
