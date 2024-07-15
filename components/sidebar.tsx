@@ -3,9 +3,10 @@ import useStore from "@/lib/store";
 
 interface SidebarProps {
   onSave: () => void;
+  onDelete: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
+const Sidebar: React.FC<SidebarProps> = ({ onSave, onDelete }) => {
   const { onePage, setOnePage } = useStore((state) => ({
     onePage: state.onePage,
     setOnePage: state.setOnePage,
@@ -14,6 +15,10 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
   const onDragStart = (event: React.DragEvent, nodeType: string): void => {
     event.dataTransfer.setData("application/reactflow", nodeType);
     event.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleOnePageModeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setOnePage(e.target.checked);
   };
 
   return (
@@ -58,16 +63,22 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
         <input
           type="checkbox"
           checked={onePage}
-          onChange={(e) => setOnePage(e.target.checked)}
+          onChange={handleOnePageModeChange}
           className="form-checkbox"
         />
       </div>
-      <section className="flex w-full pt-4" id="buttons">
+      <section className="flex h-full w-full flex-col pt-4" id="buttons">
         <button
-          className="ml-auto rounded-full border border-yellow bg-yellow p-1.5 px-8 py-4 text-black transition-all hover:border-yellow-hover hover:bg-yellow-hover"
+          className="ml-auto w-full rounded-full border border-green bg-green p-1.5 px-8 py-4 text-black transition-all hover:border-yellow-hover hover:bg-yellow-hover"
           onClick={onSave}
         >
           Save
+        </button>
+        <button
+          className="ml-auto w-full rounded-full p-1.5 px-8 py-4 text-gray-400 transition-all hover:underline"
+          onClick={onDelete}
+        >
+          Delete
         </button>
       </section>
     </aside>

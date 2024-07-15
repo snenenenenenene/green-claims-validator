@@ -119,7 +119,6 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
         nodeTypes={nodeTypes}
       >
         <Controls />
-        <MiniMap />
         <Background variant="dots" gap={12} size={1} />
       </ReactFlow>
     </div>

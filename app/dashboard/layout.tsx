@@ -30,6 +30,7 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
     currentTab,
     setCurrentTab,
     addNewTab,
+    deleteTab, // Assuming you have a deleteTab function in your store
     onePage,
     setOnePage,
   } = useStore((state) => ({
@@ -37,6 +38,7 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
     currentTab: state.currentTab,
     setCurrentTab: state.setCurrentTab,
     addNewTab: state.addNewTab,
+    deleteTab: state.deleteTab,
     onePage: state.onePage,
     setOnePage: state.setOnePage,
   }));
@@ -53,7 +55,7 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const currentPath = window.location.pathname.split("/").pop();
-    setCurrentTab(currentPath || chartInstances[0].name);
+    setCurrentTab(currentPath || chartInstances[0]?.name);
   }, [setCurrentTab, chartInstances]);
 
   const handleAddNewTab = () => {
@@ -72,6 +74,23 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
     setTimeout(() => setLoading(false), 300); // Simulate loading delay
   };
 
+  const handleDelete = () => {
+    if (currentTab) {
+      if (confirm(`Are you sure you want to delete the tab ${currentTab}?`)) {
+        deleteTab(currentTab);
+        setCurrentTab(chartInstances[0]?.name || null); // Set to first tab or null if no tabs are left
+        window.history.pushState(
+          {},
+          "",
+          `/dashboard/${chartInstances[0]?.name}`,
+        );
+        alert(`Tab ${currentTab} has been deleted.`);
+      }
+    } else {
+      alert("No tab selected to delete.");
+    }
+  };
+
   const onSave = () => {
     console.log("Saving schema...");
   };
@@ -87,29 +106,34 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
   return (
     <ReactFlowProvider>
       <section className="flex h-full w-full">
-        <Sidebar onSave={onSave} onePage={onePage} setOnePage={setOnePage} />
+        <Sidebar
+          onSave={onSave}
+          onePage={onePage}
+          setOnePage={setOnePage}
+          onDelete={handleDelete}
+        />
         <div className="flex h-full w-full flex-col">
-          <div className="flex h-20 w-full overflow-x-auto py-4 font-display">
+          <div className="flex h-20 w-full gap-2 overflow-x-auto py-4 font-display">
             {chartInstances.map((chart) => (
               <button
                 key={chart.name}
                 onClick={() => handleTabClick(chart.name)}
-                className={`flex h-full w-40 flex-col px-1 ${
-                  chart.name === currentTab ? "bg-green" : ""
-                } overflow-hidden text-ellipsis whitespace-nowrap rounded-xl p-2 text-xl hover:bg-[#154620]`}
+                className={`flex h-full items-center justify-center px-4 ${
+                  chart.name === currentTab ? "bg-gray-400" : "bg-white"
+                } overflow-hidden text-ellipsis whitespace-nowrap rounded-xl p-2 text-xl hover:bg-gray-200`}
               >
                 {chart.name}
               </button>
             ))}
             <button
               onClick={handleAddNewTab}
-              className="flex h-full w-40 flex-col rounded-xl p-2 px-1 text-xl hover:bg-[#154620]"
+              className="flex h-full items-center justify-center rounded-xl p-2 px-4 text-xl hover:bg-gray-200"
             >
               +
             </button>
           </div>
           {loading ? (
-            <ReactFlow fitView/>
+            <ReactFlow fitView />
           ) : (
             <DynamicInstancePage params={{ instanceId: currentTab }} />
           )}

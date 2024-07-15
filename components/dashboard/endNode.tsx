@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Handle, Position } from "reactflow";
-import { chartInstances } from "@/app/data/charts";
+import useStore from "@/lib/store";
 
 const EndNode = ({ id, data, isConnectable }) => {
   const [label, setLabel] = useState(data.label);
@@ -8,6 +8,8 @@ const EndNode = ({ id, data, isConnectable }) => {
   const [nodeHidden, setNodeHidden] = useState(data.hidden || false);
   const [endType, setEndType] = useState(data.endType || "end");
   const [redirectTab, setRedirectTab] = useState(data.redirectTab || "");
+
+  const chartInstances = useStore((state) => state.chartInstances);
 
   useEffect(() => {
     data.label = label;
