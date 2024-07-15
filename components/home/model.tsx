@@ -19,7 +19,7 @@ export function Model(props: any) {
       gsap.fromTo(
         groupRef.current.scale,
         { x: 0.1, y: 0.1, z: 0.1 },
-        { x: 1, y: 1, z: 1, duration: 2, ease: "power2.out" },
+        { x: 2, y: 2, z: 2, duration: 2, ease: "power2.out" },
       );
 
       gsap.fromTo(

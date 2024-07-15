@@ -23,13 +23,12 @@ export default function NavBar({ session }: { session: Session | null }) {
         <div className="mx-5 flex h-24 w-full items-center justify-between">
           <Link href="/" className="flex items-center font-roboto text-4xl">
             <Image
-              src="/logo.webp"
+              src="/logo.png"
               alt="Green Claims Validator logo"
-              width="80"
-              height="80"
+              width="120"
+              height="120"
               className="mr-0 rounded-sm"
             ></Image>
-            <p>GCV</p>
           </Link>
           <section className="flex items-center gap-4 font-medium text-lg">
             <div>
