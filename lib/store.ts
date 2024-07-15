@@ -30,6 +30,7 @@ export interface ChartInstance {
   initialNodes: Node[];
   initialEdges: Edge[];
   onePageMode?: boolean;
+  publishedVersions?: { version: number; date: string }[]; // Add published versions
 }
 
 interface StoreState {
@@ -46,6 +47,7 @@ interface StoreState {
   setOnePage: (value: boolean) => void;
   removeNode: (instanceName: string, nodeId: string) => void;
   deleteTab: (tabName: string) => void;
+  publishTab: () => void;
 }
 
 const useStore = create<StoreState>(
@@ -53,7 +55,8 @@ const useStore = create<StoreState>(
     (set, get) => ({
       chartInstances: initialChartInstances.map((instance) => ({
         ...instance,
-        onePageMode: false, // Initialize with onePageMode as false
+        onePageMode: false,
+        publishedVersions: [], // Initialize with empty published versions
       })),
       currentTab: initialChartInstances[0].name,
       onePage: initialChartInstances[0].onePageMode || false,
@@ -74,6 +77,7 @@ const useStore = create<StoreState>(
           initialNodes: [],
           initialEdges: [],
           onePageMode: false,
+          publishedVersions: [],
         };
         const updatedTabs = [...get().chartInstances, newTab];
         set({
@@ -135,6 +139,27 @@ const useStore = create<StoreState>(
             ? updatedInstances[0].onePageMode || false
             : false,
         });
+      },
+
+      publishTab: () => {
+        const { currentTab, chartInstances } = get();
+        const updatedInstances = chartInstances.map((instance) => {
+          if (instance.name === currentTab) {
+            const newVersion = {
+              version: (instance.publishedVersions?.length || 0) + 1,
+              date: new Date().toISOString(),
+            };
+            return {
+              ...instance,
+              publishedVersions: [
+                ...(instance.publishedVersions || []),
+                newVersion,
+              ],
+            };
+          }
+          return instance;
+        });
+        set({ chartInstances: updatedInstances });
       },
     }),
     {

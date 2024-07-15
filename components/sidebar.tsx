@@ -4,12 +4,20 @@ import useStore from "@/lib/store";
 interface SidebarProps {
   onSave: () => void;
   onDelete: () => void;
+  onePage: boolean;
+  setOnePage: (value: boolean) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ onSave, onDelete }) => {
-  const { onePage, setOnePage } = useStore((state) => ({
-    onePage: state.onePage,
-    setOnePage: state.setOnePage,
+const Sidebar: React.FC<SidebarProps> = ({
+  onSave,
+  onDelete,
+  onePage,
+  setOnePage,
+}) => {
+  const { publishTab, chartInstances, currentTab } = useStore((state) => ({
+    publishTab: state.publishTab,
+    chartInstances: state.chartInstances,
+    currentTab: state.currentTab,
   }));
 
   const onDragStart = (event: React.DragEvent, nodeType: string): void => {
@@ -21,8 +29,17 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave, onDelete }) => {
     setOnePage(e.target.checked);
   };
 
+  const currentInstance = chartInstances.find(
+    (instance) => instance.name === currentTab,
+  );
+  const lastPublishDate = currentInstance?.publishedVersions?.length
+    ? currentInstance.publishedVersions[
+        currentInstance.publishedVersions.length - 1
+      ].date
+    : null;
+
   return (
-    <aside className="mt-20 flex flex-col space-y-4 border-r-2 border-gray-200 p-4">
+    <aside className="flex flex-col space-y-4 p-4 pt-20">
       <div
         className="cursor-pointer rounded border bg-white p-2 hover:bg-gray-100"
         onDragStart={(event) => onDragStart(event, "startNode")}
@@ -76,6 +93,18 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave, onDelete }) => {
         </button>
         <button
           className="ml-auto w-full rounded-full p-1.5 px-8 py-4 text-gray-400 transition-all hover:underline"
+          onClick={publishTab}
+        >
+          Publish
+        </button>
+
+        {lastPublishDate && (
+          <div className="mt-2 text-center text-sm text-gray-500">
+            Last published: {new Date(lastPublishDate).toLocaleString()}
+          </div>
+        )}
+        <button
+          className="ml-auto w-full rounded-full p-1.5 px-8 py-4 text-white transition-all hover:text-gray-400 hover:underline"
           onClick={onDelete}
         >
           Delete

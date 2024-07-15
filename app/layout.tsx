@@ -21,7 +21,7 @@ export default async function RootLayout({
         <Suspense fallback="...">
           <Nav />
         </Suspense>
-        <main className="text-display flex h-full min-h-full w-full flex-col p-20 pt-20">
+        <main className="text-display flex h-full min-h-full w-full flex-col pt-20">
           {children}
         </main>
         {/* <Footer /> */}
