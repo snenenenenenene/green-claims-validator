@@ -8,54 +8,71 @@ import ReactFlow, {
   useEdgesState,
   addEdge,
   useReactFlow,
-  ReactFlowProvider,
-  Handle,
 } from "reactflow";
 
-import { chartInstances } from "../../data/charts";
 import "reactflow/dist/style.css";
-import ResizeRotateNode from "../../../components/dashboard/resizeRotateNode";
+import YesNoNode from "@/components/dashboard/yesNoNode";
+import SingleChoiceNode from "@/components/dashboard/singleChoiceNode";
+import MultipleChoiceNode from "@/components/dashboard/multipleChoiceNode";
+import EndNode from "@/components/dashboard/endNode";
+import StartNode from "@/components/dashboard/startNode";
+import useStore, { ChartInstance } from "@/lib/store";
 
 const nodeTypes = {
-  resizeRotate: ResizeRotateNode,
+  yesNo: YesNoNode,
+  singleChoice: SingleChoiceNode,
+  multipleChoice: MultipleChoiceNode,
+  endNode: EndNode,
+  startNode: StartNode,
 };
 
-const InstancePage = ({
-  params,
-}: {
+interface InstancePageProps {
   params: {
     instanceId: string;
   };
-}) => {
-  const [currentInstance, setCurrentInstance] = useState(null);
+}
+
+const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
+  const { chartInstances, setNodesAndEdges } = useStore((state) => ({
+    chartInstances: state.chartInstances,
+    setNodesAndEdges: state.setNodesAndEdges,
+  }));
+  const [currentInstance, setCurrentInstance] = useState<ChartInstance | null>(
+    null,
+  );
+
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
   useEffect(() => {
     const instance = chartInstances.find(
       (instance) => instance.name === params.instanceId,
     );
-    if (instance) {
-      setCurrentInstance(instance);
-      setNodes(instance.initialNodes);
-      setEdges(instance.initialEdges);
-    }
-  }, [params.instanceId]);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(
-    currentInstance ? currentInstance.initialNodes : [],
-  );
-  const [edges, setEdges, onEdgesChange] = useEdgesState(
-    currentInstance ? currentInstance.initialEdges : [],
-  );
+    if (instance) {
+      if (currentInstance?.name !== instance.name) {
+        setCurrentInstance(instance);
+        setNodes(instance.initialNodes);
+        setEdges(instance.initialEdges);
+      }
+    } else {
+      if (currentInstance !== null) {
+        setCurrentInstance(null);
+        setNodes([]);
+        setEdges([]);
+      }
+    }
+  }, [params.instanceId, chartInstances, currentInstance, setNodes, setEdges]);
 
   const { project } = useReactFlow();
 
-  const onDragOver = useCallback((event) => {
+  const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
   }, []);
 
   const onDrop = useCallback(
-    (event) => {
+    (event: React.DragEvent) => {
       event.preventDefault();
 
       const type = event.dataTransfer.getData("application/reactflow");
@@ -64,7 +81,12 @@ const InstancePage = ({
         id: `${+new Date()}`,
         type,
         position,
-        data: { label: `${type} node` },
+        data: {
+          label: `${type} node`,
+          options: ["Option 1", "Option 2"],
+          endType: "end",
+          redirectTab: "",
+        },
       };
 
       setNodes((nds) => nds.concat(newNode));
@@ -77,12 +99,14 @@ const InstancePage = ({
     [setEdges],
   );
 
-  if (!currentInstance) {
-    return <p>Loading...</p>;
-  }
+  useEffect(() => {
+    if (currentInstance) {
+      setNodesAndEdges(currentInstance.name, nodes, edges);
+    }
+  }, [nodes, edges, currentInstance, setNodesAndEdges]);
 
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full flex-grow">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -94,18 +118,10 @@ const InstancePage = ({
         fitView
         nodeTypes={nodeTypes}
       >
-        {/* <Controls /> */}
-        {/* <MiniMap /> */}
+        <Controls />
+        <MiniMap />
         <Background variant="dots" gap={12} size={1} />
       </ReactFlow>
-      <section className="flex w-full pt-4" id="buttons">
-        <button
-          className="ml-auto rounded-full border border-yellow bg-yellow p-1.5 px-8 py-4 text-black transition-all hover:border-yellow-hover hover:bg-yellow-hover"
-          onClick={() => console.log("Saving schema...")}
-        >
-          Save
-        </button>
-      </section>
     </div>
   );
 };
