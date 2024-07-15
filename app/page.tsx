@@ -21,7 +21,7 @@ export default async function Home() {
               authenticity of their green claims.
             </p>
           </span>
-          <Link href="/questionaire" className="mt-12">
+          <Link href="/questionnaire" className="mt-12">
             <button className=" my-auto flex items-center justify-center rounded-md bg-green px-8 py-4 font-roboto text-3xl text-black transition-all duration-200 hover:scale-105">
               Get Started
               <ArrowRightIcon className="ml-4 text-6xl" />
