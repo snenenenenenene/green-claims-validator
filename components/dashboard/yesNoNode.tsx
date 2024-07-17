@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Handle, Position, useReactFlow } from "reactflow";
 import useStore from "@/lib/store";
+import { Trash2 } from "lucide-react";
 
 const YesNoNode = ({ id, data, isConnectable }) => {
   const [label, setLabel] = useState(data.label);
@@ -53,7 +54,7 @@ const YesNoNode = ({ id, data, isConnectable }) => {
           className="absolute right-0 top-0 m-1 rounded bg-red-500 p-1 text-xs text-white"
           onClick={handleRemoveClick}
         >
-          Remove
+          <Trash2 size={16} />
         </button>
       )}
       <Handle

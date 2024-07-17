@@ -4,16 +4,9 @@ import useStore from "@/lib/store";
 interface SidebarProps {
   onSave: () => void;
   onDelete: () => void;
-  onePage: boolean;
-  setOnePage: (value: boolean) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({
-  onSave,
-  onDelete,
-  onePage,
-  setOnePage,
-}) => {
+const Sidebar: React.FC<SidebarProps> = ({ onSave, onDelete }) => {
   const { publishTab, chartInstances, currentTab } = useStore((state) => ({
     publishTab: state.publishTab,
     chartInstances: state.chartInstances,
@@ -23,10 +16,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   const onDragStart = (event: React.DragEvent, nodeType: string): void => {
     event.dataTransfer.setData("application/reactflow", nodeType);
     event.dataTransfer.effectAllowed = "move";
-  };
-
-  const handleOnePageModeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setOnePage(e.target.checked);
   };
 
   const currentInstance = chartInstances.find(
@@ -74,15 +63,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         draggable
       >
         End Node
-      </div>
-      <div className="flex items-center p-4">
-        <label className="mr-2">One Page Mode:</label>
-        <input
-          type="checkbox"
-          checked={onePage}
-          onChange={handleOnePageModeChange}
-          className="form-checkbox"
-        />
       </div>
       <section className="flex h-full w-full flex-col pt-4" id="buttons">
         <button
