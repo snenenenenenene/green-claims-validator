@@ -3,10 +3,9 @@ import useStore from "@/lib/store";
 
 interface SidebarProps {
   onSave: () => void;
-  onDelete: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ onSave, onDelete }) => {
+const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
   const { publishTab, chartInstances, currentTab } = useStore((state) => ({
     publishTab: state.publishTab,
     chartInstances: state.chartInstances,
@@ -65,10 +64,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave, onDelete }) => {
         End Node
       </div>
       <section className="flex h-full w-full flex-col pt-4" id="buttons">
-        <button
-          className="ml-auto w-full rounded-full border border-green bg-green p-1.5 px-8 py-4 text-black transition-all hover:border-yellow-hover hover:bg-yellow-hover"
-          onClick={onSave}
-        >
+        <button className="btn btn-success mt-auto" onClick={onSave}>
           Save
         </button>
         <button
@@ -83,12 +79,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave, onDelete }) => {
             Last published: {new Date(lastPublishDate).toLocaleString()}
           </div>
         )}
-        <button
-          className="ml-auto w-full rounded-full p-1.5 px-8 py-4 text-white transition-all hover:text-gray-400 hover:underline"
-          onClick={onDelete}
-        >
-          Delete
-        </button>
       </section>
     </aside>
   );
