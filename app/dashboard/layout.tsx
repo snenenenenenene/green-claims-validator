@@ -7,6 +7,7 @@ import ReactFlow, { ReactFlowProvider } from "reactflow";
 import useStore from "@/lib/store";
 import dynamic from "next/dynamic";
 import Loader from "@/components/shared/loader";
+import { Settings } from "lucide-react";
 
 const DynamicInstancePage = dynamic(
   () => import("@/app/dashboard/[instanceId]/page"),
@@ -20,6 +21,15 @@ const DynamicInstancePage = dynamic(
   },
 );
 
+const getContrastingTextColor = (hexColor: string) => {
+  const color = hexColor.replace("#", "");
+  const r = parseInt(color.substring(0, 2), 16);
+  const g = parseInt(color.substring(2, 4), 16);
+  const b = parseInt(color.substring(4, 6), 16);
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  return brightness > 128 ? "#000000" : "#FFFFFF";
+};
+
 export default function Dashboard({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<
     (Session & { user: { role: string } }) | null
@@ -30,9 +40,10 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
     currentTab,
     setCurrentTab,
     addNewTab,
-    deleteTab, // Assuming you have a deleteTab function in your store
-    onePage,
+    deleteTab,
     setOnePage,
+    currentTabColor,
+    onePage,
   } = useStore((state) => ({
     chartInstances: state.chartInstances,
     currentTab: state.currentTab,
@@ -41,9 +52,11 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
     deleteTab: state.deleteTab,
     onePage: state.onePage,
     setOnePage: state.setOnePage,
+    currentTabColor: state.currentTabColor,
   }));
 
   const [loading, setLoading] = useState(false);
+  const [newColor, setNewColor] = useState(currentTabColor);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -57,6 +70,10 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
     const currentPath = window.location.pathname.split("/").pop();
     setCurrentTab(currentPath || chartInstances[0]?.name);
   }, [setCurrentTab, chartInstances]);
+
+  useEffect(() => {
+    setNewColor(currentTabColor);
+  }, [currentTabColor]);
 
   const handleAddNewTab = () => {
     const newTabName = prompt("Enter the name for the new tab:");
@@ -91,6 +108,16 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const handleColorChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setNewColor(event.target.value);
+  };
+
+  const handleSaveSettings = () => {
+    setCurrentTabColor(newColor);
+    setOnePage(onePage);
+    document.getElementById("settings_modal")?.close();
+  };
+
   const onSave = () => {
     console.log("Saving schema...");
   };
@@ -106,25 +133,34 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
   return (
     <ReactFlowProvider>
       <section className="flex h-full w-full">
-        <Sidebar
-          onSave={onSave}
-          onePage={onePage}
-          setOnePage={setOnePage}
-          onDelete={handleDelete}
-        />
+        <Sidebar onSave={onSave} onDelete={handleDelete} />
         <div className="flex h-full w-full flex-col">
           <div className="flex h-20 w-full gap-2 overflow-x-auto py-4 font-display">
-            {chartInstances.map((chart) => (
-              <button
-                key={chart.name}
-                onClick={() => handleTabClick(chart.name)}
-                className={`flex h-full items-center justify-center px-4 ${
-                  chart.name === currentTab ? "bg-gray-400" : "bg-white"
-                } overflow-hidden text-ellipsis whitespace-nowrap rounded-xl p-2 text-xl hover:bg-gray-200`}
-              >
-                {chart.name}
-              </button>
-            ))}
+            {chartInstances.map((chart) => {
+              const tabColor =
+                chart.color && chart.color !== "#ffffff"
+                  ? chart.color
+                  : currentTabColor;
+              const textColor = getContrastingTextColor(tabColor);
+              return (
+                <button
+                  key={chart.name}
+                  onClick={() => handleTabClick(chart.name)}
+                  style={{
+                    backgroundColor:
+                      chart.name === currentTab ? "#ffffff" : tabColor,
+                    borderColor:
+                      chart.name === currentTab ? tabColor : "transparent",
+                    color: chart.name === currentTab ? tabColor : textColor,
+                  }}
+                  className={`flex h-full items-center justify-center overflow-hidden text-ellipsis whitespace-nowrap rounded-xl p-2 px-4 text-xl hover:bg-gray-200 ${
+                    chart.name === currentTab ? "border-2" : ""
+                  }`}
+                >
+                  {chart.name}
+                </button>
+              );
+            })}
             <button
               onClick={handleAddNewTab}
               className="flex h-full items-center justify-center rounded-xl p-2 px-4 text-xl hover:bg-gray-200"
@@ -139,6 +175,47 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
           )}
         </div>
       </section>
+
+      <dialog id="settings_modal" className="modal">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg">Diagram Settings</h3>
+          <label className="mb-2 block">
+            Tab Color:
+            <input
+              type="color"
+              value={newColor}
+              onChange={handleColorChange}
+              className="ml-2"
+            />
+          </label>
+          <div className="mt-4 flex items-center">
+            <label className="mr-2">One Page Mode:</label>
+            <input
+              type="checkbox"
+              checked={onePage}
+              onChange={(e) => setOnePage(e.target.checked)}
+              className="form-checkbox"
+            />
+          </div>
+          <div className="mt-4">
+            <button
+              className="bg-green-500 mr-2 rounded p-2 text-white"
+              onClick={handleSaveSettings}
+            >
+              Save
+            </button>
+            <button
+              className="rounded bg-red-500 p-2 text-white"
+              onClick={handleDelete}
+            >
+              Delete Tab
+            </button>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>Close</button>
+        </form>
+      </dialog>
     </ReactFlowProvider>
   );
 }
