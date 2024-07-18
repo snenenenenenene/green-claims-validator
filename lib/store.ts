@@ -1,20 +1,31 @@
+// lib/store.ts
 import create from "zustand";
 import { persist } from "zustand/middleware";
 import { chartInstances as initialChartInstances } from "@/app/data/charts";
 import toast from "react-hot-toast";
+import { generateQuestionsFromChart } from "@/lib/utils";
 
-interface NodeData {
-  label: string;
-  options?: string[];
-  endType?: string;
-  redirectTab?: string;
+export interface ChartInstance {
+  name: string;
+  initialNodes: Node[];
+  initialEdges: Edge[];
+  onePageMode?: boolean;
+  color?: string;
+  publishedVersions?: { version: number; date: string }[];
 }
 
 interface Node {
   id: string;
   type: string;
   position: { x: number; y: number };
-  data: NodeData;
+  data: {
+    label: string;
+    options?: string[];
+    endType?: string;
+    redirectTab?: string;
+    style?: { backgroundColor: string };
+    hidden?: boolean;
+  };
 }
 
 interface Edge {
@@ -23,21 +34,12 @@ interface Edge {
   target: string;
   sourceHandle?: string;
   targetHandle?: string;
-  label?: string;
-}
-
-export interface ChartInstance {
-  name: string;
-  initialNodes: Node[];
-  initialEdges: Edge[];
-  onePageMode?: boolean;
-  color?: string;
-  publishedVersions?: { version: number; date: string }[]; // Add published versions
 }
 
 interface StoreState {
   chartInstances: ChartInstance[];
   currentTab: string;
+  questions: any[];
   setCurrentTab: (tabName: string) => void;
   addNewTab: (newTabName: string) => void;
   setNodesAndEdges: (
@@ -50,6 +52,8 @@ interface StoreState {
   deleteTab: (tabName: string) => void;
   publishTab: () => void;
   setCurrentTabColor: (instanceName: string, color: string) => void;
+  setChartInstance: (newInstance: ChartInstance) => void;
+  generateQuestions: () => void;
 }
 
 const useStore = create<StoreState>(
@@ -59,14 +63,12 @@ const useStore = create<StoreState>(
         ...instance,
         onePageMode: false,
         color: "#ffffff",
-        publishedVersions: [], // Initialize with empty published versions
+        publishedVersions: [],
       })),
-      currentTab: initialChartInstances[0].name,
+      currentTab: initialChartInstances[0]?.name || "",
+      questions: [],
 
       setCurrentTab: (tabName) => {
-        const currentInstance = get().chartInstances.find(
-          (instance) => instance.name === tabName,
-        );
         set({
           currentTab: tabName,
         });
@@ -201,6 +203,30 @@ const useStore = create<StoreState>(
           return instance;
         });
         set({ chartInstances: updatedInstances });
+      },
+
+      setChartInstance: (newInstance: ChartInstance) => {
+        const updatedInstances = get().chartInstances.map((instance) => {
+          if (instance.name === newInstance.name) {
+            return newInstance;
+          }
+          return instance;
+        });
+        set({ chartInstances: updatedInstances, currentTab: newInstance.name });
+      },
+
+      generateQuestions: () => {
+        const { chartInstances, currentTab } = get();
+        const currentInstance = chartInstances.find(
+          (instance) => instance.name === currentTab,
+        );
+        if (currentInstance) {
+          const questions = generateQuestionsFromChart(currentInstance);
+          set({ questions });
+          toast.success("Questions generated successfully!");
+        } else {
+          toast.error("No current instance found.");
+        }
       },
     }),
     {

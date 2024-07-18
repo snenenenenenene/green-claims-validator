@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import ms from "ms";
+import { ChartInstance } from "@/lib/store";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -67,3 +68,80 @@ export const truncate = (str: string, length: number) => {
   if (!str || str.length <= length) return str;
   return `${str.slice(0, length)}...`;
 };
+
+function getStartNode(nodes) {
+  return nodes.find((node) => node.type === "startNode");
+}
+
+export function getNextNode(currentNodeId, edges, answer) {
+  const edge = edges.find(
+    (edge) => edge.source === currentNodeId && edge.sourceHandle === answer,
+  );
+  return edge ? edge.target : null;
+}
+
+function getNextNodes(currentNodeId, edges) {
+  return edges
+    .filter((edge) => edge.source === currentNodeId)
+    .map((edge) => ({ target: edge.target, handle: edge.sourceHandle }));
+}
+
+export function generateQuestionsFromChart(chartInstance: ChartInstance) {
+  const { initialNodes: nodes, initialEdges: edges } = chartInstance;
+  const startNode = getStartNode(nodes);
+
+  if (!startNode) {
+    throw new Error("Start node not found.");
+  }
+
+  const questions = [];
+  const visited = new Set();
+
+  function traverse(nodeId) {
+    if (visited.has(nodeId)) return;
+    visited.add(nodeId);
+
+    const currentNode = nodes.find((node) => node.id === nodeId);
+    if (!currentNode) return;
+
+    switch (currentNode.type) {
+      case "startNode":
+        break; // Skip start nodes visually
+      case "singleChoice":
+        questions.push({
+          id: currentNode.id,
+          type: "singleChoice",
+          question: currentNode.data.label,
+          options: currentNode.data.options,
+        });
+        break;
+      case "multipleChoice":
+        questions.push({
+          id: currentNode.id,
+          type: "multipleChoice",
+          question: currentNode.data.label,
+          options: currentNode.data.options,
+        });
+        break;
+      case "yesNo":
+        questions.push({
+          id: currentNode.id,
+          type: "yesNo",
+          question: currentNode.data.label,
+        });
+        break;
+      case "endNode":
+        return; // Skip end nodes visually and terminate the traversal
+      default:
+        break;
+    }
+
+    const nextNodes = getNextNodes(nodeId, edges);
+    nextNodes.forEach(({ target }) => traverse(target));
+  }
+
+  const initialNextNodes = getNextNodes(startNode.id, edges);
+  initialNextNodes.forEach(({ target }) => traverse(target));
+
+  return questions;
+}

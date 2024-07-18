@@ -19,7 +19,7 @@ import EndNode from "@/components/dashboard/endNode";
 import StartNode from "@/components/dashboard/startNode";
 import useStore, { ChartInstance } from "@/lib/store";
 import { Settings } from "lucide-react";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
 import { saveAs } from "file-saver";
 
 const nodeTypes = {
@@ -114,6 +114,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
       };
 
       setNodes((nds) => nds.concat(newNode));
+      toast.success("Node added.");
     },
     [project, setNodes],
   );
@@ -137,7 +138,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
 
   const exportToJSON = () => {
     if (!currentInstance) {
-      alert("No instance selected.");
+      toast.error("No instance selected.");
       return;
     }
 
@@ -153,6 +154,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
     });
 
     saveAs(blob, `${name}.json`);
+    toast.success("Exported successfully.");
   };
 
   const handleSaveSettings = () => {
@@ -160,6 +162,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
       setCurrentTabColor(currentInstance.name, newColor);
       setOnePage(currentInstance.name, onePageMode);
       setShowSettings(false);
+      toast.success("Settings saved.");
     }
   };
 
@@ -167,6 +170,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
     if (currentInstance) {
       deleteTab(currentInstance.name);
       setShowSettings(false);
+      toast.success("Tab deleted.");
     }
   };
 

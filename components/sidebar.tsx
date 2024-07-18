@@ -1,18 +1,24 @@
-import React from "react";
+import React, { useRef } from "react";
 import useStore from "@/lib/store";
 import { saveAs } from "file-saver";
-import { Download, Import, BookmarkPlus } from "lucide-react";
+import { Download, Upload, BookmarkPlus } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface SidebarProps {
   onSave: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
-  const { publishTab, chartInstances, currentTab } = useStore((state) => ({
-    publishTab: state.publishTab,
-    chartInstances: state.chartInstances,
-    currentTab: state.currentTab,
-  }));
+  const { publishTab, chartInstances, currentTab, setChartInstance } = useStore(
+    (state) => ({
+      publishTab: state.publishTab,
+      chartInstances: state.chartInstances,
+      currentTab: state.currentTab,
+      setChartInstance: state.setChartInstance,
+    }),
+  );
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const onDragStart = (event: React.DragEvent, nodeType: string): void => {
     event.dataTransfer.setData("application/reactflow", nodeType);
@@ -31,7 +37,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
 
   const exportToJSON = () => {
     if (!currentInstance) {
-      alert("No instance selected.");
+      toast.error("No instance selected.");
       return;
     }
 
@@ -47,6 +53,43 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
     });
 
     saveAs(blob, `${name}.json`);
+    toast.success("Exported successfully.");
+  };
+
+  const importFromJSON = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result;
+      if (text) {
+        try {
+          const data = JSON.parse(text as string);
+          if (
+            data.name &&
+            Array.isArray(data.nodes) &&
+            Array.isArray(data.edges)
+          ) {
+            const newInstance: ChartInstance = {
+              name: data.name,
+              initialNodes: data.nodes,
+              initialEdges: data.edges,
+              onePageMode: false,
+              color: "#ffffff",
+              publishedVersions: [],
+            };
+            setChartInstance(newInstance);
+            toast.success("Imported successfully.");
+          } else {
+            toast.error("Invalid file format.");
+          }
+        } catch (error) {
+          toast.error("Invalid file format.");
+        }
+      }
+    };
+    reader.readAsText(file);
   };
 
   return (
@@ -95,8 +138,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
           <button className="btn btn-ghost" onClick={exportToJSON}>
             <Download />
           </button>
-          <button className="btn btn-ghost" onClick={exportToJSON}>
-            <Import />
+          <button
+            className="btn btn-ghost"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload />
           </button>
           <button className="btn btn-ghost" onClick={publishTab}>
             <BookmarkPlus />
@@ -108,6 +154,13 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
           </div>
         )}
       </section>
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept="application/json"
+        style={{ display: "none" }}
+        onChange={importFromJSON}
+      />
     </aside>
   );
 };
