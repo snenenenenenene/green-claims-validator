@@ -1,5 +1,7 @@
 import React from "react";
 import useStore from "@/lib/store";
+import { saveAs } from "file-saver";
+import { Download, Import, BookmarkPlus } from "lucide-react";
 
 interface SidebarProps {
   onSave: () => void;
@@ -20,11 +22,32 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
   const currentInstance = chartInstances.find(
     (instance) => instance.name === currentTab,
   );
+
   const lastPublishDate = currentInstance?.publishedVersions?.length
     ? currentInstance.publishedVersions[
         currentInstance.publishedVersions.length - 1
       ].date
     : null;
+
+  const exportToJSON = () => {
+    if (!currentInstance) {
+      alert("No instance selected.");
+      return;
+    }
+
+    const { name, initialNodes, initialEdges } = currentInstance;
+    const dataToExport = {
+      name,
+      nodes: initialNodes,
+      edges: initialEdges,
+    };
+
+    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], {
+      type: "application/json",
+    });
+
+    saveAs(blob, `${name}.json`);
+  };
 
   return (
     <aside className="flex flex-col space-y-4 p-4 pt-20">
@@ -67,13 +90,18 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
         <button className="btn btn-success mt-auto" onClick={onSave}>
           Save
         </button>
-        <button
-          className="ml-auto w-full rounded-full p-1.5 px-8 py-4 text-gray-400 transition-all hover:underline"
-          onClick={publishTab}
-        >
-          Publish
-        </button>
 
+        <span className="flex flex w-full justify-between pt-2">
+          <button className="btn btn-ghost" onClick={exportToJSON}>
+            <Download />
+          </button>
+          <button className="btn btn-ghost" onClick={exportToJSON}>
+            <Import />
+          </button>
+          <button className="btn btn-ghost" onClick={publishTab}>
+            <BookmarkPlus />
+          </button>
+        </span>
         {lastPublishDate && (
           <div className="mt-2 text-center text-sm text-gray-500">
             Last published: {new Date(lastPublishDate).toLocaleString()}

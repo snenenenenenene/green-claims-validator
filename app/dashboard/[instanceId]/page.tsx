@@ -20,6 +20,7 @@ import StartNode from "@/components/dashboard/startNode";
 import useStore, { ChartInstance } from "@/lib/store";
 import { Settings } from "lucide-react";
 import { Toaster } from "react-hot-toast";
+import { saveAs } from "file-saver";
 
 const nodeTypes = {
   yesNo: YesNoNode,
@@ -134,6 +135,26 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
     }
   }, [nodes, edges, currentInstance, setNodesAndEdges]);
 
+  const exportToJSON = () => {
+    if (!currentInstance) {
+      alert("No instance selected.");
+      return;
+    }
+
+    const { name, initialNodes, initialEdges } = currentInstance;
+    const dataToExport = {
+      name,
+      nodes: initialNodes,
+      edges: initialEdges,
+    };
+
+    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], {
+      type: "application/json",
+    });
+
+    saveAs(blob, `${name}.json`);
+  };
+
   const handleSaveSettings = () => {
     if (currentInstance) {
       setCurrentTabColor(currentInstance.name, newColor);
@@ -150,7 +171,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
   };
 
   return (
-    <div className="h-full w-full flex-grow relative">
+    <div className="relative h-full w-full flex-grow">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -167,7 +188,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
         <Background variant="dots" gap={12} size={1} />
       </ReactFlow>
       <button
-        className="absolute top-4 right-4 z-10 p-2 bg-gray-200 rounded-full hover:bg-gray-300"
+        className="btn btn-ghost absolute right-4 top-4"
         onClick={() => setShowSettings(true)}
       >
         <Settings size={20} />
@@ -183,7 +204,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
                 type="color"
                 value={newColor}
                 onChange={(e) => setNewColor(e.target.value)}
-                className="w-full h-10 p-0"
+                className="h-10 w-full p-0"
               />
             </div>
             <div className="mt-4 flex items-center">
@@ -196,22 +217,13 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
               />
             </div>
             <div className="mt-4 flex justify-end space-x-2">
-              <button
-                className="btn btn-error"
-                onClick={handleDeleteTab}
-              >
+              <button className="btn btn-error" onClick={handleDeleteTab}>
                 Delete
               </button>
-              <button
-                className="btn"
-                onClick={() => setShowSettings(false)}
-              >
+              <button className="btn" onClick={() => setShowSettings(false)}>
                 Cancel
               </button>
-              <button
-                className="btn btn-success"
-                onClick={handleSaveSettings}
-              >
+              <button className="btn btn-success" onClick={handleSaveSettings}>
                 Save
               </button>
             </div>
