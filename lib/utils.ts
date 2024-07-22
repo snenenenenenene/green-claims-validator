@@ -96,45 +96,60 @@ export function generateQuestionsFromChart(chartInstance) {
   const questions = [];
   const visited = new Set();
 
-  function traverse(nodeId) {
+  function traverse(nodeId, parentQuestion = null) {
     if (visited.has(nodeId)) return;
     visited.add(nodeId);
 
     const currentNode = nodes.find((node) => node.id === nodeId);
     if (!currentNode) return;
 
+    let question = null;
+
     switch (currentNode.type) {
       case "startNode":
         break; // Skip start nodes visually
       case "singleChoice":
-        questions.push({
+        question = {
           id: currentNode.id,
           type: "singleChoice",
           question: currentNode.data.label,
           options: currentNode.data.options.map((option) =>
             typeof option === "string" ? option : option.label,
           ),
-        });
+          connectedNodes: [],
+        };
+        questions.push(question);
         break;
       case "multipleChoice":
-        questions.push({
+        question = {
           id: currentNode.id,
           type: "multipleChoice",
           question: currentNode.data.label,
           options: currentNode.data.options.map((option) =>
             typeof option === "string" ? option : option.label,
           ),
-        });
+          connectedNodes: [],
+        };
+        questions.push(question);
         break;
       case "yesNo":
-        questions.push({
+        question = {
           id: currentNode.id,
           type: "yesNo",
           question: currentNode.data.label,
           options: ["yes", "no"],
-        });
+          connectedNodes: [],
+        };
+        questions.push(question);
         break;
       case "endNode":
+        if (parentQuestion) {
+          parentQuestion.connectedNodes.push({
+            id: currentNode.id,
+            type: "endNode",
+            question: currentNode.data.label,
+          });
+        }
         return; // Skip end nodes visually and terminate the traversal
       default:
         break;
@@ -142,8 +157,19 @@ export function generateQuestionsFromChart(chartInstance) {
 
     const nextNodes = edges
       .filter((edge) => edge.source === nodeId)
-      .map((edge) => edge.target);
-    nextNodes.forEach((target) => traverse(target));
+      .map((edge) => ({ target: edge.target, handle: edge.sourceHandle }));
+
+    nextNodes.forEach(({ target }) => {
+      if (question) {
+        const nextNode = nodes.find((node) => node.id === target);
+        question.connectedNodes.push({
+          id: nextNode.id,
+          type: nextNode.type,
+          question: nextNode.data.label,
+        });
+      }
+      traverse(target, question);
+    });
   }
 
   const initialNextNodes = edges

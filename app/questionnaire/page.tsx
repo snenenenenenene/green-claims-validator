@@ -154,15 +154,13 @@ export default function QuestionnairePage() {
           <>
             {questions[currentQuestionIndex] &&
               renderQuestion(questions[currentQuestionIndex], handleAnswer)}
-            {currentQuestionIndex < questions.length - 1 && (
-              <button
-                type="button"
-                className="hover:bg-green-800 focus:ring-green-300 mb-8 ml-8 rounded-full bg-green px-10 py-2.5 text-white focus:outline-none focus:ring-4"
-                onClick={handleNextQuestion}
-              >
-                Volgende
-              </button>
-            )}
+            <button
+              type="button"
+              className="hover:bg-green-800 focus:ring-green-300 mb-8 ml-8 rounded-full bg-green px-10 py-2.5 text-white focus:outline-none focus:ring-4"
+              onClick={handleNextQuestion}
+            >
+              Volgende
+            </button>
           </>
         )}
       </div>
