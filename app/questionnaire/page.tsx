@@ -51,11 +51,26 @@ export default function QuestionnairePage() {
       (instance) => instance.name === currentTab,
     );
 
-    const nextNodeId = getNextNode(
-      currentQuestion.id,
-      currentInstance.initialEdges,
-      currentAnswer,
-    );
+    let nextNodeId;
+
+    if (currentQuestion.type === "singleChoice") {
+      const selectedOption = currentQuestion.options.find(
+        (option) => option.label === currentAnswer,
+      );
+      nextNodeId =
+        selectedOption?.nextNodeId ||
+        getNextNode(
+          currentQuestion.id,
+          currentInstance.initialEdges,
+          `option-${currentAnswer}-next`,
+        );
+    } else {
+      nextNodeId = getNextNode(
+        currentQuestion.id,
+        currentInstance.initialEdges,
+        currentAnswer,
+      );
+    }
 
     if (!nextNodeId) {
       if (currentQuestion.type === "endNode") {

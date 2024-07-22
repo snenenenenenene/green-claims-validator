@@ -68,7 +68,6 @@ export const truncate = (str: string, length: number) => {
   if (!str || str.length <= length) return str;
   return `${str.slice(0, length)}...`;
 };
-
 function getStartNode(nodes) {
   return nodes.find((node) => node.type === "startNode");
 }
@@ -88,7 +87,7 @@ function getNextNodes(currentNodeId, edges) {
 
 export function generateQuestionsFromChart(chartInstance) {
   const { initialNodes: nodes, initialEdges: edges } = chartInstance;
-  const startNode = getStartNode(nodes);
+  const startNode = nodes.find((node) => node.type === "startNode");
 
   if (!startNode) {
     throw new Error("Start node not found.");
@@ -112,8 +111,9 @@ export function generateQuestionsFromChart(chartInstance) {
           id: currentNode.id,
           type: "singleChoice",
           question: currentNode.data.label,
-          options:
-            currentNode.data.options?.map((option) => option.label) || [],
+          options: currentNode.data.options.map((option) =>
+            typeof option === "string" ? option : option.label,
+          ),
         });
         break;
       case "multipleChoice":
@@ -121,8 +121,9 @@ export function generateQuestionsFromChart(chartInstance) {
           id: currentNode.id,
           type: "multipleChoice",
           question: currentNode.data.label,
-          options:
-            currentNode.data.options?.map((option) => option.label) || [],
+          options: currentNode.data.options.map((option) =>
+            typeof option === "string" ? option : option.label,
+          ),
         });
         break;
       case "yesNo":
@@ -130,8 +131,7 @@ export function generateQuestionsFromChart(chartInstance) {
           id: currentNode.id,
           type: "yesNo",
           question: currentNode.data.label,
-          options:
-            currentNode.data.options?.map((option) => option.label) || [],
+          options: ["yes", "no"],
         });
         break;
       case "endNode":
@@ -140,20 +140,16 @@ export function generateQuestionsFromChart(chartInstance) {
         break;
     }
 
-    if (currentNode.type === "yesNo" || currentNode.type === "singleChoice") {
-      currentNode.data.options?.forEach((option) => {
-        if (option.nextNodeId) {
-          traverse(option.nextNodeId);
-        }
-      });
-    }
-
-    const nextNodes = getNextNodes(nodeId, edges);
-    nextNodes.forEach(({ target }) => traverse(target));
+    const nextNodes = edges
+      .filter((edge) => edge.source === nodeId)
+      .map((edge) => edge.target);
+    nextNodes.forEach((target) => traverse(target));
   }
 
-  const initialNextNodes = getNextNodes(startNode.id, edges);
-  initialNextNodes.forEach(({ target }) => traverse(target));
+  const initialNextNodes = edges
+    .filter((edge) => edge.source === startNode.id)
+    .map((edge) => edge.target);
+  initialNextNodes.forEach((target) => traverse(target));
 
   return questions;
 }
