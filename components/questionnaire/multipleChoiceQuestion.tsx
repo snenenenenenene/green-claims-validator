@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React from "react";
 
 interface MultipleChoiceQuestionProps {
   question: string;
-  options: string[];
-  onAnswer: (answer: string[]) => void;
+  options: { label: string; nextNodeId?: string }[];
+  onAnswer: (answers: string[]) => void;
 }
 
 const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
@@ -11,37 +11,44 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
   options,
   onAnswer,
 }) => {
-  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+  const [selectedOptions, setSelectedOptions] = React.useState<string[]>([]);
 
-  const handleOptionClick = (option: string) => {
-    setSelectedOptions((prevSelectedOptions) =>
-      prevSelectedOptions.includes(option)
-        ? prevSelectedOptions.filter((opt) => opt !== option)
-        : [...prevSelectedOptions, option]
-    );
-    onAnswer(
-      selectedOptions.includes(option)
-        ? selectedOptions.filter((opt) => opt !== option)
-        : [...selectedOptions, option]
-    );
+  const handleOptionChange = (optionLabel: string) => {
+    setSelectedOptions((prevSelected) => {
+      if (prevSelected.includes(optionLabel)) {
+        return prevSelected.filter((label) => label !== optionLabel);
+      } else {
+        return [...prevSelected, optionLabel];
+      }
+    });
+  };
+
+  const handleSubmit = () => {
+    onAnswer(selectedOptions);
   };
 
   return (
     <div className="p-4">
-      <h3 className="text-lg mb-4">{question}</h3>
+      <h3 className="mb-4 text-lg">{question}</h3>
       <div className="form-control">
         {options.map((option, index) => (
           <label key={index} className="label cursor-pointer">
-            <span className="label-text">{option}</span>
+            <span className="label-text">{option.label}</span>
             <input
               type="checkbox"
               className="checkbox"
-              checked={selectedOptions.includes(option)}
-              onChange={() => handleOptionClick(option)}
+              onChange={() => handleOptionChange(option.label)}
             />
           </label>
         ))}
       </div>
+      <button
+        type="button"
+        className="mt-4 rounded bg-blue-500 px-4 py-2 text-white"
+        onClick={handleSubmit}
+      >
+        Submit
+      </button>
     </div>
   );
 };

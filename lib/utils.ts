@@ -79,7 +79,7 @@ export function getNextNode(currentNodeId, edges, answer) {
   return edge ? edge.target : null;
 }
 
-function getNextNodes(currentNodeId, edges) {
+export function getNextNodes(currentNodeId, edges) {
   return edges
     .filter((edge) => edge.source === currentNodeId)
     .map((edge) => ({ target: edge.target, handle: edge.sourceHandle }));
@@ -87,7 +87,7 @@ function getNextNodes(currentNodeId, edges) {
 
 export function generateQuestionsFromChart(chartInstance) {
   const { initialNodes: nodes, initialEdges: edges } = chartInstance;
-  const startNode = nodes.find((node) => node.type === "startNode");
+  const startNode = getStartNode(nodes);
 
   if (!startNode) {
     throw new Error("Start node not found.");
@@ -96,86 +96,67 @@ export function generateQuestionsFromChart(chartInstance) {
   const questions = [];
   const visited = new Set();
 
-  function traverse(nodeId, parentQuestion = null) {
+  function traverse(nodeId) {
     if (visited.has(nodeId)) return;
     visited.add(nodeId);
 
     const currentNode = nodes.find((node) => node.id === nodeId);
     if (!currentNode) return;
 
-    let question = null;
-
     switch (currentNode.type) {
       case "startNode":
         break; // Skip start nodes visually
       case "singleChoice":
-        question = {
+        questions.push({
           id: currentNode.id,
           type: "singleChoice",
           question: currentNode.data.label,
-          options: currentNode.data.options.map((option) =>
-            typeof option === "string" ? option : option.label,
-          ),
-          connectedNodes: [],
-        };
-        questions.push(question);
+          options:
+            currentNode.data.options?.map((option) => option.label) || [],
+          connectedNodes: getNextNodes(currentNode.id, edges),
+        });
         break;
       case "multipleChoice":
-        question = {
+        questions.push({
           id: currentNode.id,
           type: "multipleChoice",
           question: currentNode.data.label,
-          options: currentNode.data.options.map((option) =>
-            typeof option === "string" ? option : option.label,
-          ),
-          connectedNodes: [],
-        };
-        questions.push(question);
+          options:
+            currentNode.data.options?.map((option) => option.label) || [],
+          connectedNodes: getNextNodes(currentNode.id, edges),
+        });
         break;
       case "yesNo":
-        question = {
+        questions.push({
           id: currentNode.id,
           type: "yesNo",
           question: currentNode.data.label,
-          options: ["yes", "no"],
-          connectedNodes: [],
-        };
-        questions.push(question);
+          options:
+            currentNode.data.options?.map((option) => option.label) || [],
+          connectedNodes: getNextNodes(currentNode.id, edges),
+        });
         break;
       case "endNode":
-        if (parentQuestion) {
-          parentQuestion.connectedNodes.push({
-            id: currentNode.id,
-            type: "endNode",
-            question: currentNode.data.label,
-          });
-        }
-        return; // Skip end nodes visually and terminate the traversal
+        // Include end nodes in the questions but skip them visually
+        questions.push({
+          id: currentNode.id,
+          type: "endNode",
+          question: currentNode.data.label,
+          endType: currentNode.data.endType,
+          redirectTab: currentNode.data.redirectTab,
+          connectedNodes: getNextNodes(currentNode.id, edges),
+        });
+        return;
       default:
         break;
     }
 
-    const nextNodes = edges
-      .filter((edge) => edge.source === nodeId)
-      .map((edge) => ({ target: edge.target, handle: edge.sourceHandle }));
-
-    nextNodes.forEach(({ target }) => {
-      if (question) {
-        const nextNode = nodes.find((node) => node.id === target);
-        question.connectedNodes.push({
-          id: nextNode.id,
-          type: nextNode.type,
-          question: nextNode.data.label,
-        });
-      }
-      traverse(target, question);
-    });
+    const nextNodes = getNextNodes(nodeId, edges);
+    nextNodes.forEach(({ target }) => traverse(target));
   }
 
-  const initialNextNodes = edges
-    .filter((edge) => edge.source === startNode.id)
-    .map((edge) => edge.target);
-  initialNextNodes.forEach((target) => traverse(target));
+  const initialNextNodes = getNextNodes(startNode.id, edges);
+  initialNextNodes.forEach(({ target }) => traverse(target));
 
   return questions;
 }

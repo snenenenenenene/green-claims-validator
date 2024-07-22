@@ -20,21 +20,25 @@ export default function QuestionnairePage() {
   const [onePageMode, setOnePageMode] = useState(false);
 
   useEffect(() => {
-    if (currentTab !== "Default") {
+    if (!currentTab) {
       setCurrentTab("Default");
-    } else {
-      const currentInstance = chartInstances.find(
-        (instance) => instance.name === currentTab,
-      );
-
-      if (currentInstance) {
-        setOnePageMode(currentInstance.onePageMode || false);
-        const generatedQuestions = generateQuestionsFromChart(currentInstance);
-        console.log("Generated Questions:", generatedQuestions);
-        setQuestions(generatedQuestions);
-      }
     }
-  }, [chartInstances, currentTab, setCurrentTab]);
+  }, [currentTab, setCurrentTab]);
+
+  useEffect(() => {
+    const currentInstance = chartInstances.find(
+      (instance) => instance.name === currentTab,
+    );
+
+    if (currentInstance) {
+      setOnePageMode(currentInstance.onePageMode || false);
+      const generatedQuestions = generateQuestionsFromChart(currentInstance);
+      console.log("Generated Questions:", generatedQuestions);
+      setQuestions(generatedQuestions);
+      setCurrentQuestionIndex(0);
+      setAnswers({});
+    }
+  }, [chartInstances, currentTab]);
 
   const handleAnswer = (answer) => {
     setAnswers((prevAnswers) => ({
@@ -72,45 +76,36 @@ export default function QuestionnairePage() {
       );
     }
 
-    if (!nextNodeId) {
-      if (currentQuestion.type === "endNode") {
-        if (currentQuestion.redirectTab) {
-          const redirectInstance = chartInstances.find(
-            (instance) => instance.name === currentQuestion.redirectTab,
-          );
+    if (nextNodeId) {
+      const nextNode = questions.find((question) => question.id === nextNodeId);
 
-          if (redirectInstance) {
-            setCurrentTab(currentQuestion.redirectTab);
-            const generatedQuestions =
-              generateQuestionsFromChart(redirectInstance);
-            setQuestions(generatedQuestions);
-            setCurrentQuestionIndex(0);
-          } else {
-            toast.error("Redirect tab not found.");
-            window.location.href = "/";
-          }
-        } else {
-          toast.success("Questionnaire completed!");
-          window.location.href = "/";
-        }
-        return;
-      } else {
-        toast.success("Questionnaire completed!");
-        window.location.href = "/";
+      if (nextNode) {
+        setCurrentQuestionIndex(
+          questions.findIndex((q) => q.id === nextNodeId),
+        );
         return;
       }
     }
 
-    const nextQuestionIndex = questions.findIndex(
-      (question) => question.id === nextNodeId,
-    );
+    if (currentQuestion.endType === "redirect") {
+      const redirectInstance = chartInstances.find(
+        (instance) => instance.name === currentQuestion.redirectTab,
+      );
 
-    if (nextQuestionIndex !== -1) {
-      setCurrentQuestionIndex(nextQuestionIndex);
-    } else {
-      toast.success("Questionnaire completed!");
-      window.location.href = "/";
+      if (redirectInstance) {
+        setCurrentTab(currentQuestion.redirectTab);
+        const generatedQuestions = generateQuestionsFromChart(redirectInstance);
+        setQuestions(generatedQuestions);
+        setCurrentQuestionIndex(0);
+        setAnswers({});
+        return;
+      } else {
+        toast.error("Redirect tab not found.");
+      }
     }
+
+    toast.success("Questionnaire completed!");
+    setCurrentTab("Default");
   };
 
   const renderQuestion = (question, onAnswer) => {
