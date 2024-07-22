@@ -92,7 +92,7 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
   };
 
   const onSave = () => {
-    console.log("Saving schema...");
+    console.log(`boop`);
   };
 
   if (!session) {

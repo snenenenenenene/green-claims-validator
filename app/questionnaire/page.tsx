@@ -7,7 +7,7 @@ export default async function QuestionnairePage() {
     // We need a card for containing questions 
     // And a link to go to the next question
     return ( 
-        <div className="mt-6 px-60 flex flex-col flex-center h-full w-full overflow-y-scroll text-dark-gray">
+        <div className="mt-6 px-60 flex flex-col h-full w-full overflow-y-scroll text-dark-gray">
             <div className="flex justify-center text-3xl font-roboto">
                 <p>Be a hero, fly carbon zero</p>
             </div>
@@ -16,8 +16,8 @@ export default async function QuestionnairePage() {
                     <Question key={index} question={q} />
                 ))}
 
-                <button type="button" className="ml-8 mb-8 px-10 text-white bg-green hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">Volgende</button>
             </div>
+            <button type="button" className="flex-initial w-32 mb-12 mx-12 px-10 text-white bg-green hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-sm px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">Volgende</button>
         </div>
     )
 }

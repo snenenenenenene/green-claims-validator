@@ -14,8 +14,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   onePage,
   setOnePage,
 }) => {
-  const { publishTab, chartInstances, currentTab } = useStore((state) => ({
+  const { publishTab, chartInstances, currentTab, saveToDb } = useStore((state) => ({
     publishTab: state.publishTab,
+    saveToDb: state.saveToDb,
     chartInstances: state.chartInstances,
     currentTab: state.currentTab,
   }));
@@ -87,7 +88,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       <section className="flex h-full w-full flex-col pt-4" id="buttons">
         <button
           className="ml-auto w-full rounded-full border border-green bg-green p-1.5 px-8 py-4 text-black transition-all hover:border-yellow-hover hover:bg-yellow-hover"
-          onClick={onSave}
+          onClick={saveToDb}
         >
           Save
         </button>

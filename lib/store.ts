@@ -1,6 +1,8 @@
 import create from "zustand";
 import { persist } from "zustand/middleware";
 import { chartInstances as initialChartInstances } from "@/app/data/charts";
+import { PrismaClient } from "@prisma/client";
+import axios from "axios";
 
 interface NodeData {
   label: string;
@@ -48,22 +50,24 @@ interface StoreState {
   removeNode: (instanceName: string, nodeId: string) => void;
   deleteTab: (tabName: string) => void;
   publishTab: () => void;
+  saveToDb: () => void;
 }
 
 const useStore = create<StoreState>(
   persist(
     (set, get) => ({
+
       chartInstances: initialChartInstances.map((instance) => ({
         ...instance,
         onePageMode: false,
         publishedVersions: [], // Initialize with empty published versions
       })),
       currentTab: initialChartInstances[0].name,
-      onePage: initialChartInstances[0].onePageMode || false,
+      onePage: (initialChartInstances[0] as any).onePageMode || false,
 
-      setCurrentTab: (tabName) => {
-        const currentInstance = get().chartInstances.find(
-          (instance) => instance.name === tabName,
+      setCurrentTab: (tabName: string) => {
+        const currentInstance = (get() as StoreState).chartInstances.find(
+          (instance: ChartInstance) => instance.name === tabName,
         );
         set({
           currentTab: tabName,
@@ -71,7 +75,7 @@ const useStore = create<StoreState>(
         });
       },
 
-      addNewTab: (newTabName) => {
+      addNewTab: (newTabName: string) => {
         const newTab: ChartInstance = {
           name: newTabName,
           initialNodes: [],
@@ -79,7 +83,7 @@ const useStore = create<StoreState>(
           onePageMode: false,
           publishedVersions: [],
         };
-        const updatedTabs = [...get().chartInstances, newTab];
+        const updatedTabs = [...(get() as StoreState).chartInstances, newTab];
         set({
           chartInstances: updatedTabs,
           currentTab: newTabName,
@@ -87,18 +91,20 @@ const useStore = create<StoreState>(
         });
       },
 
-      setNodesAndEdges: (instanceName, nodes, edges) => {
-        const updatedInstances = get().chartInstances.map((instance) => {
-          if (instance.name === instanceName) {
-            return { ...instance, initialNodes: nodes, initialEdges: edges };
-          }
-          return instance;
-        });
+      setNodesAndEdges: (instanceName: string, nodes: Node, edges: Edge) => {
+        const updatedInstances = (get() as StoreState).chartInstances.map(
+          (instance: ChartInstance) => {
+            if (instance.name === instanceName) {
+              return { ...instance, initialNodes: nodes, initialEdges: edges };
+            }
+            return instance;
+          },
+        );
         set({ chartInstances: updatedInstances });
       },
 
-      setOnePage: (value) => {
-        const { currentTab, chartInstances } = get();
+      setOnePage: (value: boolean) => {
+        const { currentTab, chartInstances } = get() as StoreState;
         const updatedInstances = chartInstances.map((instance) => {
           if (instance.name === currentTab) {
             return { ...instance, onePageMode: value };
@@ -108,8 +114,8 @@ const useStore = create<StoreState>(
         set({ chartInstances: updatedInstances, onePage: value });
       },
 
-      removeNode: (instanceName, nodeId) => {
-        const updatedInstances = get().chartInstances.map((instance) => {
+      removeNode: (instanceName: string, nodeId: string) => {
+        const updatedInstances = (get() as StoreState).chartInstances.map((instance) => {
           if (instance.name === instanceName) {
             return {
               ...instance,
@@ -126,8 +132,8 @@ const useStore = create<StoreState>(
         set({ chartInstances: updatedInstances });
       },
 
-      deleteTab: (tabName) => {
-        const updatedInstances = get().chartInstances.filter(
+      deleteTab: (tabName: string) => {
+        const updatedInstances = (get() as StoreState).chartInstances.filter(
           (instance) => instance.name !== tabName,
         );
         const newCurrentTab =
@@ -142,7 +148,7 @@ const useStore = create<StoreState>(
       },
 
       publishTab: () => {
-        const { currentTab, chartInstances } = get();
+        const { currentTab, chartInstances } = get() as StoreState;
         const updatedInstances = chartInstances.map((instance) => {
           if (instance.name === currentTab) {
             const newVersion = {
@@ -161,11 +167,24 @@ const useStore = create<StoreState>(
         });
         set({ chartInstances: updatedInstances });
       },
+      
+      saveToDb: () => {
+        const { currentTab, chartInstances } = get() as StoreState;
+        const currentInstance = chartInstances.find(
+          (instance: ChartInstance) => instance.name === currentTab,
+        );
+
+        console.log(`current instance ${JSON.stringify(currentInstance)}`)
+        axios.post('/api/charts', {
+          currentInstance
+        })
+      }
+
     }),
     {
       name: "flow-chart-store",
     },
-  ),
+  ) as any,
 );
 
 export default useStore;
