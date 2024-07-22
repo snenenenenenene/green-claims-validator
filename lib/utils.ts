@@ -86,7 +86,7 @@ function getNextNodes(currentNodeId, edges) {
     .map((edge) => ({ target: edge.target, handle: edge.sourceHandle }));
 }
 
-export function generateQuestionsFromChart(chartInstance: ChartInstance) {
+export function generateQuestionsFromChart(chartInstance) {
   const { initialNodes: nodes, initialEdges: edges } = chartInstance;
   const startNode = getStartNode(nodes);
 
@@ -112,7 +112,8 @@ export function generateQuestionsFromChart(chartInstance: ChartInstance) {
           id: currentNode.id,
           type: "singleChoice",
           question: currentNode.data.label,
-          options: currentNode.data.options,
+          options:
+            currentNode.data.options?.map((option) => option.label) || [],
         });
         break;
       case "multipleChoice":
@@ -120,7 +121,8 @@ export function generateQuestionsFromChart(chartInstance: ChartInstance) {
           id: currentNode.id,
           type: "multipleChoice",
           question: currentNode.data.label,
-          options: currentNode.data.options,
+          options:
+            currentNode.data.options?.map((option) => option.label) || [],
         });
         break;
       case "yesNo":
@@ -128,12 +130,22 @@ export function generateQuestionsFromChart(chartInstance: ChartInstance) {
           id: currentNode.id,
           type: "yesNo",
           question: currentNode.data.label,
+          options:
+            currentNode.data.options?.map((option) => option.label) || [],
         });
         break;
       case "endNode":
         return; // Skip end nodes visually and terminate the traversal
       default:
         break;
+    }
+
+    if (currentNode.type === "yesNo" || currentNode.type === "singleChoice") {
+      currentNode.data.options?.forEach((option) => {
+        if (option.nextNodeId) {
+          traverse(option.nextNodeId);
+        }
+      });
     }
 
     const nextNodes = getNextNodes(nodeId, edges);

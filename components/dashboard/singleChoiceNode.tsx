@@ -46,12 +46,12 @@ const SingleChoiceNode = ({ id, data, isConnectable }) => {
 
   const handleOptionChange = (index, newValue) => {
     const newOptions = [...options];
-    newOptions[index] = newValue;
+    newOptions[index] = { ...newOptions[index], label: newValue };
     setOptions(newOptions);
   };
 
   const handleAddOption = () => {
-    setOptions([...options, ""]);
+    setOptions([...options, { label: "", nextNodeId: null }]);
   };
 
   const handleRemoveOption = (index) => {
@@ -91,7 +91,7 @@ const SingleChoiceNode = ({ id, data, isConnectable }) => {
           <div className="relative w-full">
             <input
               type="text"
-              value={option}
+              value={option.label}
               onChange={(e) => handleOptionChange(index, e.target.value)}
               className="w-full rounded border p-2 pr-8"
             />
@@ -105,7 +105,7 @@ const SingleChoiceNode = ({ id, data, isConnectable }) => {
           <Handle
             type="source"
             position={Position.Bottom}
-            id={`option-${index}`}
+            id={`option-${option.label}-next`}
             className="absolute bottom-0 left-1/2 h-4 w-4 -translate-x-1/2 transform bg-blue-500"
           />
         </div>
