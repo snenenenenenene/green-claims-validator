@@ -1,12 +1,36 @@
 "use client";
+import { useState } from "react";
 import { Suspense } from "react";
 import { Environment, SoftShadows } from "@react-three/drei";
 import { Canvas } from "react-three-fiber";
 import { Model } from "@/components/home/model";
-import Link from "next/link";
 import { ArrowRightIcon } from "lucide-react";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { useSession } from "next-auth/react";
 
 export default function Home() {
+  const { data: session, status } = useSession();
+  const [claim, setClaim] = useState("");
+
+  const handleGetStarted = async () => {
+    const response = await axios
+      .post(
+        "/api/claim",
+        JSON.stringify({ userId: (session!.user! as any).id, claim: claim }),
+      )
+      .then((res) => {
+        toast.success("Claim saved successfully");
+        window.location.href = `/questionnaire?claim=${encodeURIComponent(
+          claim,
+        )}`;
+      })
+      .catch((err) => {
+        console.error(err);
+        toast.error("Failed to save the claim");
+      });
+  };
+
   return (
     <div className="relative flex w-full flex-col self-start px-20">
       <section className="flex h-screen w-full">
@@ -26,13 +50,16 @@ export default function Home() {
               type="text"
               placeholder="Enter your claim..."
               className="w-full rounded-full border border-gray-300 px-6 py-6 text-lg text-gray-700 outline-green focus:border-green focus:outline-none focus:ring-2 focus:ring-green"
+              value={claim}
+              onChange={(e) => setClaim(e.target.value)}
             />
-            <Link href="/questionnaire" className="absolute right-2">
-              <button className="flex items-center justify-center rounded-full bg-green px-6 py-4 text-lg text-white transition-all duration-200 hover:scale-105">
-                Try it for free
-                <ArrowRightIcon className="ml-2 text-2xl" />
-              </button>
-            </Link>
+            <button
+              onClick={handleGetStarted}
+              className="absolute right-2 flex items-center justify-center rounded-full bg-green px-6 py-4 text-lg text-white transition-all duration-200 hover:scale-105"
+            >
+              Try it for free
+              <ArrowRightIcon className="ml-2 text-2xl" />
+            </button>
           </div>
         </div>
         <span className="flex w-1/2">

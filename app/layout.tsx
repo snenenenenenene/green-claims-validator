@@ -2,6 +2,8 @@ import "./globals.css";
 import Nav from "@/components/layout/nav";
 import { Suspense } from "react";
 import { Analytics as VercelAnalytics } from "@vercel/analytics/react";
+import { SessionProvider } from "next-auth/react";
+import Providers from "@/components/providers";
 
 export const metadata = {
   title: "Green Claims Validator - Greenwashing Verification",
@@ -21,9 +23,11 @@ export default async function RootLayout({
         <Suspense fallback="...">
           <Nav />
         </Suspense>
-        <main className="text-display flex h-full min-h-full w-full flex-col pt-20">
-          {children}
-        </main>
+        <Providers>
+          <main className="text-display flex h-full min-h-full w-full flex-col pt-20">
+            {children}
+          </main>
+        </Providers>
         {/* <Footer /> */}
         <VercelAnalytics />
       </body>

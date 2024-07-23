@@ -5,9 +5,14 @@ import useStore from "@/lib/store";
 import YesNoQuestion from "@/components/questionnaire/yesNoQuestion";
 import SingleChoiceQuestion from "@/components/questionnaire/singleChoiceQuestion";
 import MultipleChoiceQuestion from "@/components/questionnaire/multipleChoiceQuestion";
-import { generateQuestionsFromChart, getNextNode } from "@/lib/utils";
+import { generateQuestionsFromChart, getNextNode, fetcher } from "@/lib/utils";
+import { useSession } from "next-auth/react";
+import axios from "axios";
 
 export default function QuestionnairePage() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialClaim = urlParams.get("claim");
+
   const { chartInstances, currentTab, setCurrentTab } = useStore((state) => ({
     chartInstances: state.chartInstances,
     currentTab: state.currentTab,
@@ -18,6 +23,8 @@ export default function QuestionnairePage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<{ [key: string]: string }>({});
   const [onePageMode, setOnePageMode] = useState(false);
+  const [claim, setClaim] = useState<string | null>(null);
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     if (!currentTab) {
@@ -26,19 +33,40 @@ export default function QuestionnairePage() {
   }, [currentTab, setCurrentTab]);
 
   useEffect(() => {
-    const currentInstance = chartInstances.find(
-      (instance) => instance.name === currentTab,
-    );
+    if (status === "authenticated" && session?.user) {
+      const fetchClaim = async () => {
+        try {
+          const response = await axios.get(
+            `/api/claim?userId=${(session.user as any).id}`,
+          );
+          setClaim(response.data.claim || initialClaim);
+        } catch (err) {
+          console.error(err);
+          setClaim(initialClaim as string);
+          toast.error("Failed to fetch the claim");
+        }
+      };
 
-    if (currentInstance) {
-      setOnePageMode(currentInstance.onePageMode || false);
-      const generatedQuestions = generateQuestionsFromChart(currentInstance);
-      console.log("Generated Questions:", generatedQuestions);
-      setQuestions(generatedQuestions);
-      setCurrentQuestionIndex(0);
-      setAnswers({});
+      fetchClaim();
     }
-  }, [chartInstances, currentTab]);
+  }, [status, session, initialClaim]);
+
+  useEffect(() => {
+    if (claim !== null) {
+      const currentInstance = chartInstances.find(
+        (instance) => instance.name === currentTab,
+      );
+
+      if (currentInstance) {
+        setOnePageMode(currentInstance.onePageMode || false);
+        const generatedQuestions = generateQuestionsFromChart(currentInstance);
+        console.log("Generated Questions:", generatedQuestions);
+        setQuestions(generatedQuestions);
+        setCurrentQuestionIndex(0);
+        setAnswers({});
+      }
+    }
+  }, [chartInstances, currentTab, claim]);
 
   const handleAnswer = (answer: string) => {
     setAnswers((prevAnswers) => ({
@@ -143,7 +171,7 @@ export default function QuestionnairePage() {
   return (
     <div className="flex h-screen w-full flex-col justify-between px-60 text-dark-gray">
       <div className="my-6 flex justify-center font-roboto text-3xl">
-        <p>Be a hero, fly carbon zero</p>
+        <p>{claim || "Be a hero, fly carbon zero"}</p>
       </div>
       <div className="w-full px-8 pb-4">
         <div className="relative h-12 w-full rounded-full bg-gray-200 p-2 dark:bg-gray-700">
