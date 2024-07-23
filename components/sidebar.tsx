@@ -10,14 +10,14 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
-  const { publishTab, chartInstances, currentTab, setChartInstance } = useStore(
-    (state) => ({
+  const { publishTab, chartInstances, currentTab, saveToDb, setChartInstance } =
+    useStore((state) => ({
       publishTab: state.publishTab,
+      saveToDb: state.saveToDb,
       chartInstances: state.chartInstances,
       currentTab: state.currentTab,
       setChartInstance: state.setChartInstance,
-    }),
-  );
+    }));
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -131,11 +131,14 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
         End Node
       </div>
       <section className="flex h-full w-full flex-col pt-4" id="buttons">
-        <button className="btn btn-success mt-auto" onClick={onSave}>
+        <button
+          className="ml-auto w-full rounded-full border border-green bg-green p-1.5 px-8 py-4 text-black transition-all hover:border-yellow-hover hover:bg-yellow-hover"
+          onClick={saveToDb}
+        >
           Save
         </button>
 
-        <span className="flex flex w-full justify-between pt-2">
+        <span className="flex w-full justify-between pt-2">
           <button className="btn btn-ghost" onClick={exportToJSON}>
             <Download />
           </button>
