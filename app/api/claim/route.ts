@@ -1,17 +1,55 @@
-// pages/api/claim.ts
-import prisma from "@/lib/prisma"; // Assuming you are using Prisma
+import prisma from "@/lib/prisma";
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { userId, claim } = body;
+  const { userId, claim, overwrite } = body;
 
   try {
-    await prisma.claim.create({
-      data: {
-        userId,
-        claim,
-      },
-    });
+    if (overwrite) {
+      const existingClaim = await prisma.claim.findFirst({
+        where: { userId },
+      });
+
+      if (existingClaim) {
+        await prisma.claim.update({
+          where: { id: existingClaim.id },
+          data: { claim },
+        });
+      } else {
+        await prisma.claim.create({
+          data: {
+            userId,
+            claim,
+          },
+        });
+      }
+    } else {
+      const existingClaim = await prisma.claim.findFirst({
+        where: { userId },
+      });
+
+      if (existingClaim) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: "Claim already exists",
+          }),
+          {
+            status: 400,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          },
+        );
+      }
+
+      await prisma.claim.create({
+        data: {
+          userId,
+          claim,
+        },
+      });
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
@@ -28,6 +66,7 @@ export async function POST(request: Request) {
     });
   }
 }
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const userId = url.searchParams.get("userId");
