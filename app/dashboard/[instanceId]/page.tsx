@@ -130,7 +130,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
 
   useEffect(() => {
     if (currentInstance) {
-      setNodesAndEdges(currentInstance.name, nodes, edges);
+      setNodesAndEdges(currentInstance.name, nodes as any, edges as any);
     }
   }, [nodes, edges, currentInstance, setNodesAndEdges]);
 
@@ -158,7 +158,6 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
   const handleSaveSettings = () => {
     if (currentInstance) {
       setCurrentTabColor(currentInstance.name, newColor);
-      setOnePage(currentInstance.name, onePageMode);
       setShowSettings(false);
       toast.success("Settings saved.");
     }

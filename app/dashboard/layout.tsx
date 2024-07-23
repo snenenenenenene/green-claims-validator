@@ -42,7 +42,6 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
     addNewTab,
     deleteTab,
     setOnePage,
-    currentTabColor,
     onePage,
   } = useStore((state) => ({
     chartInstances: state.chartInstances,
@@ -52,11 +51,10 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
     deleteTab: state.deleteTab,
     onePage: state.onePage,
     setOnePage: state.setOnePage,
-    currentTabColor: state.currentTabColor,
   }));
 
   const [loading, setLoading] = useState(false);
-  const [newColor, setNewColor] = useState(currentTabColor);
+  const [newColor, setNewColor] = useState("#000");
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -70,10 +68,6 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
     const currentPath = window.location.pathname.split("/").pop();
     setCurrentTab(currentPath || chartInstances[0]?.name);
   }, [setCurrentTab, chartInstances]);
-
-  useEffect(() => {
-    setNewColor(currentTabColor);
-  }, [currentTabColor]);
 
   const handleAddNewTab = () => {
     const newTabName = prompt("Enter the name for the new tab:");
@@ -95,7 +89,7 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
     if (currentTab) {
       if (confirm(`Are you sure you want to delete the tab ${currentTab}?`)) {
         deleteTab(currentTab);
-        setCurrentTab(chartInstances[0]?.name || null); // Set to first tab or null if no tabs are left
+        setCurrentTab(chartInstances[0]?.name);
         window.history.pushState(
           {},
           "",
@@ -137,9 +131,9 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
           <div className="font-display flex h-20 w-full gap-2 overflow-x-auto py-4">
             {chartInstances.map((chart) => {
               const tabColor =
-                chart.color && chart.color !== "#ffffff"
+                chart.color && chart.color !== "#000"
                   ? chart.color
-                  : currentTabColor;
+                  : "#000";
               const textColor = getContrastingTextColor(tabColor);
               return (
                 <button
