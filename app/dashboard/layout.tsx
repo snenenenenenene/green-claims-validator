@@ -8,6 +8,7 @@ import useStore from "@/lib/store";
 import dynamic from "next/dynamic";
 import Loader from "@/components/shared/loader";
 import { Settings } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 
 const DynamicInstancePage = dynamic(
   () => import("@/app/dashboard/[instanceId]/page"),
@@ -34,6 +35,9 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<
     (Session & { user: { role: string } }) | null
   >(null);
+  
+  const router = useRouter();
+  const pathname = usePathname();
 
   const {
     chartInstances,
@@ -105,6 +109,15 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
   const handleColorChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setNewColor(event.target.value);
   };
+
+  useEffect(() => {
+    if (pathname.endsWith("/dashboard")) {
+      router.replace(`/dashboard/${encodeURIComponent(chartInstances[0].name)}`);
+    } else {
+      const currentPath = decodeURIComponent(pathname.split("/").pop() || "");
+      setCurrentTab(currentPath);
+    }
+  }, [setCurrentTab, chartInstances, pathname, router]);
 
   const handleSaveSettings = () => {
     setOnePage(onePage);

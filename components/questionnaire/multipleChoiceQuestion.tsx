@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from 'framer-motion';
 
 interface MultipleChoiceQuestionProps {
   question: string;
@@ -23,8 +24,18 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
     });
   };
 
+  const fadeInUpVariants = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: 20 }
+  };
+
   return (
-    <div className="p-4">
+    <motion.div initial="initial"
+    animate="animate"
+    exit="exit"
+    variants={fadeInUpVariants}
+    transition={{ duration: 0.5 }}  className="p-4">
       <h3 className="mb-6 text-4xl font-semibold text-gray-700">{question}</h3>
       <div className="form-control">
         {options.map((option, index) => (
@@ -38,7 +49,7 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
           </label>
         ))}
       </div>
-    </div>
+    </motion.div>
   );
 };
 

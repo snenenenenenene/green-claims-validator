@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from 'framer-motion';
 
 interface SingleChoiceQuestionProps {
   question: string;
@@ -6,14 +7,23 @@ interface SingleChoiceQuestionProps {
   onAnswer: (answer: string) => void;
 }
 
+const fadeInUpVariants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: 20 }
+};
+
 const SingleChoiceQuestion: React.FC<SingleChoiceQuestionProps> = ({
   question,
   options,
   onAnswer,
 }) => {
-  console.log(options);
   return (
-    <div className="p-4">
+    <motion.div initial="initial"
+    animate="animate"
+    exit="exit"
+    variants={fadeInUpVariants}
+    transition={{ duration: 0.5 }} className="p-4">
       <h3 className="mb-6 text-4xl font-semibold text-gray-700">
         {question}
       </h3>
@@ -30,7 +40,7 @@ const SingleChoiceQuestion: React.FC<SingleChoiceQuestionProps> = ({
           </label>
         ))}
       </div>
-    </div>
+    </motion.div>
   );
 };
 

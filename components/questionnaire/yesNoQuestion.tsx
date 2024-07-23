@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import React, { useState } from "react";
 
 interface YesNoQuestionProps {
@@ -16,8 +17,18 @@ const YesNoQuestion: React.FC<YesNoQuestionProps> = ({
     onAnswer(option);
   };
 
+  const fadeInUpVariants = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: 20 }
+  };
+
   return (
-    <div className="rounded-lg">
+    <motion.div initial="initial"
+    animate="animate"
+    exit="exit"
+    variants={fadeInUpVariants}
+    transition={{ duration: 0.5 }} className="rounded-lg">
       <h3 className="mb-6 text-4xl font-semibold text-gray-700">{question}</h3>
       <div className="flex w-full gap-x-4">
         <button
@@ -37,7 +48,7 @@ const YesNoQuestion: React.FC<YesNoQuestionProps> = ({
           No
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
