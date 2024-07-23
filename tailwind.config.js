@@ -20,14 +20,8 @@ module.exports = {
         "black-hover": "#404040",
       },
       fontFamily: {
-        display: ["Founders Grotesk Regular"],
-        bretish: ["Bretish"],
         roboto: ["Roboto"],
         poppins: ["Poppins"],
-        ortland: ["Ortland"],
-        default: ["Founders Grotesk Regular"],
-        medium: ["Founders Grotesk Medium"],
-        bold: ["Founders Grotesk Bold"],
       },
       animation: {
         // Fade up and down
