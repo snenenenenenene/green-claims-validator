@@ -1,7 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import ms from "ms";
-import { ChartInstance } from "@/lib/store";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -113,7 +112,7 @@ export function getNextNodes(
     .map((edge) => ({ target: edge.target, handle: edge.sourceHandle }));
 }
 
-export function generateQuestionsFromChart(chartInstance: ChartInstance) {
+export function generateQuestionsFromChart(chartInstance: any) {
   const { initialNodes: nodes, initialEdges: edges } = chartInstance;
   const startNode = getStartNode(nodes as any);
 
