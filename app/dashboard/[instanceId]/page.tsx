@@ -59,7 +59,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [showSettings, setShowSettings] = useState(false);
-  const [newColor, setNewColor] = useState("#ffffff");
+  const [newColor, setNewColor] = useState("#80B500");
   const [onePageMode, setOnePageMode] = useState(false);
 
   useEffect(() => {
@@ -72,7 +72,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
         setCurrentInstance(instance);
         setNodes(instance.initialNodes);
         setEdges(instance.initialEdges);
-        setNewColor(instance.color || "#ffffff");
+        setNewColor(instance.color || "#80B500");
         setOnePageMode(instance.onePageMode || false);
       }
     } else {
@@ -80,7 +80,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
         setCurrentInstance(null);
         setNodes([]);
         setEdges([]);
-        setNewColor("#ffffff");
+        setNewColor("#80B500");
         setOnePageMode(false);
       }
     }

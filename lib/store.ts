@@ -62,7 +62,7 @@ const useStore = create<StoreState>(
       chartInstances: initialChartInstances.map((instance) => ({
         ...instance,
         onePageMode: false,
-        color: "#ffffff",
+        color: "#80B500",
         publishedVersions: [],
       })),
       currentTab: initialChartInstances[0]?.name || "",
@@ -85,7 +85,7 @@ const useStore = create<StoreState>(
           initialNodes: [],
           initialEdges: [],
           onePageMode: false,
-          color: "#ffffff",
+          color: "#80B500",
           publishedVersions: [],
         };
         const updatedTabs = [...(get() as StoreState).chartInstances, newTab];
