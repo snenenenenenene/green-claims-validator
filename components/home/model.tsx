@@ -5,8 +5,14 @@ import { useFrame } from "react-three-fiber";
 import gsap from "gsap";
 
 export function Model(props: any) {
-  const { nodes, materials } = useGLTF("/models/earth.glb");
-  const groupRef = useRef();
+  const {
+    nodes,
+    materials,
+  }: {
+    nodes: any;
+    materials: any;
+  } = useGLTF("/models/earth.glb");
+  const groupRef = useRef<any>();
   const { size, viewport } = useThree();
   const aspect = size.width / viewport.width;
 
