@@ -84,7 +84,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
         setNodes([]);
         setEdges([]);
         setNewColor("#80B500");
-        setOnePageMode(false);
+        setOnePage(false);
       }
     }
   }, [params.instanceId, chartInstances, currentInstance, setNodes, setEdges]);
@@ -168,6 +168,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
   const handleSaveSettings = () => {
     if (currentInstance) {
       setCurrentTabColor(currentInstance.name, newColor);
+      setOnePage(onePageMode);
       setShowSettings(false);
       toast.success("Settings saved.");
     }
@@ -196,7 +197,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
         connectionLineType={ConnectionLineType.SmoothStep}
       >
         <Controls />
-
+        {/* @ts-ignore */}
         <Background variant="dots" gap={12} size={1} />
       </ReactFlow>
       <button
