@@ -8,10 +8,12 @@ import MultipleChoiceQuestion from "@/components/questionnaire/multipleChoiceQue
 import { generateQuestionsFromChart, getNextNode, fetcher } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import axios from "axios";
+import { useSearchParams, useRouter } from 'next/navigation';
 
 export default function QuestionnairePage() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const initialClaim = urlParams.get("claim");
+  const searchParams = useSearchParams()
+
+  const initialClaim = searchParams.get("claim");
 
   const { chartInstances, currentTab, setCurrentTab } = useStore((state) => ({
     chartInstances: state.chartInstances,
@@ -19,6 +21,7 @@ export default function QuestionnairePage() {
     setCurrentTab: state.setCurrentTab,
   }));
 
+  const router = useRouter();
   const [questions, setQuestions] = useState<any[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<{ [key: string]: string }>({});
@@ -37,7 +40,7 @@ export default function QuestionnairePage() {
       if (status === "authenticated" && session?.user) {
         try {
           const response = await axios.get(
-            `/api/claim?userId=${(session.user as any).id}`,
+            `/api/claim?userId=${(session.user as any).id}`
           );
           setClaim(response.data.claim || initialClaim);
         } catch (err) {
@@ -57,7 +60,7 @@ export default function QuestionnairePage() {
   useEffect(() => {
     if (claim !== null && currentTab) {
       const currentInstance = chartInstances.find(
-        (instance) => instance.name === currentTab,
+        (instance) => instance.name === currentTab
       );
 
       if (currentInstance) {
@@ -83,27 +86,27 @@ export default function QuestionnairePage() {
     const currentAnswer = answers[currentQuestion.id];
 
     const currentInstance = chartInstances.find(
-      (instance) => instance.name === currentTab,
+      (instance) => instance.name === currentTab
     ) as any;
 
     let nextNodeId: string | null = null;
 
     if (currentQuestion.type === "singleChoice") {
       const selectedOption = currentQuestion.options.find(
-        (option: any) => option.label === currentAnswer,
+        (option: any) => option.label === currentAnswer
       );
       nextNodeId =
         selectedOption?.nextNodeId ||
         getNextNode(
           currentQuestion.id,
           currentInstance.initialEdges,
-          `option-${currentAnswer}-next`,
+          `option-${currentAnswer}-next`
         );
     } else {
       nextNodeId = getNextNode(
         currentQuestion.id,
         currentInstance.initialEdges,
-        currentAnswer,
+        currentAnswer
       );
     }
 
@@ -112,7 +115,7 @@ export default function QuestionnairePage() {
 
       if (nextNode) {
         setCurrentQuestionIndex(
-          questions.findIndex((q) => q.id === nextNodeId),
+          questions.findIndex((q) => q.id === nextNodeId)
         );
         return;
       }
@@ -120,12 +123,14 @@ export default function QuestionnairePage() {
 
     if (currentQuestion.endType === "redirect") {
       const redirectInstance = chartInstances.find(
-        (instance) => instance.name === currentQuestion.redirectTab,
+        (instance) => instance.name === currentQuestion.redirectTab
       );
 
       if (redirectInstance) {
         setCurrentTab(currentQuestion.redirectTab);
-        const generatedQuestions = generateQuestionsFromChart(redirectInstance);
+        const generatedQuestions = generateQuestionsFromChart(
+          redirectInstance
+        );
         setQuestions(generatedQuestions);
         setCurrentQuestionIndex(0);
         setAnswers({});
@@ -137,13 +142,10 @@ export default function QuestionnairePage() {
 
     toast.success("Questionnaire completed!");
     setCurrentTab("Default");
-    window.location.href = "/questionnaire/results"; // Redirect to results page
+    router.push("/questionnaire/results");
   };
 
-  const renderQuestion = (
-    question: any,
-    onAnswer: (answer: string) => void,
-  ) => {
+  const renderQuestion = (question: any, onAnswer: (answer: string) => void) => {
     switch (question.type) {
       case "yesNo":
         return (

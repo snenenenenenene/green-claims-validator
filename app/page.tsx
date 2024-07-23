@@ -1,6 +1,6 @@
 "use client";
 import { useState, Suspense } from "react";
-
+import { useRouter } from 'next/navigation'
 import { Environment, SoftShadows } from "@react-three/drei";
 import { Canvas } from "react-three-fiber";
 import { Model } from "@/components/home/model";
@@ -12,6 +12,7 @@ import axios from "axios";
 export default function Home() {
   const { data: session } = useSession();
   const [claim, setClaim] = useState("");
+  const router = useRouter();
   const [existingClaim, setExistingClaim] = useState("");
 
   const handleClaimChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,9 +47,9 @@ export default function Home() {
           claim,
           overwrite,
         });
-        window.location.href = `/questionnaire?claim=${encodeURIComponent(
+        router.push(`/questionnaire?claim=${encodeURIComponent(
           claim,
-        )}`;
+        )}`)
       } catch (err) {
         console.error(err);
       }

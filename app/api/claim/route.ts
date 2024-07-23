@@ -98,6 +98,7 @@ export async function GET(request: Request) {
       },
     );
   } catch (error) {
+    console.log(error)
     return new Response(JSON.stringify({ success: false, error: error }), {
       status: 500,
       headers: {
