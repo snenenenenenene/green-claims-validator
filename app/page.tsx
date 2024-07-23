@@ -6,7 +6,7 @@ import { Model } from "@/components/home/model";
 import Link from "next/link";
 import { ArrowRightIcon } from "lucide-react";
 
-export default async function Home() {
+export default function Home() {
   return (
     <div className="relative flex w-full flex-col self-start px-20">
       <section className="flex h-screen w-full">
@@ -17,16 +17,23 @@ export default async function Home() {
             </h1>
 
             <p className="mt-2 font-poppins text-3xl">
-              The first user friendly app that empowers companies to verify the
+              The first user-friendly app that empowers companies to verify the
               authenticity of their green claims.
             </p>
           </span>
-          <Link href="/questionnaire" className="mt-12">
-            <button className=" my-auto flex items-center justify-center rounded-md bg-green px-8 py-4 font-roboto text-3xl text-black transition-all duration-200 hover:scale-105">
-              Get Started
-              <ArrowRightIcon className="ml-4 text-6xl" />
-            </button>
-          </Link>
+          <div className="relative mt-12 flex items-center font-poppins">
+            <input
+              type="text"
+              placeholder="Enter your claim..."
+              className="w-full rounded-full border border-gray-300 px-6 py-6 text-lg text-gray-700 outline-green focus:border-green focus:outline-none focus:ring-2 focus:ring-green"
+            />
+            <Link href="/questionnaire" className="absolute right-2">
+              <button className="flex items-center justify-center rounded-full bg-green px-6 py-4 text-lg text-white transition-all duration-200 hover:scale-105">
+                Try it for free
+                <ArrowRightIcon className="ml-2 text-2xl" />
+              </button>
+            </Link>
+          </div>
         </div>
         <span className="flex w-1/2">
           <Canvas className="flex h-full w-full">
