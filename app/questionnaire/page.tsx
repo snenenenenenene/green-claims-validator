@@ -138,15 +138,31 @@ export default function QuestionnairePage() {
     }
   };
 
+  const progressValue = ((currentQuestionIndex + 1) / questions.length) * 100;
+
   return (
-    <div className="mt-6 flex h-full w-full flex-col overflow-y-scroll px-60 text-dark-gray">
-      <div className="flex justify-center font-roboto text-3xl">
+    <div className="flex h-screen w-full flex-col justify-between px-60 text-dark-gray">
+      <div className="my-6 flex justify-center font-roboto text-3xl">
         <p>Be a hero, fly carbon zero</p>
       </div>
-      <div className="mx-0.2 m-8 rounded-3xl bg-light-gray">
+      <div className="w-full px-8 pb-4">
+        <div className="relative h-12 w-full rounded-full bg-gray-200 p-2 dark:bg-gray-700">
+          <div
+            className="h-full rounded-full bg-green transition-all duration-500 ease-in-out dark:bg-green"
+            style={{ width: `${progressValue}%` }}
+          >
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white">
+              {Math.round(progressValue)}%
+            </span>
+          </div>
+        </div>
+      </div>
+      <div className="mx-8 my-4 mb-auto flex h-[30%] flex-col overflow-y-auto rounded-3xl bg-light-gray p-8">
         {onePageMode ? (
           questions.map((question, index) => (
-            <div key={index}>{renderQuestion(question, handleAnswer)}</div>
+            <div key={index} className="mb-auto">
+              {renderQuestion(question, handleAnswer)}
+            </div>
           ))
         ) : (
           <>
@@ -154,7 +170,7 @@ export default function QuestionnairePage() {
               renderQuestion(questions[currentQuestionIndex], handleAnswer)}
             <button
               type="button"
-              className="hover:bg-green-800 focus:ring-green-300 mb-8 ml-8 rounded-full bg-green px-10 py-2.5 text-white focus:outline-none focus:ring-4"
+              className="hover:bg-green-800 focus:ring-green-300 mt-auto w-40 rounded-full bg-green px-10 py-2.5 text-white focus:outline-none focus:ring-4"
               onClick={handleNextQuestion}
             >
               Volgende

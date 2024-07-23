@@ -14,7 +14,9 @@ const SingleChoiceQuestion: React.FC<SingleChoiceQuestionProps> = ({
   console.log(options);
   return (
     <div className="p-4">
-      <h3 className="mb-4 text-lg">{question}</h3>
+      <h3 className="mb-6 text-4xl font-semibold text-gray-700">
+        {question}
+      </h3>
       <div className="form-control">
         {options.map((option, index) => (
           <label key={index} className="label cursor-pointer">
