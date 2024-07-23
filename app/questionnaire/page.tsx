@@ -191,7 +191,7 @@ export default function QuestionnairePage() {
           </div>
         </div>
       </div>
-      <div className="mx-8 my-4 mb-auto flex h-[30%] flex-col overflow-y-auto rounded-3xl bg-light-gray p-8">
+      <div className="mx-8 my-4 mb-auto flex min-h-[30%] flex-col overflow-y-auto rounded-3xl bg-light-gray p-8">
         {onePageMode ? (
           questions.map((question, index) => (
             <div key={index} className="mb-auto">
