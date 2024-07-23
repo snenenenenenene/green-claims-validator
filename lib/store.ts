@@ -67,10 +67,10 @@ const useStore = create<StoreState>(
       })),
       currentTab: initialChartInstances[0]?.name || "",
       questions: [],
-      onePage: initialChartInstances[0]?.onePageMode || false,
+      onePage: (initialChartInstances[0] as any).onePageMode || false,
 
       setCurrentTab: (tabName: string) => {
-        const currentInstance = get().chartInstances.find(
+        const currentInstance = (get() as StoreState).chartInstances.find(
           (instance: ChartInstance) => instance.name === tabName
         );
         set({
@@ -88,7 +88,7 @@ const useStore = create<StoreState>(
           color: "#ffffff",
           publishedVersions: [],
         };
-        const updatedTabs = [...get().chartInstances, newTab];
+        const updatedTabs = [...(get() as StoreState).chartInstances, newTab];
         set({
           chartInstances: updatedTabs,
           currentTab: newTabName,
@@ -97,7 +97,7 @@ const useStore = create<StoreState>(
       },
 
       setNodesAndEdges: (instanceName: string, nodes: Node[], edges: Edge[]) => {
-        const updatedInstances = get().chartInstances.map((instance: ChartInstance) => {
+        const updatedInstances = (get() as StoreState).chartInstances.map((instance: ChartInstance) => {
           if (instance.name === instanceName) {
             return { ...instance, initialNodes: nodes, initialEdges: edges };
           }
@@ -107,7 +107,7 @@ const useStore = create<StoreState>(
       },
 
       setOnePage: (value: boolean) => {
-        const { currentTab, chartInstances } = get();
+        const { currentTab, chartInstances } = (get() as StoreState);
         const updatedInstances = chartInstances.map((instance) => {
           if (instance.name === currentTab) {
             return { ...instance, onePageMode: value };
@@ -118,7 +118,7 @@ const useStore = create<StoreState>(
       },
 
       removeNode: (instanceName: string, nodeId: string) => {
-        const updatedInstances = get().chartInstances.map((instance) => {
+        const updatedInstances = (get() as StoreState).chartInstances.map((instance) => {
           if (instance.name === instanceName) {
             return {
               ...instance,
@@ -134,7 +134,7 @@ const useStore = create<StoreState>(
       },
 
       deleteTab: (tabName: string) => {
-        const updatedInstances = get().chartInstances.filter(
+        const updatedInstances = (get() as StoreState).chartInstances.filter(
           (instance) => instance.name !== tabName
         );
         const newCurrentTab = updatedInstances.length > 0 ? updatedInstances[0].name : "Default";
@@ -142,7 +142,7 @@ const useStore = create<StoreState>(
       },
 
       publishTab: () => {
-        const { currentTab, chartInstances } = get();
+        const { currentTab, chartInstances } = (get() as StoreState) as StoreState;
         const updatedInstances = chartInstances.map((instance) => {
           if (instance.name === currentTab) {
             const newVersion = {
@@ -164,7 +164,7 @@ const useStore = create<StoreState>(
       },
 
       setCurrentTabColor: (instanceName: string, color: string) => {
-        const updatedInstances = get().chartInstances.map((instance) => {
+        const updatedInstances = (get() as StoreState).chartInstances.map((instance) => {
           if (instance.name === instanceName) {
             return { ...instance, color: color };
           }
@@ -174,7 +174,7 @@ const useStore = create<StoreState>(
       },
 
       saveToDb: () => {
-        const { currentTab, chartInstances } = get();
+        const { currentTab, chartInstances } = (get() as StoreState);
         const currentInstance = chartInstances.find(
           (instance: ChartInstance) => instance.name === currentTab
         );
@@ -184,7 +184,7 @@ const useStore = create<StoreState>(
       },
 
       setChartInstance: (newInstance: ChartInstance) => {
-        const updatedInstances = get().chartInstances.map((instance) => {
+        const updatedInstances = (get() as StoreState).chartInstances.map((instance) => {
           if (instance.name === newInstance.name) {
             return newInstance;
           }
@@ -194,7 +194,7 @@ const useStore = create<StoreState>(
       },
 
       generateQuestions: () => {
-        const { chartInstances, currentTab } = get();
+        const { chartInstances, currentTab } = (get() as StoreState);
         const currentInstance = chartInstances.find(
           (instance) => instance.name === currentTab
         );
