@@ -6,15 +6,15 @@ const Loader = () => {
     <div className="flex w-full items-center justify-center">
       <div className="tree">
         {Array.from({ length: 4 }).map((_, x) => (
-          <div key={x} className="branch" style={{ "--x": x }}>
+          <div key={x} className="branch" style={{ "--x": x } as any}>
             {Array.from({ length: 4 }).map((_, i) => (
-              <span key={i} style={{ "--i": i }}></span>
+              <span key={i} style={{ "--i": i } as any}></span>
             ))}
           </div>
         ))}
         <div className="stem">
           {Array.from({ length: 4 }).map((_, i) => (
-            <span key={i} style={{ "--i": i }}></span>
+            <span key={i} style={{ "--i": i } as any}></span>
           ))}
         </div>
         <span className="shadow"></span>
