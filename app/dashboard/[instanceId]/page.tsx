@@ -22,6 +22,7 @@ import useStore from "@/lib/store";
 import { Settings } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { saveAs } from "file-saver";
+import EditableEdge from "@/components/dashboard/editableEdge";
 
 const nodeTypes = {
   yesNo: YesNoNode,
@@ -31,6 +32,10 @@ const nodeTypes = {
   startNode: StartNode,
   // weightNode: WeightNode, // Add the WeightNode to node types
 };
+
+const edgeTypes = {
+  editableEdge: EditableEdge,
+}
 
 interface InstancePageProps {
   params: {
@@ -129,9 +134,10 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
 
   const onConnect = useCallback(
     (params) =>
+      
       setEdges((eds) =>
         addEdge(
-          { ...params, type: ConnectionLineType.SmoothStep, animated: true },
+          { ...params, type: 'editableEdge',  },
           eds,
         ),
       ),
@@ -194,6 +200,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
         onDrop={onDrop}
         fitView
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         connectionLineType={ConnectionLineType.SmoothStep}
       >
         <Controls />
