@@ -26,15 +26,15 @@ export default function QuestionnairePage() {
   const [claim, setClaim] = useState<string | null>(null);
   const { data: session, status } = useSession();
 
+  // Set the initial tab to "Default" if it's not set
   useEffect(() => {
-    if (!currentTab) {
-      setCurrentTab("Default");
-    }
-  }, [currentTab, setCurrentTab]);
+    setCurrentTab("Default");
+  }, [setCurrentTab]);
 
+  // Fetch the user's claim
   useEffect(() => {
-    if (status === "authenticated" && session?.user) {
-      const fetchClaim = async () => {
+    const fetchClaim = async () => {
+      if (status === "authenticated" && session?.user) {
         try {
           const response = await axios.get(
             `/api/claim?userId=${(session.user as any).id}`,
@@ -45,14 +45,17 @@ export default function QuestionnairePage() {
           setClaim(initialClaim as string);
           toast.error("Failed to fetch the claim");
         }
-      };
+      } else {
+        setClaim(initialClaim as string);
+      }
+    };
 
-      fetchClaim();
-    }
+    fetchClaim();
   }, [status, session, initialClaim]);
 
+  // Generate questions based on the current tab and claim
   useEffect(() => {
-    if (claim !== null) {
+    if (claim !== null && currentTab) {
       const currentInstance = chartInstances.find(
         (instance) => instance.name === currentTab,
       );
@@ -133,6 +136,7 @@ export default function QuestionnairePage() {
     }
 
     toast.success("Questionnaire completed!");
+    setCurrentTab("Default");
     window.location.href = "/questionnaire/results"; // Redirect to results page
   };
 
