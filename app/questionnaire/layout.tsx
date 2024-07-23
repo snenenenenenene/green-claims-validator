@@ -1,7 +1,5 @@
-// app/questionnaire/layout.tsx
-
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import useStore from "@/lib/store";
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -9,7 +7,7 @@ import { useSession } from "next-auth/react";
 import axios from "axios";
 import { generateQuestionsFromChart } from "@/lib/utils";
 
-export default function QuestionnaireLayout({ children }: { children: React.ReactNode }) {
+function LayoutContent() {
   const { chartInstances, currentTab, setCurrentTab } = useStore((state) => ({
     chartInstances: state.chartInstances,
     currentTab: state.currentTab,
@@ -60,8 +58,15 @@ export default function QuestionnaireLayout({ children }: { children: React.Reac
     }
   }, [chartInstances, currentTab, claim, router]);
 
+  return null;
+}
+
+export default function QuestionnaireLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen w-full flex-col justify-between px-60 text-dark-gray">
+      <Suspense fallback={<div>Loading...</div>}>
+        <LayoutContent />
+      </Suspense>
       <Toaster />
       {children}
     </div>
