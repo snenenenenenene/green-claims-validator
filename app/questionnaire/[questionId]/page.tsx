@@ -37,21 +37,31 @@ export default function QuestionPage() {
         const questionIndex = generatedQuestions.findIndex(question => question.id === questionId);
         if (questionIndex !== -1) {
           setCurrentQuestionIndex(questionIndex);
+        } else {
+          handleRedirectNode(generatedQuestions[0]?.id);
         }
       }
     }
   }, [chartInstances, currentTab, questionId]);
 
+  useEffect(() => {
+    if (questions.length > 0 && currentQuestionIndex === -1) {
+      handleRedirectNode(questions[0].id);
+    }
+  }, [questions, currentQuestionIndex]);
+
   const handleAnswer = (answer: string) => {
     setAnswers(prevAnswers => ({
       ...prevAnswers,
-      [questions[currentQuestionIndex].id]: answer,
+      [questions[currentQuestionIndex]?.id]: answer,
     }));
   };
 
   const handleNextQuestion = () => {
     const currentQuestion = questions[currentQuestionIndex];
-    const currentAnswer = answers[currentQuestion.id];
+    const currentAnswer = answers[currentQuestion?.id];
+
+    if (!currentQuestion) return;
 
     const currentInstance = chartInstances.find(instance => instance.name === currentTab) as any;
 
@@ -69,19 +79,15 @@ export default function QuestionPage() {
     }
 
     if (nextNodeId) {
-      const nextNode = questions.find(question => question.id === nextNodeId);
-
-      if (nextNode) {
-        router.push(`/questionnaire/${nextNode.id}?claim=${encodeURIComponent(claim)}`);
-        setCurrentQuestionIndex(questions.findIndex(q => q.id === nextNodeId));
-        return;
-      }
+      handleRedirectNode(nextNodeId);
+      return;
     }
 
     if (currentQuestion.endType === "redirect") {
       const redirectInstance = chartInstances.find(instance => instance.name === currentQuestion.redirectTab);
 
       if (redirectInstance) {
+        toast.success(`Redirected to ${currentQuestion.redirectTab} flow chart.`);
         setCurrentTab(currentQuestion.redirectTab);
         const generatedQuestions = generateQuestionsFromChart(redirectInstance);
         setQuestions(generatedQuestions);
@@ -99,8 +105,39 @@ export default function QuestionPage() {
     router.push("/questionnaire/results"); // Redirect to results page
   };
 
+  const handleRedirectNode = (nextNodeId: string | null) => {
+    while (nextNodeId) {
+      const nextNode = questions.find(question => question.id === nextNodeId);
+
+      if (nextNode) {
+        if (nextNode.endType === "redirect") {
+          const redirectInstance = chartInstances.find(instance => instance.name === nextNode.redirectTab);
+
+          if (redirectInstance) {
+            toast.success(`Redirected to ${nextNode.redirectTab} flow chart.`);
+            setCurrentTab(nextNode.redirectTab);
+            const generatedQuestions = generateQuestionsFromChart(redirectInstance);
+            setQuestions(generatedQuestions);
+            setAnswers({});
+            router.replace(`/questionnaire/${generatedQuestions[0].id}?claim=${encodeURIComponent(claim)}`);
+            return;
+          } else {
+            toast.error("Redirect tab not found.");
+            break;
+          }
+        } else {
+          router.replace(`/questionnaire/${nextNode.id}?claim=${encodeURIComponent(claim)}`);
+          setCurrentQuestionIndex(questions.findIndex(q => q.id === nextNodeId));
+          return;
+        }
+      } else {
+        break;
+      }
+    }
+  };
+
   const renderQuestion = (question: any, onAnswer: (answer: string) => void) => {
-    switch (question.type) {
+    switch (question?.type) {
       case "yesNo":
         return <YesNoQuestion question={question.question} onAnswer={onAnswer} />;
       case "singleChoice":
@@ -135,7 +172,7 @@ export default function QuestionPage() {
           </div>
         </div>
       </div>
-      <div className="mx-8 my-4 mb-auto flex min-h-[30%] flex-col rounded-3xl bg-light-gray p-8">
+      <div className="mx-8 my-4 mb-auto flex h-[30%] flex-col overflow-y-auto rounded-3xl bg-light-gray p-8">
         {onePageMode ? (
           questions.map((question, index) => (
             <div key={index} className="mb-auto">
