@@ -70,11 +70,12 @@ const useStore = create<StoreState>(
       onePage: (initialChartInstances[0] as any).onePageMode || false,
 
       setCurrentTab: (tabName: string) => {
+        const decodedTabName = decodeURIComponent(tabName);
         const currentInstance = (get() as StoreState).chartInstances.find(
-          (instance: ChartInstance) => instance.name === tabName
+          (instance: ChartInstance) => instance.name === decodedTabName
         );
         set({
-          currentTab: tabName,
+          currentTab: decodedTabName,
           onePage: currentInstance?.onePageMode || false,
         });
       },
@@ -97,8 +98,9 @@ const useStore = create<StoreState>(
       },
 
       setNodesAndEdges: (instanceName: string, nodes: Node[], edges: Edge[]) => {
+        const decodedInstanceName = decodeURIComponent(instanceName);
         const updatedInstances = (get() as StoreState).chartInstances.map((instance: ChartInstance) => {
-          if (instance.name === instanceName) {
+          if (instance.name === decodedInstanceName) {
             return { ...instance, initialNodes: nodes, initialEdges: edges };
           }
           return instance;
@@ -108,8 +110,9 @@ const useStore = create<StoreState>(
 
       setOnePage: (value: boolean) => {
         const { currentTab, chartInstances } = (get() as StoreState);
+        const decodedTabName = decodeURIComponent(currentTab);
         const updatedInstances = chartInstances.map((instance) => {
-          if (instance.name === currentTab) {
+          if (instance.name === decodedTabName) {
             return { ...instance, onePageMode: value };
           }
           return instance;
@@ -118,8 +121,9 @@ const useStore = create<StoreState>(
       },
 
       removeNode: (instanceName: string, nodeId: string) => {
+        const decodedInstanceName = decodeURIComponent(instanceName);
         const updatedInstances = (get() as StoreState).chartInstances.map((instance) => {
-          if (instance.name === instanceName) {
+          if (instance.name === decodedInstanceName) {
             return {
               ...instance,
               initialNodes: instance.initialNodes.filter((node: any) => node.id !== nodeId),
@@ -134,8 +138,9 @@ const useStore = create<StoreState>(
       },
 
       deleteTab: (tabName: string) => {
+        const decodedTabName = decodeURIComponent(tabName);
         const updatedInstances = (get() as StoreState).chartInstances.filter(
-          (instance) => instance.name !== tabName
+          (instance) => instance.name !== decodedTabName
         );
         const newCurrentTab = updatedInstances.length > 0 ? updatedInstances[0].name : "Default";
         set({ chartInstances: updatedInstances, currentTab: newCurrentTab });
@@ -143,8 +148,9 @@ const useStore = create<StoreState>(
 
       publishTab: () => {
         const { currentTab, chartInstances } = (get() as StoreState) as StoreState;
+        const decodedTabName = decodeURIComponent(currentTab);
         const updatedInstances = chartInstances.map((instance) => {
-          if (instance.name === currentTab) {
+          if (instance.name === decodedTabName) {
             const newVersion = {
               version: (instance.publishedVersions?.length || 0) + 1,
               date: new Date().toISOString(),
@@ -164,8 +170,9 @@ const useStore = create<StoreState>(
       },
 
       setCurrentTabColor: (instanceName: string, color: string) => {
+        const decodedInstanceName = decodeURIComponent(instanceName);
         const updatedInstances = (get() as StoreState).chartInstances.map((instance) => {
-          if (instance.name === instanceName) {
+          if (instance.name === decodedInstanceName) {
             return { ...instance, color: color };
           }
           return instance;
@@ -175,8 +182,9 @@ const useStore = create<StoreState>(
 
       saveToDb: () => {
         const { currentTab, chartInstances } = (get() as StoreState);
+        const decodedTabName = decodeURIComponent(currentTab);
         const currentInstance = chartInstances.find(
-          (instance: ChartInstance) => instance.name === currentTab
+          (instance: ChartInstance) => instance.name === decodedTabName
         );
 
         axios.post("/api/charts", { currentInstance });
@@ -195,8 +203,9 @@ const useStore = create<StoreState>(
 
       generateQuestions: () => {
         const { chartInstances, currentTab } = (get() as StoreState);
+        const decodedTabName = decodeURIComponent(currentTab);
         const currentInstance = chartInstances.find(
-          (instance) => instance.name === currentTab
+          (instance) => instance.name === decodedTabName
         );
         if (currentInstance) {
           const questions = generateQuestionsFromChart(currentInstance);

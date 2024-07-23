@@ -17,6 +17,7 @@ import SingleChoiceNode from "@/components/dashboard/singleChoiceNode";
 import MultipleChoiceNode from "@/components/dashboard/multipleChoiceNode";
 import EndNode from "@/components/dashboard/endNode";
 import StartNode from "@/components/dashboard/startNode";
+// import WeightNode from "@/components/dashboard/WeightNode"; // Add the WeightNode import
 import useStore from "@/lib/store";
 import { Settings } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
@@ -28,6 +29,7 @@ const nodeTypes = {
   multipleChoice: MultipleChoiceNode,
   endNode: EndNode,
   startNode: StartNode,
+  // weightNode: WeightNode, // Add the WeightNode to node types
 };
 
 interface InstancePageProps {
@@ -63,8 +65,9 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
   const [onePageMode, setOnePageMode] = useState(false);
 
   useEffect(() => {
+    const instanceId = decodeURIComponent(params.instanceId);
     const instance = chartInstances.find(
-      (instance) => instance.name === params.instanceId,
+      (instance) => instance.name === instanceId,
     );
 
     if (instance) {
@@ -108,13 +111,20 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
           options: ["Option 1", "Option 2"],
           endType: "end",
           redirectTab: "",
+          weight: 0,
+          onChange: (value: number) => {
+            const updatedNodes = nodes.map(node => 
+              node.id === newNode.id ? { ...node, data: { ...node.data, weight: value } } : node
+            );
+            setNodes(updatedNodes);
+          },
         },
       };
 
       setNodes((nds) => nds.concat(newNode));
       toast.success("Node added.");
     },
-    [project, setNodes],
+    [project, setNodes, nodes],
   );
 
   const onConnect = useCallback(
@@ -186,8 +196,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
         connectionLineType={ConnectionLineType.SmoothStep}
       >
         <Controls />
-        {/* The following will be ts ignored due to variant "dots" not properly parsing */}
-        {/* @ts-ignore */}
+
         <Background variant="dots" gap={12} size={1} />
       </ReactFlow>
       <button
