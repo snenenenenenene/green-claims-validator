@@ -17,7 +17,7 @@ import SingleChoiceNode from "@/components/dashboard/singleChoiceNode";
 import MultipleChoiceNode from "@/components/dashboard/multipleChoiceNode";
 import EndNode from "@/components/dashboard/endNode";
 import StartNode from "@/components/dashboard/startNode";
-import useStore, { ChartInstance } from "@/lib/store";
+import useStore from "@/lib/store";
 import { Settings } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { saveAs } from "file-saver";
@@ -55,9 +55,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
     setCurrentTab: state.setCurrentTab,
   }));
 
-  const [currentInstance, setCurrentInstance] = useState<ChartInstance | null>(
-    null,
-  );
+  const [currentInstance, setCurrentInstance] = useState<any | null>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [showSettings, setShowSettings] = useState(false);
@@ -189,6 +187,8 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
         connectionLineType={ConnectionLineType.SmoothStep}
       >
         <Controls />
+        {/* The following will be ts ignored due to variant "dots" not properly parsing */}
+        {/* @ts-ignore */}
         <Background variant="dots" gap={12} size={1} />
       </ReactFlow>
       <button
@@ -201,7 +201,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
       {showSettings && (
         <dialog open className="modal">
           <div className="modal-box">
-            <h3 className="font-bold text-lg">Settings</h3>
+            <h3 className="text-lg font-bold">Settings</h3>
             <div className="mt-4">
               <label className="block">Tab Color</label>
               <input

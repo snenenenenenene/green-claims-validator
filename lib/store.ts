@@ -1,62 +1,12 @@
 // lib/store.ts
-import create from "zustand";
+import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { chartInstances as initialChartInstances } from "@/app/data/charts";
 import toast from "react-hot-toast";
 import { generateQuestionsFromChart } from "@/lib/utils";
+import {  Node, Edge } from "@/lib/utils";
 
-export interface ChartInstance {
-  name: string;
-  initialNodes: Node[];
-  initialEdges: Edge[];
-  onePageMode?: boolean;
-  color?: string;
-  publishedVersions?: { version: number; date: string }[];
-}
-
-interface Node {
-  id: string;
-  type: string;
-  position: { x: number; y: number };
-  data: {
-    label: string;
-    options?: string[];
-    endType?: string;
-    redirectTab?: string;
-    style?: { backgroundColor: string };
-    hidden?: boolean;
-  };
-}
-
-interface Edge {
-  id: string;
-  source: string;
-  target: string;
-  sourceHandle?: string;
-  targetHandle?: string;
-}
-
-interface StoreState {
-  chartInstances: ChartInstance[];
-  currentTab: string;
-  questions: any[];
-  setCurrentTab: (tabName: string) => void;
-  addNewTab: (newTabName: string) => void;
-  setNodesAndEdges: (
-    instanceName: string,
-    nodes: Node[],
-    edges: Edge[],
-  ) => void;
-  setOnePage: (instanceName: string, value: boolean) => void;
-  removeNode: (instanceName: string, nodeId: string) => void;
-  deleteTab: (tabName: string) => void;
-  publishTab: () => void;
-  setCurrentTabColor: (instanceName: string, color: string) => void;
-  setChartInstance: (newInstance: ChartInstance) => void;
-  generateQuestions: () => void;
-}
-
-const useStore = create<StoreState>(
+const useStore = create<any>(
   persist(
     (set, get) => ({
       chartInstances: initialChartInstances.map((instance) => ({
@@ -68,14 +18,12 @@ const useStore = create<StoreState>(
       currentTab: initialChartInstances[0]?.name || "",
       questions: [],
 
-      setCurrentTab: (tabName) => {
-        set({
-          currentTab: tabName,
-        });
+      setCurrentTab: (tabName: string) => {
+        set({ currentTab: tabName });
       },
 
-      addNewTab: (newTabName) => {
-        const newTab: ChartInstance = {
+      addNewTab: (newTabName: string) => {
+        const newTab: any = {
           name: newTabName,
           initialNodes: [],
           initialEdges: [],
@@ -84,14 +32,15 @@ const useStore = create<StoreState>(
           publishedVersions: [],
         };
         const updatedTabs = [...get().chartInstances, newTab];
-        set({
-          chartInstances: updatedTabs,
-          currentTab: newTabName,
-        });
+        set({ chartInstances: updatedTabs, currentTab: newTabName });
       },
 
-      setNodesAndEdges: (instanceName, nodes, edges) => {
-        const updatedInstances = get().chartInstances.map((instance) => {
+      setNodesAndEdges: (
+        instanceName: string,
+        nodes: Node[],
+        edges: Edge[],
+      ) => {
+        const updatedInstances = get().chartInstances.map((instance: any) => {
           if (instance.name === instanceName) {
             return { ...instance, initialNodes: nodes, initialEdges: edges };
           }
@@ -100,8 +49,8 @@ const useStore = create<StoreState>(
         set({ chartInstances: updatedInstances });
       },
 
-      setOnePage: (instanceName, value) => {
-        const updatedInstances = get().chartInstances.map((instance) => {
+      setOnePage: (instanceName: string, value: boolean) => {
+        const updatedInstances = get().chartInstances.map((instance: any) => {
           if (instance.name === instanceName) {
             return { ...instance, onePageMode: value };
           }
@@ -110,16 +59,16 @@ const useStore = create<StoreState>(
         set({ chartInstances: updatedInstances });
       },
 
-      removeNode: (instanceName, nodeId) => {
-        const updatedInstances = get().chartInstances.map((instance) => {
+      removeNode: (instanceName: string, nodeId: string) => {
+        const updatedInstances = get().chartInstances.map((instance: any) => {
           if (instance.name === instanceName) {
             return {
               ...instance,
               initialNodes: instance.initialNodes.filter(
-                (node) => node.id !== nodeId,
+                (node: any) => node.id !== nodeId,
               ),
               initialEdges: instance.initialEdges.filter(
-                (edge) => edge.source !== nodeId && edge.target !== nodeId,
+                (edge: any) => edge.source !== nodeId && edge.target !== nodeId,
               ),
             };
           }
@@ -128,22 +77,19 @@ const useStore = create<StoreState>(
         set({ chartInstances: updatedInstances });
       },
 
-      deleteTab: (tabName) => {
+      deleteTab: (tabName: string) => {
         const updatedInstances = get().chartInstances.filter(
-          (instance) => instance.name !== tabName,
+          (instance: any) => instance.name !== tabName,
         );
         const newCurrentTab =
-          updatedInstances.length > 0 ? updatedInstances[0].name : null;
-        set({
-          chartInstances: updatedInstances,
-          currentTab: newCurrentTab,
-        });
+          updatedInstances.length > 0 ? updatedInstances[0].name : "";
+        set({ chartInstances: updatedInstances, currentTab: newCurrentTab });
       },
 
       publishTab: () => {
         const { currentTab, chartInstances } = get();
         const currentInstance = chartInstances.find(
-          (instance) => instance.name === currentTab,
+          (instance: any) => instance.name === currentTab,
         );
 
         if (!currentInstance) {
@@ -157,10 +103,10 @@ const useStore = create<StoreState>(
         }
 
         const hasStartNode = currentInstance.initialNodes.some(
-          (node) => node.type === "startNode",
+          (node: any) => node.type === "startNode",
         );
         const hasEndNode = currentInstance.initialNodes.some(
-          (node) => node.type === "endNode",
+          (node: any) => node.type === "endNode",
         );
 
         if (!hasStartNode) {
@@ -178,7 +124,7 @@ const useStore = create<StoreState>(
           date: new Date().toISOString(),
         };
 
-        const updatedInstances = chartInstances.map((instance) => {
+        const updatedInstances = chartInstances.map((instance: any) => {
           if (instance.name === currentTab) {
             return {
               ...instance,
@@ -195,8 +141,8 @@ const useStore = create<StoreState>(
         toast.success("Published successfully.");
       },
 
-      setCurrentTabColor: (instanceName, color) => {
-        const updatedInstances = get().chartInstances.map((instance) => {
+      setCurrentTabColor: (instanceName: string, color: string) => {
+        const updatedInstances = get().chartInstances.map((instance: any) => {
           if (instance.name === instanceName) {
             return { ...instance, color: color };
           }
@@ -205,8 +151,8 @@ const useStore = create<StoreState>(
         set({ chartInstances: updatedInstances });
       },
 
-      setChartInstance: (newInstance: ChartInstance) => {
-        const updatedInstances = get().chartInstances.map((instance) => {
+      setChartInstance: (newInstance: any) => {
+        const updatedInstances = get().chartInstances.map((instance: any) => {
           if (instance.name === newInstance.name) {
             return newInstance;
           }
@@ -218,7 +164,7 @@ const useStore = create<StoreState>(
       generateQuestions: () => {
         const { chartInstances, currentTab } = get();
         const currentInstance = chartInstances.find(
-          (instance) => instance.name === currentTab,
+          (instance: any) => instance.name === currentTab,
         );
         if (currentInstance) {
           const questions = generateQuestionsFromChart(currentInstance);

@@ -68,35 +68,63 @@ export const truncate = (str: string, length: number) => {
   if (!str || str.length <= length) return str;
   return `${str.slice(0, length)}...`;
 };
-function getStartNode(nodes) {
+
+export interface Node {
+  id: string;
+  type: string;
+  data: {
+    label: string;
+    options?: { label: string; nextNodeId?: string }[];
+    style?: { backgroundColor?: string };
+    hidden?: boolean;
+    endType?: string;
+    redirectTab?: string;
+  };
+}
+
+export interface Edge {
+  source: string;
+  sourceHandle?: string | null;
+  target: string;
+  targetHandle?: string | null;
+}
+
+function getStartNode(nodes: Node[]): Node | undefined {
   return nodes.find((node) => node.type === "startNode");
 }
 
-export function getNextNode(currentNodeId, edges, answer) {
+export function getNextNode(
+  currentNodeId: string,
+  edges: Edge[],
+  answer: string,
+): string | null {
   const edge = edges.find(
     (edge) => edge.source === currentNodeId && edge.sourceHandle === answer,
   );
   return edge ? edge.target : null;
 }
 
-export function getNextNodes(currentNodeId, edges) {
+export function getNextNodes(
+  currentNodeId: string,
+  edges: Edge[],
+): { target: string; handle?: string | null }[] {
   return edges
     .filter((edge) => edge.source === currentNodeId)
     .map((edge) => ({ target: edge.target, handle: edge.sourceHandle }));
 }
 
-export function generateQuestionsFromChart(chartInstance) {
+export function generateQuestionsFromChart(chartInstance: ChartInstance) {
   const { initialNodes: nodes, initialEdges: edges } = chartInstance;
-  const startNode = getStartNode(nodes);
+  const startNode = getStartNode(nodes as any);
 
   if (!startNode) {
     throw new Error("Start node not found.");
   }
 
-  const questions = [];
-  const visited = new Set();
+  const questions: any[] = [];
+  const visited = new Set<string>();
 
-  function traverse(nodeId) {
+  function traverse(nodeId: string) {
     if (visited.has(nodeId)) return;
     visited.add(nodeId);
 
@@ -112,7 +140,7 @@ export function generateQuestionsFromChart(chartInstance) {
           type: "singleChoice",
           question: currentNode.data.label,
           options:
-            currentNode.data.options?.map((option) => option.label) || [],
+            currentNode.data.options?.map((option: any) => option.label) || [],
           connectedNodes: getNextNodes(currentNode.id, edges),
         });
         break;
@@ -122,7 +150,7 @@ export function generateQuestionsFromChart(chartInstance) {
           type: "multipleChoice",
           question: currentNode.data.label,
           options:
-            currentNode.data.options?.map((option) => option.label) || [],
+            currentNode.data.options?.map((option: any) => option.label) || [],
           connectedNodes: getNextNodes(currentNode.id, edges),
         });
         break;
@@ -132,12 +160,11 @@ export function generateQuestionsFromChart(chartInstance) {
           type: "yesNo",
           question: currentNode.data.label,
           options:
-            currentNode.data.options?.map((option) => option.label) || [],
+            currentNode.data.options?.map((option: any) => option.label) || [],
           connectedNodes: getNextNodes(currentNode.id, edges),
         });
         break;
       case "endNode":
-        // Include end nodes in the questions but skip them visually
         questions.push({
           id: currentNode.id,
           type: "endNode",

@@ -113,9 +113,8 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
   };
 
   const handleSaveSettings = () => {
-    setCurrentTabColor(newColor);
     setOnePage(onePage);
-    document.getElementById("settings_modal")?.close();
+    (document.getElementById("settings_modal") as any).close();
   };
 
   const onSave = () => {
@@ -135,7 +134,7 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
       <section className="flex h-full w-full">
         <Sidebar onSave={onSave} onDelete={handleDelete} />
         <div className="flex h-full w-full flex-col">
-          <div className="flex h-20 w-full gap-2 overflow-x-auto py-4 font-display">
+          <div className="font-display flex h-20 w-full gap-2 overflow-x-auto py-4">
             {chartInstances.map((chart) => {
               const tabColor =
                 chart.color && chart.color !== "#ffffff"
@@ -178,7 +177,7 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
 
       <dialog id="settings_modal" className="modal">
         <div className="modal-box">
-          <h3 className="font-bold text-lg">Diagram Settings</h3>
+          <h3 className="text-lg font-bold">Diagram Settings</h3>
           <label className="mb-2 block">
             Tab Color:
             <input

@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 
 interface SidebarProps {
   onSave: () => void;
+  onDelete: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
@@ -71,7 +72,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
             Array.isArray(data.nodes) &&
             Array.isArray(data.edges)
           ) {
-            const newInstance: ChartInstance = {
+            const newInstance: any = {
               name: data.name,
               initialNodes: data.nodes,
               initialEdges: data.edges,

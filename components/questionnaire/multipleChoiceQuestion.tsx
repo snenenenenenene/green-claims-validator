@@ -3,13 +3,17 @@ import React from "react";
 interface MultipleChoiceQuestionProps {
   question: string;
   options: { label: string; nextNodeId?: string }[];
-  onAnswer: (answers: string[]) => void;
+  onAnswer: (answers: string[] | string) => void;
 }
 
 const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
   question,
   options,
   onAnswer,
+}: {
+  question: string;
+  options: { label: string; nextNodeId?: string }[];
+  onAnswer: (answers: string[]) => void;
 }) => {
   const [selectedOptions, setSelectedOptions] = React.useState<string[]>([]);
 

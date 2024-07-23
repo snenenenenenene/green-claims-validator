@@ -37,7 +37,7 @@ export default function ResizeRotateNode({
       updateNodeInternals(id);
     });
 
-    selection.call(dragHandler);
+    selection.call(dragHandler as any);
   }, [id, updateNodeInternals]);
 
   const handleLabelChange = (event) => {

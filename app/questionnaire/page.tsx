@@ -14,9 +14,9 @@ export default function QuestionnairePage() {
     setCurrentTab: state.setCurrentTab,
   }));
 
-  const [questions, setQuestions] = useState([]);
+  const [questions, setQuestions] = useState<any[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState({});
+  const [answers, setAnswers] = useState<{ [key: string]: string }>({});
   const [onePageMode, setOnePageMode] = useState(false);
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export default function QuestionnairePage() {
     }
   }, [chartInstances, currentTab]);
 
-  const handleAnswer = (answer) => {
+  const handleAnswer = (answer: string) => {
     setAnswers((prevAnswers) => ({
       ...prevAnswers,
       [questions[currentQuestionIndex].id]: answer,
@@ -53,13 +53,13 @@ export default function QuestionnairePage() {
 
     const currentInstance = chartInstances.find(
       (instance) => instance.name === currentTab,
-    );
+    ) as any;
 
-    let nextNodeId;
+    let nextNodeId: string | null = null;
 
     if (currentQuestion.type === "singleChoice") {
       const selectedOption = currentQuestion.options.find(
-        (option) => option.label === currentAnswer,
+        (option: any) => option.label === currentAnswer,
       );
       nextNodeId =
         selectedOption?.nextNodeId ||
@@ -108,7 +108,10 @@ export default function QuestionnairePage() {
     setCurrentTab("Default");
   };
 
-  const renderQuestion = (question, onAnswer) => {
+  const renderQuestion = (
+    question: any,
+    onAnswer: (answer: string) => void,
+  ) => {
     switch (question.type) {
       case "yesNo":
         return (
@@ -118,7 +121,7 @@ export default function QuestionnairePage() {
         return (
           <SingleChoiceQuestion
             question={question.question}
-            options={question.options}
+            options={question.options.map((option: any) => option.label)}
             onAnswer={onAnswer}
           />
         );
@@ -126,8 +129,8 @@ export default function QuestionnairePage() {
         return (
           <MultipleChoiceQuestion
             question={question.question}
-            options={question.options}
-            onAnswer={onAnswer}
+            options={question.options.map((option: any) => option.label)}
+            onAnswer={onAnswer as any}
           />
         );
       default:

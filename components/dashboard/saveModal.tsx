@@ -11,7 +11,7 @@ const SaveModal = ({ id, onSave, initialColor, initialOnePage }) => {
 
   const handleSave = () => {
     onSave(color, onePage);
-    document.getElementById(id).close();
+    (document.getElementById(id) as any).close();
   };
 
   return (
@@ -40,7 +40,7 @@ const SaveModal = ({ id, onSave, initialColor, initialOnePage }) => {
           </button>
           <button
             className="btn"
-            onClick={() => document.getElementById(id).close()}
+            onClick={() => (document.getElementById(id) as any).close()}
           >
             Close
           </button>
