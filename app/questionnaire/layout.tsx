@@ -63,7 +63,7 @@ function LayoutContent() {
 
 export default function QuestionnaireLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen w-full flex-col justify-between px-60 text-dark-gray">
+    <div className="flex h-screen w-full flex-col justify-between px-10 md:px-20 lg:px-24 xl:px-40 text-dark-gray">
       <Suspense fallback={<div>Loading...</div>}>
         <LayoutContent />
       </Suspense>

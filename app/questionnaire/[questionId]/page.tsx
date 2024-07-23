@@ -156,7 +156,7 @@ export default function QuestionPage() {
   const progressValue = ((currentQuestionIndex + 1) / questions.length) * 100;
 
   return (
-    <div className="flex h-screen w-full flex-col justify-between px-48 text-dark-gray">
+    <div className="flex h-screen w-full flex-col justify-between px-10 lg:px-20 xl:px-28 text-dark-gray">
       <div className="my-6 flex justify-center font-roboto text-3xl">
         <p>{claim}</p>
       </div>
@@ -172,7 +172,7 @@ export default function QuestionPage() {
           </div>
         </div>
       </div>
-      <div className="mx-8 my-4 mb-auto flex h-[30%] flex-col overflow-y-auto rounded-3xl bg-light-gray p-8">
+      <div className="mx-8 my-4 mb-auto flex min-h-[30%] flex-col rounded-3xl bg-light-gray p-8">
         {onePageMode ? (
           questions.map((question, index) => (
             <div key={index} className="mb-auto">
