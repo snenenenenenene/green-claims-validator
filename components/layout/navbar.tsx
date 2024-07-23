@@ -30,16 +30,16 @@ export default function NavBar({ session }: { session: Session | null }) {
               className="mr-0 rounded-sm"
             ></Image>
           </Link>
-          <section className="flex items-center gap-4 font-medium text-lg">
+          <section className="flex items-center gap-4 text-lg font-medium">
             <div>
               {session ? (
                 <UserDropdown session={session} />
               ) : (
                 <button
-                  className="rounded-full border border-yellow bg-yellow p-1.5 px-8 py-4 text-black transition-all hover:border-yellow-hover hover:bg-yellow-hover"
+                  className="rounded-full p-1.5 px-8 py-4 font-roboto text-xl text-gray-400 transition-all duration-200 hover:text-black hover:underline"
                   onClick={() => setShowSignInModal(true)}
                 >
-                  Try Green Claims Validator for Free
+                  Log in
                 </button>
               )}
             </div>
