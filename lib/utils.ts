@@ -138,8 +138,7 @@ export function generateQuestionsFromChart(chartInstance: any) {
           id: currentNode.id,
           type: "singleChoice",
           question: currentNode.data.label,
-          options:
-            currentNode.data.options?.map((option: any) => option.label) || [],
+          options: currentNode.data.options?.map((option: any) => option) || [],
           connectedNodes: getNextNodes(currentNode.id, edges),
         });
         break;
@@ -148,8 +147,7 @@ export function generateQuestionsFromChart(chartInstance: any) {
           id: currentNode.id,
           type: "multipleChoice",
           question: currentNode.data.label,
-          options:
-            currentNode.data.options?.map((option: any) => option.label) || [],
+          options: currentNode.data.options?.map((option: any) => option) || [],
           connectedNodes: getNextNodes(currentNode.id, edges),
         });
         break;

@@ -11,6 +11,7 @@ const SingleChoiceQuestion: React.FC<SingleChoiceQuestionProps> = ({
   options,
   onAnswer,
 }) => {
+  console.log(options);
   return (
     <div className="p-4">
       <h3 className="mb-4 text-lg">{question}</h3>

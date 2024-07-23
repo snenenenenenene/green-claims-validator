@@ -17,20 +17,20 @@ const YesNoQuestion: React.FC<YesNoQuestionProps> = ({
   };
 
   return (
-    <div className="p-4">
-      <h3 className="mb-4 text-lg">{question}</h3>
-      <div className="form-control w-full flex-row justify-between">
+    <div className="rounded-lg p-6">
+      <h3 className="mb-6 text-4xl font-semibold text-gray-700">{question}</h3>
+      <div className="flex">
         <button
-          className={`btn btn-wide ${
-            selectedOption === "yes" ? "btn-active" : ""
+          className={`btn ${
+            selectedOption === "yes" ? "btn-primary" : "btn-outline"
           }`}
           onClick={() => handleOptionChange("yes")}
         >
           Yes
         </button>
         <button
-          className={`btn btn-wide ${
-            selectedOption === "no" ? "btn-active" : ""
+          className={`btn ${
+            selectedOption === "no" ? "btn-primary" : "btn-outline"
           }`}
           onClick={() => handleOptionChange("no")}
         >

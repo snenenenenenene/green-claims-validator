@@ -105,7 +105,7 @@ export default function QuestionnairePage() {
     }
 
     toast.success("Questionnaire completed!");
-    setCurrentTab("Default");
+    window.location.href = "/questionnaire/results"; // Redirect to results page
   };
 
   const renderQuestion = (
@@ -121,7 +121,7 @@ export default function QuestionnairePage() {
         return (
           <SingleChoiceQuestion
             question={question.question}
-            options={question.options.map((option: any) => option.label)}
+            options={question.options}
             onAnswer={onAnswer}
           />
         );
@@ -129,7 +129,7 @@ export default function QuestionnairePage() {
         return (
           <MultipleChoiceQuestion
             question={question.question}
-            options={question.options.map((option: any) => option.label)}
+            options={question.options}
             onAnswer={onAnswer as any}
           />
         );
