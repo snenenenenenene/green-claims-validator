@@ -10,19 +10,28 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
-  const { publishTab, chartInstances, currentTab, saveToDb, setChartInstance, saveChartWithCommit } =
-    useStore((state) => ({
-      publishTab: state.publishTab,
-      saveToDb: state.saveToDb,
-      chartInstances: state.chartInstances,
-      currentTab: state.currentTab,
-      setChartInstance: state.setChartInstance,
-      saveChartWithCommit: state.saveChartWithCommit,
-    }));
+  const {
+    publishTab,
+    chartInstances,
+    currentTab,
+    saveToDb,
+    setChartInstance,
+    commitLocal,
+    commitGlobal,
+  } = useStore((state) => ({
+    publishTab: state.publishTab,
+    saveToDb: state.saveToDb,
+    chartInstances: state.chartInstances,
+    currentTab: state.currentTab,
+    setChartInstance: state.setChartInstance,
+    commitLocal: state.commitLocal,
+    commitGlobal: state.commitGlobal,
+  }));
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [commitMessage, setCommitMessage] = useState("");
+  const [activeTab, setActiveTab] = useState("local");
 
   const onDragStart = (event: React.DragEvent, nodeType: string): void => {
     event.dataTransfer.setData("application/reactflow", nodeType);
@@ -96,9 +105,21 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
     reader.readAsText(file);
   };
 
-  const handleSaveChart = () => {
-    saveChartWithCommit(currentTab, commitMessage);
+  const handleSave = () => {
+    if (commitMessage.trim() === "") {
+      toast.error("Please enter a commit message.");
+      return;
+    }
+
+    if (activeTab === "local") {
+      commitLocal(commitMessage);
+    } else {
+      commitGlobal(commitMessage);
+    }
+
+    saveToDb();
     setShowSaveModal(false);
+    setCommitMessage("");
   };
 
   return (
@@ -173,10 +194,26 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
         style={{ display: "none" }}
         onChange={importFromJSON}
       />
+
       {showSaveModal && (
         <dialog open className="modal">
           <div className="modal-box">
-            <h3 className="text-lg font-bold">Save Chart</h3>
+            <div role="tablist" className="tabs tabs-bordered">
+              <a
+                role="tab"
+                className={`tab ${activeTab === "local" ? "tab-active" : ""}`}
+                onClick={() => setActiveTab("local")}
+              >
+                Local Commit
+              </a>
+              <a
+                role="tab"
+                className={`tab ${activeTab === "global" ? "tab-active" : ""}`}
+                onClick={() => setActiveTab("global")}
+              >
+                Global Commit
+              </a>
+            </div>
             <div className="mt-4">
               <label className="block">Commit Message</label>
               <input
@@ -188,10 +225,13 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
               />
             </div>
             <div className="mt-4 flex justify-end space-x-2">
-              <button className="btn" onClick={() => setShowSaveModal(false)}>
+              <button
+                className="btn btn-error"
+                onClick={() => setShowSaveModal(false)}
+              >
                 Cancel
               </button>
-              <button className="btn btn-success" onClick={handleSaveChart}>
+              <button className="btn btn-success" onClick={handleSave}>
                 Save
               </button>
             </div>

@@ -1,4 +1,3 @@
-// lib/store.ts
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { chartInstances as initialChartInstances } from "@/app/data/charts";
@@ -35,7 +34,7 @@ export interface ChartInstance {
   initialEdges: Edge[];
   color: string;
   onePageMode?: boolean;
-  publishedVersions?: { version: number; date: string }[];
+  publishedVersions?: { version: number; date: string; message: string; nodes: Node[]; edges: Edge[] }[];
 }
 
 interface StoreState {
@@ -54,7 +53,8 @@ interface StoreState {
   setCurrentTabColor: (instanceName: string, color: string) => void;
   setChartInstance: (newInstance: ChartInstance) => void;
   generateQuestions: () => void;
-  renameChart: (oldName: string, newName: string) => void;
+  commitLocal: (message: string) => void;
+  commitGlobal: (message: string) => void;
 }
 
 const useStore = create<StoreState>(
@@ -155,6 +155,9 @@ const useStore = create<StoreState>(
             const newVersion = {
               version: (instance.publishedVersions?.length || 0) + 1,
               date: new Date().toISOString(),
+              message: `Published Version ${(instance.publishedVersions?.length || 0) + 1}`,
+              nodes: instance.initialNodes,
+              edges: instance.initialEdges,
             };
             return {
               ...instance,
@@ -217,18 +220,50 @@ const useStore = create<StoreState>(
         }
       },
 
-      renameChart: (oldName: string, newName: string) => {
-        const { chartInstances, currentTab } = (get() as StoreState);
-        const decodedOldName = decodeURIComponent(oldName);
-        const decodedNewName = decodeURIComponent(newName);
+      commitLocal: (message: string) => {
+        const { currentTab, chartInstances } = (get() as StoreState);
         const updatedInstances = chartInstances.map((instance) => {
-          if (instance.name === decodedOldName) {
-            return { ...instance, name: decodedNewName };
+          if (instance.name === currentTab) {
+            const newVersion = {
+              version: (instance.publishedVersions?.length || 0) + 1,
+              date: new Date().toISOString(),
+              message,
+              nodes: instance.initialNodes,
+              edges: instance.initialEdges,
+            };
+            return {
+              ...instance,
+              publishedVersions: [
+                ...(instance.publishedVersions || []),
+                newVersion,
+              ],
+            };
           }
           return instance;
         });
-        set({ chartInstances: updatedInstances, currentTab: currentTab === decodedOldName ? decodedNewName : currentTab });
-        toast.success(`Chart renamed to ${decodedNewName}.`);
+        set({ chartInstances: updatedInstances });
+        toast.success("Committed locally.");
+      },
+
+      commitGlobal: (message: string) => {
+        const updatedInstances = (get() as StoreState).chartInstances.map((instance) => {
+          const newVersion = {
+            version: (instance.publishedVersions?.length || 0) + 1,
+            date: new Date().toISOString(),
+            message,
+            nodes: instance.initialNodes,
+            edges: instance.initialEdges,
+          };
+          return {
+            ...instance,
+            publishedVersions: [
+              ...(instance.publishedVersions || []),
+              newVersion,
+            ],
+          };
+        });
+        set({ chartInstances: updatedInstances });
+        toast.success("Committed globally.");
       },
     }),
     {

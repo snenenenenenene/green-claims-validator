@@ -51,7 +51,6 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
     currentTab,
     setCurrentTab,
     setChartInstance,
-    renameChart,
   } = useStore((state) => ({
     chartInstances: state.chartInstances,
     setNodesAndEdges: state.setNodesAndEdges,
@@ -61,7 +60,6 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
     currentTab: state.currentTab,
     setCurrentTab: state.setCurrentTab,
     setChartInstance: state.setChartInstance,
-    renameChart: state.renameChart,
   }));
 
   const [currentInstance, setCurrentInstance] = useState<any | null>(null);
@@ -87,7 +85,6 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
         setEdges(instance.initialEdges);
         setNewColor(instance.color || "#80B500");
         setOnePageMode(instance.onePageMode || false);
-        setNewTabName(instance.name);
       }
     } else {
       if (currentInstance !== null) {
@@ -96,7 +93,6 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
         setEdges([]);
         setNewColor("#80B500");
         setOnePageMode(false);
-        setNewTabName("");
       }
     }
   }, [params.instanceId, chartInstances, currentInstance, setNodes, setEdges]);
@@ -135,7 +131,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
         },
       };
 
-      setNodes((nds) => nds.concat(newNode));
+      setNodes((nds) => [...(nds || []), newNode]);
       toast.success("Node added.");
     },
     [project, setNodes, nodes],
@@ -195,8 +191,9 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
 
   const handleRenameTab = () => {
     if (newTabName && currentInstance) {
-      renameChart(currentInstance.name, newTabName);
-      setShowSettings(false);
+      const updatedInstance = { ...currentInstance, name: newTabName };
+      setChartInstance(updatedInstance);
+      setCurrentTab(newTabName); // Update current tab to the new name
       toast.success("Tab renamed successfully.");
     }
   };
@@ -210,9 +207,9 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
     );
 
     if (versionData) {
-      const { initialNodes, initialEdges } = versionData;
-      setNodes(initialNodes);
-      setEdges(initialEdges);
+      const { nodes, edges } = versionData;
+      setNodes(nodes);
+      setEdges(edges);
       toast.success("Reverted to selected version.");
     }
   };
@@ -300,6 +297,31 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
                     Rename
                   </button>
                 </div>
+                <div className="mt-4">
+                  <label className="block">Select Version</label>
+                  <select
+                    value={selectedVersion}
+                    onChange={handleVersionChange}
+                    className="select select-bordered w-full"
+                  >
+                    <option value="">Select a version</option>
+                    {currentInstance?.publishedVersions?.map((version) => (
+                      <option key={version.version} value={version.version}>
+                        {`${version.message} - ${new Date(
+                          version.date,
+                        ).toLocaleString()}`}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedVersion && (
+                    <button
+                      className="btn btn-warning mt-2"
+                      onClick={() => handleVersionChange({ target: { value: selectedVersion } } as any)}
+                    >
+                      Revert to Selected Version
+                    </button>
+                  )}
+                </div>
                 <div className="mt-4 flex justify-end space-x-2">
                   <button className="btn btn-error" onClick={handleDeleteTab}>
                     Delete
@@ -325,14 +347,24 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
                     className="select select-bordered w-full"
                   >
                     <option value="">Select a version</option>
-                    {currentInstance?.publishedVersions?.map((version) => (
-                      <option key={version.version} value={version.version}>
-                        {`Version ${version.version} - ${new Date(
-                          version.date,
-                        ).toLocaleString()}`}
-                      </option>
-                    ))}
+                    {chartInstances
+                      .flatMap((instance) => instance.publishedVersions || [])
+                      .map((version, index) => (
+                        <option key={index} value={version.version}>
+                          {`${version.message} - ${new Date(
+                            version.date,
+                          ).toLocaleString()}`}
+                        </option>
+                      ))}
                   </select>
+                  {selectedVersion && (
+                    <button
+                      className="btn btn-warning mt-2"
+                      onClick={() => handleVersionChange({ target: { value: selectedVersion } } as any)}
+                    >
+                      Revert to Selected Version
+                    </button>
+                  )}
                 </div>
               </div>
             )}
