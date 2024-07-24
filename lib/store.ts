@@ -54,6 +54,7 @@ interface StoreState {
   setCurrentTabColor: (instanceName: string, color: string) => void;
   setChartInstance: (newInstance: ChartInstance) => void;
   generateQuestions: () => void;
+  renameChart: (oldName: string, newName: string) => void;
 }
 
 const useStore = create<StoreState>(
@@ -214,6 +215,20 @@ const useStore = create<StoreState>(
         } else {
           toast.error("No current instance found.");
         }
+      },
+
+      renameChart: (oldName: string, newName: string) => {
+        const { chartInstances, currentTab } = (get() as StoreState);
+        const decodedOldName = decodeURIComponent(oldName);
+        const decodedNewName = decodeURIComponent(newName);
+        const updatedInstances = chartInstances.map((instance) => {
+          if (instance.name === decodedOldName) {
+            return { ...instance, name: decodedNewName };
+          }
+          return instance;
+        });
+        set({ chartInstances: updatedInstances, currentTab: currentTab === decodedOldName ? decodedNewName : currentTab });
+        toast.success(`Chart renamed to ${decodedNewName}.`);
       },
     }),
     {

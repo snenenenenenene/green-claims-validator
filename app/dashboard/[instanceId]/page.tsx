@@ -17,12 +17,11 @@ import SingleChoiceNode from "@/components/dashboard/singleChoiceNode";
 import MultipleChoiceNode from "@/components/dashboard/multipleChoiceNode";
 import EndNode from "@/components/dashboard/endNode";
 import StartNode from "@/components/dashboard/startNode";
-// import WeightNode from "@/components/dashboard/WeightNode"; // Add the WeightNode import
+import EditableEdge from "@/components/dashboard/editableEdge";
 import useStore from "@/lib/store";
 import { Settings } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { saveAs } from "file-saver";
-import EditableEdge from "@/components/dashboard/editableEdge";
 
 const nodeTypes = {
   yesNo: YesNoNode,
@@ -30,12 +29,11 @@ const nodeTypes = {
   multipleChoice: MultipleChoiceNode,
   endNode: EndNode,
   startNode: StartNode,
-  // weightNode: WeightNode, // Add the WeightNode to node types
 };
 
 const edgeTypes = {
   editableEdge: EditableEdge,
-}
+};
 
 interface InstancePageProps {
   params: {
@@ -52,6 +50,8 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
     deleteTab,
     currentTab,
     setCurrentTab,
+    setChartInstance,
+    renameChart,
   } = useStore((state) => ({
     chartInstances: state.chartInstances,
     setNodesAndEdges: state.setNodesAndEdges,
@@ -60,6 +60,8 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
     deleteTab: state.deleteTab,
     currentTab: state.currentTab,
     setCurrentTab: state.setCurrentTab,
+    setChartInstance: state.setChartInstance,
+    renameChart: state.renameChart,
   }));
 
   const [currentInstance, setCurrentInstance] = useState<any | null>(null);
@@ -68,6 +70,9 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
   const [showSettings, setShowSettings] = useState(false);
   const [newColor, setNewColor] = useState("#80B500");
   const [onePageMode, setOnePageMode] = useState(false);
+  const [newTabName, setNewTabName] = useState("");
+  const [selectedVersion, setSelectedVersion] = useState("");
+  const [activeTab, setActiveTab] = useState("local");
 
   useEffect(() => {
     const instanceId = decodeURIComponent(params.instanceId);
@@ -82,6 +87,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
         setEdges(instance.initialEdges);
         setNewColor(instance.color || "#80B500");
         setOnePageMode(instance.onePageMode || false);
+        setNewTabName(instance.name);
       }
     } else {
       if (currentInstance !== null) {
@@ -89,7 +95,8 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
         setNodes([]);
         setEdges([]);
         setNewColor("#80B500");
-        setOnePage(false);
+        setOnePageMode(false);
+        setNewTabName("");
       }
     }
   }, [params.instanceId, chartInstances, currentInstance, setNodes, setEdges]);
@@ -118,8 +125,10 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
           redirectTab: "",
           weight: 0,
           onChange: (value: number) => {
-            const updatedNodes = nodes.map(node => 
-              node.id === newNode.id ? { ...node, data: { ...node.data, weight: value } } : node
+            const updatedNodes = nodes.map((node) =>
+              node.id === newNode.id
+                ? { ...node, data: { ...node.data, weight: value } }
+                : node,
             );
             setNodes(updatedNodes);
           },
@@ -134,12 +143,8 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
 
   const onConnect = useCallback(
     (params) =>
-      
       setEdges((eds) =>
-        addEdge(
-          { ...params, type: 'editableEdge',  },
-          eds,
-        ),
+        addEdge({ ...params, type: "editableEdge" }, eds),
       ),
     [setEdges],
   );
@@ -188,6 +193,30 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
     }
   };
 
+  const handleRenameTab = () => {
+    if (newTabName && currentInstance) {
+      renameChart(currentInstance.name, newTabName);
+      setShowSettings(false);
+      toast.success("Tab renamed successfully.");
+    }
+  };
+
+  const handleVersionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedVersion = event.target.value;
+    setSelectedVersion(selectedVersion);
+
+    const versionData = currentInstance?.publishedVersions?.find(
+      (version) => version.version.toString() === selectedVersion,
+    );
+
+    if (versionData) {
+      const { initialNodes, initialEdges } = versionData;
+      setNodes(initialNodes);
+      setEdges(initialEdges);
+      toast.success("Reverted to selected version.");
+    }
+  };
+
   return (
     <div className="relative h-full w-full flex-grow">
       <ReactFlow
@@ -217,39 +246,99 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
       {showSettings && (
         <dialog open className="modal">
           <div className="modal-box">
-            <h3 className="text-lg font-bold">Settings</h3>
-            <div className="mt-4">
-              <label className="block">Tab Color</label>
-              <input
-                type="color"
-                value={newColor}
-                onChange={(e) => setNewColor(e.target.value)}
-                className="h-10 w-full p-0"
-              />
+            <div role="tablist" className="tabs tabs-bordered">
+              <a
+                role="tab"
+                className={`tab ${activeTab === "local" ? "tab-active" : ""}`}
+                onClick={() => setActiveTab("local")}
+              >
+                Local Settings
+              </a>
+              <a
+                role="tab"
+                className={`tab ${activeTab === "global" ? "tab-active" : ""}`}
+                onClick={() => setActiveTab("global")}
+              >
+                Global Settings
+              </a>
             </div>
-            <div className="mt-4 flex items-center">
-              <label className="mr-2">One Page Mode:</label>
-              <input
-                type="checkbox"
-                checked={onePageMode}
-                onChange={(e) => setOnePageMode(e.target.checked)}
-                className="form-checkbox"
-              />
-            </div>
-            <div className="mt-4 flex justify-end space-x-2">
-              <button className="btn btn-error" onClick={handleDeleteTab}>
-                Delete
-              </button>
-              <button className="btn" onClick={() => setShowSettings(false)}>
-                Cancel
-              </button>
-              <button className="btn btn-success" onClick={handleSaveSettings}>
-                Save
-              </button>
-            </div>
+
+            {activeTab === "local" && (
+              <div className="mt-4">
+                <h3 className="text-lg font-bold">Local Settings</h3>
+                <div className="mt-4">
+                  <label className="block">Tab Color</label>
+                  <input
+                    type="color"
+                    value={newColor}
+                    onChange={(e) => setNewColor(e.target.value)}
+                    className="h-10 w-full p-0"
+                  />
+                </div>
+                <div className="mt-4 flex items-center">
+                  <label className="mr-2">One Page Mode:</label>
+                  <input
+                    type="checkbox"
+                    checked={onePageMode}
+                    onChange={(e) => setOnePageMode(e.target.checked)}
+                    className="form-checkbox"
+                  />
+                </div>
+                <div className="mt-4">
+                  <label className="block">Rename Tab</label>
+                  <input
+                    type="text"
+                    value={newTabName}
+                    onChange={(e) => setNewTabName(e.target.value)}
+                    className="input input-bordered w-full"
+                    placeholder="Enter new tab name"
+                  />
+                  <button
+                    className="btn btn-primary mt-2"
+                    onClick={handleRenameTab}
+                  >
+                    Rename
+                  </button>
+                </div>
+                <div className="mt-4 flex justify-end space-x-2">
+                  <button className="btn btn-error" onClick={handleDeleteTab}>
+                    Delete
+                  </button>
+                  <button className="btn" onClick={() => setShowSettings(false)}>
+                    Cancel
+                  </button>
+                  <button className="btn btn-success" onClick={handleSaveSettings}>
+                    Save
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "global" && (
+              <div className="mt-4">
+                <h3 className="text-lg font-bold">Global Settings</h3>
+                <div className="mt-4">
+                  <label className="block">Select Version</label>
+                  <select
+                    value={selectedVersion}
+                    onChange={handleVersionChange}
+                    className="select select-bordered w-full"
+                  >
+                    <option value="">Select a version</option>
+                    {currentInstance?.publishedVersions?.map((version) => (
+                      <option key={version.version} value={version.version}>
+                        {`Version ${version.version} - ${new Date(
+                          version.date,
+                        ).toLocaleString()}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
           <form method="dialog" className="modal-backdrop">
-            <button>close</button>
+            <button>Close</button>
           </form>
         </dialog>
       )}

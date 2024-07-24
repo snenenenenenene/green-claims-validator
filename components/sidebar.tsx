@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import useStore from "@/lib/store";
 import { saveAs } from "file-saver";
 import { Download, Upload, BookmarkPlus } from "lucide-react";
@@ -10,16 +10,19 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
-  const { publishTab, chartInstances, currentTab, saveToDb, setChartInstance } =
+  const { publishTab, chartInstances, currentTab, saveToDb, setChartInstance, saveChartWithCommit } =
     useStore((state) => ({
       publishTab: state.publishTab,
       saveToDb: state.saveToDb,
       chartInstances: state.chartInstances,
       currentTab: state.currentTab,
       setChartInstance: state.setChartInstance,
+      saveChartWithCommit: state.saveChartWithCommit,
     }));
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [commitMessage, setCommitMessage] = useState("");
 
   const onDragStart = (event: React.DragEvent, nodeType: string): void => {
     event.dataTransfer.setData("application/reactflow", nodeType);
@@ -93,6 +96,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
     reader.readAsText(file);
   };
 
+  const handleSaveChart = () => {
+    saveChartWithCommit(currentTab, commitMessage);
+    setShowSaveModal(false);
+  };
+
   return (
     <aside className="flex flex-col space-y-4 p-4 pt-20">
       <div
@@ -133,7 +141,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
       <section className="flex h-full w-full flex-col pt-4" id="buttons">
         <button
           className="ml-auto w-full rounded-full border border-green bg-green p-1.5 px-8 py-4 text-black transition-all hover:border-yellow-hover hover:bg-yellow-hover"
-          onClick={saveToDb}
+          onClick={() => setShowSaveModal(true)}
         >
           Save
         </button>
@@ -165,6 +173,34 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
         style={{ display: "none" }}
         onChange={importFromJSON}
       />
+      {showSaveModal && (
+        <dialog open className="modal">
+          <div className="modal-box">
+            <h3 className="text-lg font-bold">Save Chart</h3>
+            <div className="mt-4">
+              <label className="block">Commit Message</label>
+              <input
+                type="text"
+                value={commitMessage}
+                onChange={(e) => setCommitMessage(e.target.value)}
+                className="input input-bordered w-full"
+                placeholder="Enter commit message"
+              />
+            </div>
+            <div className="mt-4 flex justify-end space-x-2">
+              <button className="btn" onClick={() => setShowSaveModal(false)}>
+                Cancel
+              </button>
+              <button className="btn btn-success" onClick={handleSaveChart}>
+                Save
+              </button>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop">
+            <button>Close</button>
+          </form>
+        </dialog>
+      )}
     </aside>
   );
 };
