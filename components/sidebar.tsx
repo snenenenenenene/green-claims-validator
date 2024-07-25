@@ -10,28 +10,21 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
-  const {
-    publishTab,
-    chartInstances,
-    currentTab,
-    saveToDb,
-    setChartInstance,
-    commitLocal,
-    commitGlobal,
-  } = useStore((state) => ({
-    publishTab: state.publishTab,
-    saveToDb: state.saveToDb,
-    chartInstances: state.chartInstances,
-    currentTab: state.currentTab,
-    setChartInstance: state.setChartInstance,
-    commitLocal: state.commitLocal,
-    commitGlobal: state.commitGlobal,
-  }));
+  const { publishTab, chartInstances, currentTab, saveToDb, commitLocal, commitGlobal, setChartInstance } =
+    useStore((state) => ({
+      publishTab: state.publishTab,
+      saveToDb: state.saveToDb,
+      chartInstances: state.chartInstances,
+      currentTab: state.currentTab,
+      commitLocal: state.commitLocal,
+      commitGlobal: state.commitGlobal,
+      setChartInstance: state.setChartInstance,
+    }));
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [showSaveModal, setShowSaveModal] = useState(false);
-  const [commitMessage, setCommitMessage] = useState("");
-  const [activeTab, setActiveTab] = useState("local");
+  const [commitMessage, setCommitMessage] = useState<string>("");
+  const [showCommitModal, setShowCommitModal] = useState<boolean>(false);
+  const [commitScope, setCommitScope] = useState<"local" | "global">("local");
 
   const onDragStart = (event: React.DragEvent, nodeType: string): void => {
     event.dataTransfer.setData("application/reactflow", nodeType);
@@ -105,21 +98,13 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
     reader.readAsText(file);
   };
 
-  const handleSave = () => {
-    if (commitMessage.trim() === "") {
-      toast.error("Please enter a commit message.");
-      return;
-    }
-
-    if (activeTab === "local") {
+  const handleCommit = () => {
+    if (commitScope === "local") {
       commitLocal(commitMessage);
     } else {
       commitGlobal(commitMessage);
     }
-
-    saveToDb();
-    setShowSaveModal(false);
-    setCommitMessage("");
+    setShowCommitModal(false);
   };
 
   return (
@@ -162,7 +147,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
       <section className="flex h-full w-full flex-col pt-4" id="buttons">
         <button
           className="ml-auto w-full rounded-full border border-green bg-green p-1.5 px-8 py-4 text-black transition-all hover:border-yellow-hover hover:bg-yellow-hover"
-          onClick={() => setShowSaveModal(true)}
+          onClick={() => setShowCommitModal(true)}
         >
           Save
         </button>
@@ -195,25 +180,10 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
         onChange={importFromJSON}
       />
 
-      {showSaveModal && (
+      {showCommitModal && (
         <dialog open className="modal">
           <div className="modal-box">
-            <div role="tablist" className="tabs tabs-bordered">
-              <a
-                role="tab"
-                className={`tab ${activeTab === "local" ? "tab-active" : ""}`}
-                onClick={() => setActiveTab("local")}
-              >
-                Local Commit
-              </a>
-              <a
-                role="tab"
-                className={`tab ${activeTab === "global" ? "tab-active" : ""}`}
-                onClick={() => setActiveTab("global")}
-              >
-                Global Commit
-              </a>
-            </div>
+            <h3 className="text-lg font-bold">Commit Changes</h3>
             <div className="mt-4">
               <label className="block">Commit Message</label>
               <input
@@ -224,15 +194,23 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
                 placeholder="Enter commit message"
               />
             </div>
-            <div className="mt-4 flex justify-end space-x-2">
-              <button
-                className="btn btn-error"
-                onClick={() => setShowSaveModal(false)}
+            <div className="mt-4">
+              <label className="block">Commit Scope</label>
+              <select
+                value={commitScope}
+                onChange={(e) => setCommitScope(e.target.value as "local" | "global")}
+                className="select select-bordered w-full"
               >
+                <option value="local">Local</option>
+                <option value="global">Global</option>
+              </select>
+            </div>
+            <div className="mt-4 flex justify-end space-x-2">
+              <button className="btn btn-error" onClick={() => setShowCommitModal(false)}>
                 Cancel
               </button>
-              <button className="btn btn-success" onClick={handleSave}>
-                Save
+              <button className="btn btn-success" onClick={handleCommit}>
+                Commit
               </button>
             </div>
           </div>
