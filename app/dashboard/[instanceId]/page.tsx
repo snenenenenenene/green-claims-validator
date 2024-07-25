@@ -70,6 +70,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
   const [onePageMode, setOnePageMode] = useState(false);
   const [newTabName, setNewTabName] = useState("");
   const [selectedVersion, setSelectedVersion] = useState("");
+  const [selectedGlobalVersion, setSelectedGlobalVersion] = useState("");
   const [activeTab, setActiveTab] = useState("local");
 
   useEffect(() => {
@@ -193,7 +194,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
     if (newTabName && currentInstance) {
       const updatedInstance = { ...currentInstance, name: newTabName };
       setChartInstance(updatedInstance);
-      setCurrentTab(newTabName); // Update current tab to the new name
+      setCurrentTab(newTabName);
       toast.success("Tab renamed successfully.");
     }
   };
@@ -203,15 +204,124 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
     setSelectedVersion(selectedVersion);
 
     const versionData = currentInstance?.publishedVersions?.find(
-      (version) => version.version.toString() === selectedVersion,
+      (version) => version.message === selectedVersion,
     );
 
     if (versionData) {
-      const { nodes, edges } = versionData;
-      setNodes(nodes);
-      setEdges(edges);
+      const { initialNodes, initialEdges } = versionData;
+      setNodes(initialNodes);
+      setEdges(initialEdges);
       toast.success("Reverted to selected version.");
     }
+  };
+
+  const handleGlobalVersionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedGlobalVersion = event.target.value;
+    setSelectedGlobalVersion(selectedGlobalVersion);
+    const { globalCommits, setChartInstances } = useStore.getState();
+    const commit = globalCommits.find(
+      (commit) => commit.message === selectedGlobalVersion,
+    );
+
+    if (commit) {
+      setChartInstances(commit.chartInstances);
+      toast.success("Reverted to selected global commit.");
+    }
+  };
+
+  const renderLocalSettings = () => (
+    <div className="mt-4">
+      <h3 className="text-lg font-bold">Local Settings</h3>
+      <div className="mt-4">
+        <label className="block">Tab Color</label>
+        <input
+          type="color"
+          value={newColor}
+          onChange={(e) => setNewColor(e.target.value)}
+          className="h-10 w-full p-0"
+        />
+      </div>
+      <div className="mt-4 flex items-center">
+        <label className="mr-2">One Page Mode:</label>
+        <input
+          type="checkbox"
+          checked={onePageMode}
+          onChange={(e) => setOnePageMode(e.target.checked)}
+          className="form-checkbox"
+        />
+      </div>
+      <div className="mt-4">
+        <label className="block">Rename Tab</label>
+        <input
+          type="text"
+          value={newTabName}
+          onChange={(e) => setNewTabName(e.target.value)}
+          className="input input-bordered w-full"
+          placeholder="Enter new tab name"
+        />
+        <button
+          className="btn btn-primary mt-2"
+          onClick={handleRenameTab}
+        >
+          Rename
+        </button>
+      </div>
+      <div className="mt-4">
+        <label className="block">Select Version</label>
+        <select
+          value={selectedVersion}
+          onChange={handleVersionChange}
+          className="select select-bordered w-full"
+        >
+          <option value="">Select a version</option>
+          {currentInstance?.publishedVersions?.map((version) => (
+            <option key={version.version} value={version.message}>
+              {version.message}
+            </option>
+          ))}
+        </select>
+        {selectedVersion && (
+          <button
+            className="btn btn-warning mt-2"
+            onClick={() => handleVersionChange({ target: { value: selectedVersion } })}
+          >
+            Revert
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderGlobalSettings = () => {
+    const { globalCommits } = useStore.getState();
+    return (
+      <div className="mt-4">
+        <h3 className="text-lg font-bold">Global Settings</h3>
+        <div className="mt-4">
+          <label className="block">Select Global Version</label>
+          <select
+            value={selectedGlobalVersion}
+            onChange={handleGlobalVersionChange}
+            className="select select-bordered w-full"
+          >
+            <option value="">Select a global version</option>
+            {globalCommits.map((commit) => (
+              <option key={commit.version} value={commit.message}>
+                {commit.message}
+              </option>
+            ))}
+          </select>
+          {selectedGlobalVersion && (
+            <button
+              className="btn btn-warning mt-2"
+              onClick={() => handleGlobalVersionChange({ target: { value: selectedGlobalVersion } })}
+            >
+              Revert
+            </button>
+          )}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -260,114 +370,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
               </a>
             </div>
 
-            {activeTab === "local" && (
-              <div className="mt-4">
-                <h3 className="text-lg font-bold">Local Settings</h3>
-                <div className="mt-4">
-                  <label className="block">Tab Color</label>
-                  <input
-                    type="color"
-                    value={newColor}
-                    onChange={(e) => setNewColor(e.target.value)}
-                    className="h-10 w-full p-0"
-                  />
-                </div>
-                <div className="mt-4 flex items-center">
-                  <label className="mr-2">One Page Mode:</label>
-                  <input
-                    type="checkbox"
-                    checked={onePageMode}
-                    onChange={(e) => setOnePageMode(e.target.checked)}
-                    className="form-checkbox"
-                  />
-                </div>
-                <div className="mt-4">
-                  <label className="block">Rename Tab</label>
-                  <input
-                    type="text"
-                    value={newTabName}
-                    onChange={(e) => setNewTabName(e.target.value)}
-                    className="input input-bordered w-full"
-                    placeholder="Enter new tab name"
-                  />
-                  <button
-                    className="btn btn-primary mt-2"
-                    onClick={handleRenameTab}
-                  >
-                    Rename
-                  </button>
-                </div>
-                <div className="mt-4">
-                  <label className="block">Select Version</label>
-                  <select
-                    value={selectedVersion}
-                    onChange={handleVersionChange}
-                    className="select select-bordered w-full"
-                  >
-                    <option value="">Select a version</option>
-                    {currentInstance?.publishedVersions?.map((version) => (
-                      <option key={version.version} value={version.version}>
-                        {`${version.message} - ${new Date(
-                          version.date,
-                        ).toLocaleString()}`}
-                      </option>
-                    ))}
-                  </select>
-                  {selectedVersion && (
-                    <button
-                      className="btn btn-warning mt-2"
-                      onClick={() => handleVersionChange({ target: { value: selectedVersion } } as any)}
-                    >
-                      Revert to Selected Version
-                    </button>
-                  )}
-                </div>
-                <div className="mt-4 flex justify-end space-x-2">
-                  <button className="btn btn-error" onClick={handleDeleteTab}>
-                    Delete
-                  </button>
-                  <button className="btn" onClick={() => setShowSettings(false)}>
-                    Cancel
-                  </button>
-                  <button className="btn btn-success" onClick={handleSaveSettings}>
-                    Save
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "global" && (
-              <div className="mt-4">
-                <h3 className="text-lg font-bold">Global Settings</h3>
-                <div className="mt-4">
-                  <label className="block">Select Version</label>
-                  <select
-                    value={selectedVersion}
-                    onChange={handleVersionChange}
-                    className="select select-bordered w-full"
-                  >
-                    <option value="">Select a version</option>
-                    {chartInstances
-                      .flatMap((instance) => instance.publishedVersions || [])
-                      .map((version, index) => (
-                        <option key={index} value={version.version}>
-                          {`${version.message} - ${new Date(
-                            version.date,
-                          ).toLocaleString()}`}
-                        </option>
-                      ))}
-                  </select>
-                  {selectedVersion && (
-                    <button
-                      className="btn btn-warning mt-2"
-                      onClick={() => handleVersionChange({ target: { value: selectedVersion } } as any)}
-                    >
-                      Revert to Selected Version
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
+            {activeTab === "local" ? renderLocalSettings() : renderGlobalSettings()}
           </div>
           <form method="dialog" className="modal-backdrop">
             <button>Close</button>

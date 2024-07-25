@@ -9,56 +9,33 @@ interface SidebarProps {
   onDelete: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
-  const { publishTab, chartInstances, currentTab, saveToDb, commitLocal, commitGlobal, setChartInstance } =
+const Sidebar: React.FC<SidebarProps> = ({ onSave, onDelete }) => {
+  const { publishTab, saveToDb, setChartInstance, commitLocalChanges, commitGlobalChanges, globalCommits } =
     useStore((state) => ({
       publishTab: state.publishTab,
       saveToDb: state.saveToDb,
-      chartInstances: state.chartInstances,
-      currentTab: state.currentTab,
-      commitLocal: state.commitLocal,
-      commitGlobal: state.commitGlobal,
       setChartInstance: state.setChartInstance,
+      commitLocalChanges: state.commitLocalChanges,
+      commitGlobalChanges: state.commitGlobalChanges,
+      globalCommits: state.globalCommits,
     }));
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [commitMessage, setCommitMessage] = useState<string>("");
-  const [showCommitModal, setShowCommitModal] = useState<boolean>(false);
-  const [commitScope, setCommitScope] = useState<"local" | "global">("local");
+  const [showCommitModal, setShowCommitModal] = useState(false);
+  const [commitMessage, setCommitMessage] = useState("");
+  const [commitType, setCommitType] = useState<"local" | "global">("local");
 
   const onDragStart = (event: React.DragEvent, nodeType: string): void => {
     event.dataTransfer.setData("application/reactflow", nodeType);
     event.dataTransfer.effectAllowed = "move";
   };
 
-  const currentInstance = chartInstances.find(
-    (instance) => instance.name === currentTab,
-  );
-
-  const lastPublishDate = currentInstance?.publishedVersions?.length
-    ? currentInstance.publishedVersions[
-        currentInstance.publishedVersions.length - 1
-      ].date
-    : null;
-
   const exportToJSON = () => {
-    if (!currentInstance) {
-      toast.error("No instance selected.");
-      return;
-    }
-
-    const { name, initialNodes, initialEdges } = currentInstance;
-    const dataToExport = {
-      name,
-      nodes: initialNodes,
-      edges: initialEdges,
-    };
-
-    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], {
+    const chartInstances = useStore.getState().chartInstances;
+    const blob = new Blob([JSON.stringify(chartInstances, null, 2)], {
       type: "application/json",
     });
-
-    saveAs(blob, `${name}.json`);
+    saveAs(blob, "chart-instances.json");
     toast.success("Exported successfully.");
   };
 
@@ -72,20 +49,8 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
       if (text) {
         try {
           const data = JSON.parse(text as string);
-          if (
-            data.name &&
-            Array.isArray(data.nodes) &&
-            Array.isArray(data.edges)
-          ) {
-            const newInstance: any = {
-              name: data.name,
-              initialNodes: data.nodes,
-              initialEdges: data.edges,
-              onePageMode: false,
-              color: "#ffffff",
-              publishedVersions: [],
-            };
-            setChartInstance(newInstance);
+          if (Array.isArray(data)) {
+            data.forEach((instance) => setChartInstance(instance));
             toast.success("Imported successfully.");
           } else {
             toast.error("Invalid file format.");
@@ -98,13 +63,15 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
     reader.readAsText(file);
   };
 
-  const handleCommit = () => {
-    if (commitScope === "local") {
-      commitLocal(commitMessage);
+  const handleCommitAndSave = () => {
+    if (commitType === "local") {
+      commitLocalChanges(commitMessage);
     } else {
-      commitGlobal(commitMessage);
+      commitGlobalChanges(commitMessage);
     }
+    saveToDb();
     setShowCommitModal(false);
+    setCommitMessage("");
   };
 
   return (
@@ -146,7 +113,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
       </div>
       <section className="flex h-full w-full flex-col pt-4" id="buttons">
         <button
-          className="ml-auto w-full rounded-full border border-green bg-green p-1.5 px-8 py-4 text-black transition-all hover:border-yellow-hover hover:bg-yellow-hover"
+          className="ml-auto w-full rounded-full border border-green bg-green p-1.5"
           onClick={() => setShowCommitModal(true)}
         >
           Save
@@ -166,59 +133,57 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave }) => {
             <BookmarkPlus />
           </button>
         </span>
-        {lastPublishDate && (
-          <div className="mt-2 text-center text-sm text-gray-500">
-            Last published: {new Date(lastPublishDate).toLocaleString()}
-          </div>
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept="application/json"
+          style={{ display: "none" }}
+          onChange={importFromJSON}
+        />
+
+        {showCommitModal && (
+          <dialog open className="modal">
+            <div className="modal-box">
+              <h3 className="text-lg font-bold">Commit and Save</h3>
+              <div className="mt-4">
+                <label className="block">Commit Message</label>
+                <input
+                  type="text"
+                  value={commitMessage}
+                  onChange={(e) => setCommitMessage(e.target.value)}
+                  className="input input-bordered w-full"
+                  placeholder="Enter commit message"
+                />
+              </div>
+              <div className="mt-4 flex space-x-2">
+                <button
+                  className={`btn ${commitType === "local" ? "btn-active" : ""}`}
+                  onClick={() => setCommitType("local")}
+                >
+                  Local
+                </button>
+                <button
+                  className={`btn ${commitType === "global" ? "btn-active" : ""}`}
+                  onClick={() => setCommitType("global")}
+                >
+                  Global
+                </button>
+              </div>
+              <div className="mt-4 flex justify-end space-x-2">
+                <button className="btn" onClick={() => setShowCommitModal(false)}>
+                  Cancel
+                </button>
+                <button className="btn btn-success" onClick={handleCommitAndSave}>
+                  Save
+                </button>
+              </div>
+            </div>
+            <form method="dialog" className="modal-backdrop">
+              <button>Close</button>
+            </form>
+          </dialog>
         )}
       </section>
-      <input
-        type="file"
-        ref={fileInputRef}
-        accept="application/json"
-        style={{ display: "none" }}
-        onChange={importFromJSON}
-      />
-
-      {showCommitModal && (
-        <dialog open className="modal">
-          <div className="modal-box">
-            <h3 className="text-lg font-bold">Commit Changes</h3>
-            <div className="mt-4">
-              <label className="block">Commit Message</label>
-              <input
-                type="text"
-                value={commitMessage}
-                onChange={(e) => setCommitMessage(e.target.value)}
-                className="input input-bordered w-full"
-                placeholder="Enter commit message"
-              />
-            </div>
-            <div className="mt-4">
-              <label className="block">Commit Scope</label>
-              <select
-                value={commitScope}
-                onChange={(e) => setCommitScope(e.target.value as "local" | "global")}
-                className="select select-bordered w-full"
-              >
-                <option value="local">Local</option>
-                <option value="global">Global</option>
-              </select>
-            </div>
-            <div className="mt-4 flex justify-end space-x-2">
-              <button className="btn btn-error" onClick={() => setShowCommitModal(false)}>
-                Cancel
-              </button>
-              <button className="btn btn-success" onClick={handleCommit}>
-                Commit
-              </button>
-            </div>
-          </div>
-          <form method="dialog" className="modal-backdrop">
-            <button>Close</button>
-          </form>
-        </dialog>
-      )}
     </aside>
   );
 };
