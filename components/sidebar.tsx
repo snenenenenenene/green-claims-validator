@@ -10,15 +10,21 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ onSave, onDelete }) => {
-  const { publishTab, saveToDb, setChartInstance, commitLocalChanges, commitGlobalChanges, globalCommits } =
-    useStore((state) => ({
-      publishTab: state.publishTab,
-      saveToDb: state.saveToDb,
-      setChartInstance: state.setChartInstance,
-      commitLocalChanges: state.commitLocalChanges,
-      commitGlobalChanges: state.commitGlobalChanges,
-      globalCommits: state.globalCommits,
-    }));
+  const {
+    publishTab,
+    saveToDb,
+    setChartInstance,
+    commitLocalChanges,
+    commitGlobalChanges,
+    globalCommits,
+  } = useStore((state) => ({
+    publishTab: state.publishTab,
+    saveToDb: state.saveToDb,
+    setChartInstance: state.setChartInstance,
+    commitLocalChanges: state.addLocalCommit,
+    commitGlobalChanges: state.addGlobalCommit,
+    globalCommits: state.globalCommits,
+  }));
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [showCommitModal, setShowCommitModal] = useState(false);

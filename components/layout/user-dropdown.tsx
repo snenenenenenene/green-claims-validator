@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { signOut } from "next-auth/react";
-import { LayoutDashboard, LogOut } from "lucide-react";
+import { LayoutDashboard, LogOut, Users } from "lucide-react";
 import Popover from "@/components/shared/popover";
 import Image from "next/image";
 import { Session } from "next-auth";
@@ -12,6 +12,7 @@ export default function UserDropdown({ session }: { session: Session }) {
   const { email, image } = session?.user || {};
   const [openPopover, setOpenPopover] = useState(false);
 
+  console.log(session);
   if (!email) return null;
 
   return (
@@ -29,13 +30,25 @@ export default function UserDropdown({ session }: { session: Session }) {
                 {session?.user?.email}
               </p>
             </div>
-            <Link
-              href="/dashboard"
-              className="hover:bg-primary-hover relative flex w-full items-center justify-start space-x-2 rounded-md p-2 text-left text-sm transition-all duration-75"
-            >
-              <LayoutDashboard className="h-4 w-4" />
-              <p className="text-sm">Dashboard</p>
-            </Link>
+            {session?.user?.role === "admin" && (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="hover:bg-primary-hover relative flex w-full items-center justify-start space-x-2 rounded-md p-2 text-left text-sm transition-all duration-75"
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  <p className="text-sm">Dashboard</p>
+                </Link>
+
+                <Link
+                  href="/admin"
+                  className="hover:bg-primary-hover relative flex w-full items-center justify-start space-x-2 rounded-md p-2 text-left text-sm transition-all duration-75"
+                >
+                  <Users className="h-4 w-4" />
+                  <p className="text-sm">Admin Dashboard</p>
+                </Link>
+              </>
+            )}
             <button
               className="hover:bg-primary-hover relative flex w-full items-center justify-start space-x-2 rounded-md p-2 text-left text-sm transition-all duration-75"
               onClick={() => signOut()}

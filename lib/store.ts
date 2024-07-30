@@ -1,9 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { chartInstances as initialChartInstances } from "@/app/data/charts";
+import axios from "axios";
 import toast from "react-hot-toast";
 import { generateQuestionsFromChart } from "@/lib/utils";
-import axios from 'axios';
 
 interface NodeData {
   label: string;
@@ -34,10 +33,10 @@ export interface ChartInstance {
   initialEdges: Edge[];
   color: string;
   onePageMode?: boolean;
-  publishedVersions?: { version: number; date: string; message: string }[];
+  publishedVersions?: { version: number; date: string }[];
 }
 
-export interface GlobalCommit {
+interface Commit {
   version: number;
   date: string;
   message: string;
@@ -46,10 +45,11 @@ export interface GlobalCommit {
 
 interface StoreState {
   chartInstances: ChartInstance[];
-  globalCommits: GlobalCommit[];
   currentTab: string;
   questions: any[];
   onePage: boolean;
+  localCommits: Commit[];
+  globalCommits: Commit[];
   setCurrentTab: (tabName: string) => void;
   addNewTab: (newTabName: string) => void;
   setNodesAndEdges: (instanceName: string, nodes: Node[], edges: Edge[]) => void;
@@ -60,37 +60,26 @@ interface StoreState {
   saveToDb: () => void;
   setCurrentTabColor: (instanceName: string, color: string) => void;
   setChartInstance: (newInstance: ChartInstance) => void;
+  setChartInstances: (newInstances: ChartInstance[]) => void;
   generateQuestions: () => void;
-  commitLocalChanges: (message: string) => void;
-  commitGlobalChanges: (message: string) => void;
+  addLocalCommit: (message: string) => void;
   revertToLocalCommit: (message: string) => void;
+  addGlobalCommit: (message: string) => void;
   revertToGlobalCommit: (message: string) => void;
-  setChartInstances: (chartInstances: ChartInstance[]) => void;
 }
 
 const useStore = create<StoreState>(
   persist(
     (set, get) => ({
-      chartInstances: initialChartInstances.map((instance) => ({
-        ...instance,
-        onePageMode: false,
-        color: "#80B500",
-        publishedVersions: [],
-      })),
-      globalCommits: [],
-      currentTab: initialChartInstances[0]?.name || "",
+      chartInstances: [],
+      currentTab: "",
       questions: [],
-      onePage: (initialChartInstances[0] as any).onePageMode || false,
+      onePage: false,
+      localCommits: [],
+      globalCommits: [],
 
       setCurrentTab: (tabName: string) => {
-        const decodedTabName = decodeURIComponent(tabName);
-        const currentInstance = (get() as StoreState).chartInstances.find(
-          (instance: ChartInstance) => instance.name === decodedTabName,
-        );
-        set({
-          currentTab: decodedTabName,
-          onePage: currentInstance?.onePageMode || false,
-        });
+        set({ currentTab: tabName });
       },
 
       addNewTab: (newTabName: string) => {
@@ -102,7 +91,7 @@ const useStore = create<StoreState>(
           color: "#80B500",
           publishedVersions: [],
         };
-        const updatedTabs = [...(get() as StoreState).chartInstances, newTab];
+        const updatedTabs = [...get().chartInstances, newTab];
         set({
           chartInstances: updatedTabs,
           currentTab: newTabName,
@@ -111,23 +100,19 @@ const useStore = create<StoreState>(
       },
 
       setNodesAndEdges: (instanceName: string, nodes: Node[], edges: Edge[]) => {
-        const decodedInstanceName = decodeURIComponent(instanceName);
-        const updatedInstances = (get() as StoreState).chartInstances.map(
-          (instance: ChartInstance) => {
-            if (instance.name === decodedInstanceName) {
-              return { ...instance, initialNodes: nodes, initialEdges: edges };
-            }
-            return instance;
-          },
-        );
+        const updatedInstances = get().chartInstances.map((instance) => {
+          if (instance.name === instanceName) {
+            return { ...instance, initialNodes: nodes, initialEdges: edges };
+          }
+          return instance;
+        });
         set({ chartInstances: updatedInstances });
       },
 
       setOnePage: (value: boolean) => {
-        const { currentTab, chartInstances } = get() as StoreState;
-        const decodedTabName = decodeURIComponent(currentTab);
+        const { currentTab, chartInstances } = get();
         const updatedInstances = chartInstances.map((instance) => {
-          if (instance.name === decodedTabName) {
+          if (instance.name === currentTab) {
             return { ...instance, onePageMode: value };
           }
           return instance;
@@ -136,53 +121,80 @@ const useStore = create<StoreState>(
       },
 
       removeNode: (instanceName: string, nodeId: string) => {
-        const decodedInstanceName = decodeURIComponent(instanceName);
-        const updatedInstances = (get() as StoreState).chartInstances.map(
-          (instance) => {
-            if (instance.name === decodedInstanceName) {
-              return {
-                ...instance,
-                initialNodes: instance.initialNodes.filter(
-                  (node: any) => node.id !== nodeId,
-                ),
-                initialEdges: instance.initialEdges.filter(
-                  (edge: any) =>
-                    edge.source !== nodeId && edge.target !== nodeId,
-                ),
-              };
-            }
-            return instance;
-          },
-        );
+        const updatedInstances = get().chartInstances.map((instance) => {
+          if (instance.name === instanceName) {
+            return {
+              ...instance,
+              initialNodes: instance.initialNodes.filter((node) => node.id !== nodeId),
+              initialEdges: instance.initialEdges.filter(
+                (edge) => edge.source !== nodeId && edge.target !== nodeId,
+              ),
+            };
+          }
+          return instance;
+        });
         set({ chartInstances: updatedInstances });
       },
 
       deleteTab: (tabName: string) => {
-        const decodedTabName = decodeURIComponent(tabName);
-        const updatedInstances = (get() as StoreState).chartInstances.filter(
-          (instance) => instance.name !== decodedTabName,
+        const updatedInstances = get().chartInstances.filter(
+          (instance) => instance.name !== tabName,
         );
-        const newCurrentTab =
-          updatedInstances.length > 0 ? updatedInstances[0].name : "Default";
+        const newCurrentTab = updatedInstances.length > 0 ? updatedInstances[0].name : "Default";
         set({ chartInstances: updatedInstances, currentTab: newCurrentTab });
       },
-
+      updateChartInstanceName: (oldName, newName) => {
+        set((state) => {
+          const updatedInstances = state.chartInstances.map((instance) => {
+            if (instance.name === oldName) {
+              return { ...instance, name: newName };
+            }
+            return instance;
+          });
+      
+          // Update the nodes and edges of the new instance name
+          const currentInstance = state.chartInstances.find(
+            (instance) => instance.name === oldName,
+          );
+      
+          if (currentInstance) {
+            const nodes = currentInstance.initialNodes;
+            const edges = currentInstance.initialEdges;
+      
+            const updatedNodesAndEdges = updatedInstances.map((instance) => {
+              if (instance.name === newName) {
+                return {
+                  ...instance,
+                  initialNodes: nodes,
+                  initialEdges: edges,
+                };
+              }
+              return instance;
+            });
+      
+            return {
+              chartInstances: updatedNodesAndEdges,
+              currentTab: newName,
+            };
+          }
+      
+          return { chartInstances: updatedInstances, currentTab: newName };
+        });
+        toast.success(`Renamed ${oldName} to ${newName}`);
+      },      
       publishTab: () => {
         const { currentTab, chartInstances } = get() as StoreState;
-        const decodedTabName = decodeURIComponent(currentTab);
         const updatedInstances = chartInstances.map((instance) => {
-          if (instance.name === decodedTabName) {
+          if (instance.name === currentTab) {
             const newVersion = {
               version: (instance.publishedVersions?.length || 0) + 1,
               date: new Date().toISOString(),
-              message: `Published version ${(instance.publishedVersions?.length || 0) + 1}`,
+              initialNodes: instance.initialNodes,
+              initialEdges: instance.initialEdges,
             };
             return {
               ...instance,
-              publishedVersions: [
-                ...(instance.publishedVersions || []),
-                newVersion,
-              ],
+              publishedVersions: [...(instance.publishedVersions || []), newVersion],
             };
           }
           return instance;
@@ -192,49 +204,40 @@ const useStore = create<StoreState>(
       },
 
       setCurrentTabColor: (instanceName: string, color: string) => {
-        const decodedInstanceName = decodeURIComponent(instanceName);
-        const updatedInstances = (get() as StoreState).chartInstances.map(
-          (instance) => {
-            if (instance.name === decodedInstanceName) {
-              return { ...instance, color: color };
-            }
-            return instance;
-          },
-        );
+        const updatedInstances = get().chartInstances.map((instance) => {
+          if (instance.name === instanceName) {
+            return { ...instance, color };
+          }
+          return instance;
+        });
         set({ chartInstances: updatedInstances });
       },
 
       saveToDb: () => {
-        const { currentTab, chartInstances } = get() as StoreState;
-        const decodedTabName = decodeURIComponent(currentTab);
-        const currentInstance = chartInstances.find(
-          (instance: ChartInstance) => instance.name === decodedTabName,
-        );
+        const { currentTab, chartInstances } = get();
+        const currentInstance = chartInstances.find((instance) => instance.name === currentTab);
 
         axios.post("/api/charts", { currentInstance });
-        toast.success(
-          `Successfully saved ${currentInstance?.name} to the database.`,
-        );
+        toast.success(`Successfully saved ${currentInstance?.name} to the database.`);
       },
 
       setChartInstance: (newInstance: ChartInstance) => {
-        const updatedInstances = (get() as StoreState).chartInstances.map(
-          (instance) => {
-            if (instance.name === newInstance.name) {
-              return newInstance;
-            }
-            return instance;
-          },
-        );
-        set({ chartInstances: updatedInstances });
+        const updatedInstances = get().chartInstances.map((instance) => {
+          if (instance.name === newInstance.name) {
+            return newInstance;
+          }
+          return instance;
+        });
+        set({ chartInstances: updatedInstances, currentTab: newInstance.name });
+      },
+
+      setChartInstances: (newInstances: ChartInstance[]) => {
+        set({ chartInstances: newInstances });
       },
 
       generateQuestions: () => {
-        const { chartInstances, currentTab } = get() as StoreState;
-        const decodedTabName = decodeURIComponent(currentTab);
-        const currentInstance = chartInstances.find(
-          (instance) => instance.name === decodedTabName,
-        );
+        const { chartInstances, currentTab } = get();
+        const currentInstance = chartInstances.find((instance) => instance.name === currentTab);
         if (currentInstance) {
           const questions = generateQuestionsFromChart(currentInstance);
           set({ questions });
@@ -244,93 +247,52 @@ const useStore = create<StoreState>(
         }
       },
 
-      commitLocalChanges: (message: string) => {
-        const { currentTab, chartInstances } = get() as StoreState;
-        const decodedTabName = decodeURIComponent(currentTab);
-        const updatedInstances = chartInstances.map((instance) => {
-          if (instance.name === decodedTabName) {
-            const newVersion = {
-              version: (instance.publishedVersions?.length || 0) + 1,
-              date: new Date().toISOString(),
-              message,
-              nodes: instance.initialNodes,
-              edges: instance.initialEdges,
-            };
-            return {
-              ...instance,
-              publishedVersions: [
-                ...(instance.publishedVersions || []),
-                newVersion,
-              ],
-            };
-          }
-          return instance;
-        });
-        set({ chartInstances: updatedInstances });
-        toast.success("Local commit saved successfully.");
-      },
-
-      commitGlobalChanges: (message: string) => {
-        const { chartInstances, globalCommits } = get() as StoreState;
-        const newCommit: GlobalCommit = {
-          version: (globalCommits.length || 0) + 1,
-          date: new Date().toISOString(),
-          message,
-          chartInstances: chartInstances.map((ci) => ({
-            ...ci,
-            initialNodes: [...ci.initialNodes],
-            initialEdges: [...ci.initialEdges],
-          })),
-        };
-        set({
-          globalCommits: [...globalCommits, newCommit],
-        });
-        toast.success("Global commit saved successfully.");
-      },
-
-      revertToLocalCommit: (message: string) => {
-        const { currentTab, chartInstances } = get() as StoreState;
-        const decodedTabName = decodeURIComponent(currentTab);
-        const currentInstance = chartInstances.find(
-          (instance) => instance.name === decodedTabName,
-        );
+      addLocalCommit: (message: string) => {
+        const { chartInstances, currentTab, localCommits } = get();
+        const currentInstance = chartInstances.find((instance) => instance.name === currentTab);
 
         if (currentInstance) {
-          const commit = currentInstance.publishedVersions?.find(
-            (version) => version.message === message,
-          );
-
-          if (commit) {
-            const { nodes, edges } = commit;
-            const updatedInstance = {
-              ...currentInstance,
-              initialNodes: nodes,
-              initialEdges: edges,
-            };
-            set({
-              chartInstances: chartInstances.map((ci) =>
-                ci.name === currentInstance.name ? updatedInstance : ci,
-              ),
-            });
-            toast.success("Reverted to selected local commit.");
-          }
+          const newCommit = {
+            version: localCommits.length + 1,
+            date: new Date().toISOString(),
+            message,
+            chartInstances: [currentInstance],
+          };
+          set({ localCommits: [...localCommits, newCommit] });
+          toast.success("Local commit added.");
         }
       },
 
+      revertToLocalCommit: (message: string) => {
+        const { localCommits, setChartInstance } = get();
+        const commit = localCommits.find((commit) => commit.message === message);
+
+        if (commit && commit.chartInstances.length > 0) {
+          setChartInstance(commit.chartInstances[0]);
+          toast.success("Reverted to selected local commit.");
+        }
+      },
+
+      addGlobalCommit: (message: string) => {
+        const { chartInstances, globalCommits } = get();
+        const newCommit = {
+          version: globalCommits.length + 1,
+          date: new Date().toISOString(),
+          message,
+          chartInstances,
+        };
+        set({ globalCommits: [...globalCommits, newCommit] });
+        toast.success("Global commit added.");
+      },
+
       revertToGlobalCommit: (message: string) => {
-        const { globalCommits } = get() as StoreState;
-        const commit = globalCommits.find(
-          (commit) => commit.message === message,
-        );
+        const { globalCommits } = get();
+        const commit = globalCommits.find((commit) => commit.message === message);
 
         if (commit) {
           set({ chartInstances: commit.chartInstances });
           toast.success("Reverted to selected global commit.");
         }
-      },
-
-      setChartInstances: (chartInstances: ChartInstance[]) => {
-        set({ chartInstances });
       },
     }),
     {
