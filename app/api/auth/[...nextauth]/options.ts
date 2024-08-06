@@ -16,6 +16,7 @@ export const authOptions: NextAuthOptions = {
           name: `${profile.given_name} ${profile.family_name}`,
           email: profile.email,
           role: profile.role ?? "user",
+          credits: profile.credits ?? 0,
         };
       },
       authorization: {
@@ -36,6 +37,7 @@ export const authOptions: NextAuthOptions = {
         ...session.user,
         id: user.id,
         role: user.role,
+        credits: user.credits,
       },
     }),
   },
