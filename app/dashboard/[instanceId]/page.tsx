@@ -22,6 +22,7 @@ import useStore from "@/lib/store";
 import { Settings } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { saveAs } from "file-saver";
+import WeightNode from "@/components/dashboard/weightNode";
 
 const nodeTypes = {
   yesNo: YesNoNode,
@@ -29,6 +30,7 @@ const nodeTypes = {
   multipleChoice: MultipleChoiceNode,
   endNode: EndNode,
   startNode: StartNode,
+  weightNode: WeightNode,
 };
 
 const edgeTypes = {
@@ -113,7 +115,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
     (event: React.DragEvent) => {
       event.preventDefault();
 
-      const type = event.dataTransfer.getData("application/reactflow");
+      const type = event.dataTransfer.getData('application/reactflow');
       const position = project({ x: event.clientX, y: event.clientY });
       const newNode = {
         id: `${+new Date()}`,
@@ -121,15 +123,13 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
         position,
         data: {
           label: `${type} node`,
-          options: ["Option 1", "Option 2"],
-          endType: "end",
-          redirectTab: "",
-          weight: 0,
+          options: ['Option 1', 'Option 2'],
+          endType: 'end',
+          redirectTab: '',
+          weight: 1, // Default weight for new weight nodes
           onChange: (value: number) => {
             const updatedNodes = nodes.map((node) =>
-              node.id === newNode.id
-                ? { ...node, data: { ...node.data, weight: value } }
-                : node,
+              node.id === newNode.id ? { ...node, data: { ...node.data, weight: value } } : node
             );
             setNodes(updatedNodes);
           },
@@ -137,10 +137,11 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
       };
 
       setNodes((nds) => [...nds, newNode]);
-      toast.success("Node added.");
+      toast.success('Node added.');
     },
-    [project, setNodes, nodes],
+    [project, setNodes, nodes]
   );
+
 
   const onConnect = useCallback(
     (params) =>

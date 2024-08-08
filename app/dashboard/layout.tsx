@@ -35,22 +35,22 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<
     (Session & { user: { role: string } }) | null
   >(null);
-  
+
   const router = useRouter();
   const pathname = usePathname();
 
   const {
     chartInstances,
-    currentTab,
-    setCurrentTab,
+    currentDashboardTab,
+    setCurrentDashboardTab,
     addNewTab,
     deleteTab,
     setOnePage,
     onePage,
   } = useStore((state) => ({
     chartInstances: state.chartInstances,
-    currentTab: state.currentTab,
-    setCurrentTab: state.setCurrentTab,
+    currentDashboardTab: state.currentDashboardTab,
+    setCurrentDashboardTab: state.setCurrentDashboardTab,
     addNewTab: state.addNewTab,
     deleteTab: state.deleteTab,
     onePage: state.onePage,
@@ -70,36 +70,36 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const currentPath = window.location.pathname.split("/").pop();
-    setCurrentTab(currentPath || chartInstances[0]?.name);
-  }, [setCurrentTab, chartInstances]);
+    setCurrentDashboardTab(currentPath || chartInstances[0]?.name);
+  }, [setCurrentDashboardTab, chartInstances]);
 
   const handleAddNewTab = () => {
     const newTabName = prompt("Enter the name for the new tab:");
     if (newTabName) {
       addNewTab(newTabName);
-      setCurrentTab(newTabName);
+      setCurrentDashboardTab(newTabName);
       window.history.pushState({}, "", `/dashboard/${newTabName}`);
     }
   };
 
   const handleTabClick = (tabName: string) => {
     setLoading(true);
-    setCurrentTab(tabName);
+    setCurrentDashboardTab(tabName);
     window.history.pushState({}, "", `/dashboard/${tabName}`);
     setTimeout(() => setLoading(false), 300); // Simulate loading delay
   };
 
   const handleDelete = () => {
-    if (currentTab) {
-      if (confirm(`Are you sure you want to delete the tab ${currentTab}?`)) {
-        deleteTab(currentTab);
-        setCurrentTab(chartInstances[0]?.name);
+    if (currentDashboardTab) {
+      if (confirm(`Are you sure you want to delete the tab ${currentDashboardTab}?`)) {
+        deleteTab(currentDashboardTab);
+        setCurrentDashboardTab(chartInstances[0]?.name);
         window.history.pushState(
           {},
           "",
           `/dashboard/${chartInstances[0]?.name}`,
         );
-        alert(`Tab ${currentTab} has been deleted.`);
+        alert(`Tab ${currentDashboardTab} has been deleted.`);
       }
     } else {
       alert("No tab selected to delete.");
@@ -115,9 +115,9 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
       router.replace(`/dashboard/${encodeURIComponent(chartInstances[0].name)}`);
     } else {
       const currentPath = decodeURIComponent(pathname.split("/").pop() || "");
-      setCurrentTab(currentPath);
+      setCurrentDashboardTab(currentPath);
     }
-  }, [setCurrentTab, chartInstances, pathname, router]);
+  }, [setCurrentDashboardTab, chartInstances, pathname, router]);
 
   const handleSaveSettings = () => {
     setOnePage(onePage);
@@ -154,14 +154,13 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
                   onClick={() => handleTabClick(chart.name)}
                   style={{
                     backgroundColor:
-                      chart.name === currentTab ? "#ffffff" : tabColor,
+                      chart.name === currentDashboardTab ? "#ffffff" : tabColor,
                     borderColor:
-                      chart.name === currentTab ? tabColor : "transparent",
-                    color: chart.name === currentTab ? tabColor : textColor,
+                      chart.name === currentDashboardTab ? tabColor : "transparent",
+                    color: chart.name === currentDashboardTab ? tabColor : textColor,
                   }}
-                  className={`flex h-full items-center justify-center overflow-hidden text-ellipsis whitespace-nowrap rounded-xl p-2 px-4 text-xl hover:bg-gray-200 ${
-                    chart.name === currentTab ? "border-2" : ""
-                  }`}
+                  className={`flex h-full items-center justify-center overflow-hidden text-ellipsis whitespace-nowrap rounded-xl p-2 px-4 text-xl hover:bg-gray-200 ${chart.name === currentDashboardTab ? "border-2" : ""
+                    }`}
                 >
                   {chart.name}
                 </button>
@@ -177,7 +176,7 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
           {loading ? (
             <ReactFlow fitView />
           ) : (
-            <DynamicInstancePage params={{ instanceId: currentTab }} />
+            <DynamicInstancePage params={{ instanceId: currentDashboardTab }} />
           )}
         </div>
       </section>

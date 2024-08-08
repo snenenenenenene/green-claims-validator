@@ -1,3 +1,5 @@
+// utils.ts
+
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import ms from "ms";
@@ -78,6 +80,7 @@ export interface Node {
     hidden?: boolean;
     endType?: string;
     redirectTab?: string;
+    weight?: number;
   };
 }
 
@@ -171,6 +174,15 @@ export function generateQuestionsFromChart(chartInstance: any) {
           connectedNodes: getNextNodes(currentNode.id, edges),
         });
         return;
+      case "weightNode":
+        questions.push({
+          id: currentNode.id,
+          type: "weightNode",
+          weight: currentNode.data.weight,
+          connectedNodes: getNextNodes(currentNode.id, edges),
+          skipRender: true, // Add flag to skip rendering
+        });
+        break;
       default:
         break;
     }
@@ -182,5 +194,6 @@ export function generateQuestionsFromChart(chartInstance: any) {
   const initialNextNodes = getNextNodes(startNode.id, edges);
   initialNextNodes.forEach(({ target }) => traverse(target));
 
+  console.log("Generated questions in utility function:", questions);
   return questions;
 }

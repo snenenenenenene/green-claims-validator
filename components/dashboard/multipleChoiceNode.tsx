@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
-import { Handle, Position, useReactFlow } from "reactflow";
-import useStore from "@/lib/store";
-import { Trash2 } from "lucide-react";
+import React, { useEffect, useState } from 'react';
+import { Handle, Position, useReactFlow } from 'reactflow';
+import useStore from '@/lib/store';
+import { Trash2 } from 'lucide-react';
 
 const MultipleChoiceNode = ({ id, data, isConnectable }) => {
   const [label, setLabel] = useState(data.label);
-  const [nodeBg, setNodeBg] = useState(data.style?.backgroundColor || "#eee");
+  const [nodeBg, setNodeBg] = useState(data.style?.backgroundColor || '#eee');
   const [nodeHidden, setNodeHidden] = useState(data.hidden || false);
   const [options, setOptions] = useState(data.options || []);
   const [showRemoveButton, setShowRemoveButton] = useState(false);
@@ -24,23 +24,17 @@ const MultipleChoiceNode = ({ id, data, isConnectable }) => {
   }, [label, nodeBg, nodeHidden, options, data]);
 
   const handleRemoveClick = () => {
-    const edges = getEdges().filter(
-      (edge) => edge.source === id || edge.target === id,
-    );
+    const edges = getEdges().filter((edge) => edge.source === id || edge.target === id);
     if (edges.length > 0) {
-      if (confirm("Are you sure you want to delete this node?")) {
+      if (confirm('Are you sure you want to delete this node?')) {
         removeNode(currentTab, id);
         setNodes((nds) => nds.filter((node) => node.id !== id));
-        setEdges((eds) =>
-          eds.filter((edge) => edge.source !== id && edge.target !== id),
-        );
+        setEdges((eds) => eds.filter((edge) => edge.source !== id && edge.target !== id));
       }
     } else {
       removeNode(currentTab, id);
       setNodes((nds) => nds.filter((node) => node.id !== id));
-      setEdges((eds) =>
-        eds.filter((edge) => edge.source !== id && edge.target !== id),
-      );
+      setEdges((eds) => eds.filter((edge) => edge.source !== id && edge.target !== id));
     }
   };
 
@@ -51,7 +45,7 @@ const MultipleChoiceNode = ({ id, data, isConnectable }) => {
   };
 
   const handleAddOption = () => {
-    setOptions([...options, { label: "", nextNodeId: null }]);
+    setOptions([...options, { label: '', nextNodeId: null }]);
   };
 
   const handleRemoveOption = (index) => {
@@ -62,7 +56,7 @@ const MultipleChoiceNode = ({ id, data, isConnectable }) => {
   return (
     <div
       style={{ backgroundColor: nodeBg }}
-      className={`relative rounded border-2 p-4 ${nodeHidden ? "hidden" : ""}`}
+      className={`relative rounded border-2 p-4 ${nodeHidden ? 'hidden' : ''}`}
       onMouseEnter={() => setShowRemoveButton(true)}
       onMouseLeave={() => setShowRemoveButton(false)}
     >
@@ -74,11 +68,7 @@ const MultipleChoiceNode = ({ id, data, isConnectable }) => {
           <Trash2 size={16} />
         </button>
       )}
-      <Handle
-        type="target"
-        position={Position.Top}
-        className="bg-green-500 h-4 w-4"
-      />
+      <Handle type="target" position={Position.Top} className="bg-green-500 h-4 w-4" />
       <input
         type="text"
         value={label}
@@ -87,11 +77,7 @@ const MultipleChoiceNode = ({ id, data, isConnectable }) => {
       />
       {options.map((option, index) => (
         <div key={index} className="relative mt-2 flex items-center">
-          <input
-            type="checkbox"
-            name={`multiple-choice-${id}`}
-            className="mr-2"
-          />
+          <input type="checkbox" name={`multiple-choice-${id}`} className="mr-2" />
           <div className="relative w-full">
             <input
               type="text"
@@ -108,15 +94,8 @@ const MultipleChoiceNode = ({ id, data, isConnectable }) => {
           </div>
         </div>
       ))}
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="h-4 w-4 bg-blue-500"
-      />
-      <button
-        className="mt-2 w-full rounded bg-blue-500 p-2 text-white"
-        onClick={handleAddOption}
-      >
+      <Handle type="source" position={Position.Bottom} className="h-4 w-4 bg-blue-500" />
+      <button className="mt-2 w-full rounded bg-blue-500 p-2 text-white" onClick={handleAddOption}>
         Add Option
       </button>
     </div>

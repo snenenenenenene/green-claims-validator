@@ -8,10 +8,10 @@ import axios from "axios";
 import { generateQuestionsFromChart } from "@/lib/utils";
 
 function LayoutContent() {
-  const { chartInstances, currentTab, setCurrentTab } = useStore((state) => ({
+  const { chartInstances, currentQuestionnaireTab, setCurrentQuestionnaireTab } = useStore((state) => ({
     chartInstances: state.chartInstances,
-    currentTab: state.currentTab,
-    setCurrentTab: state.setCurrentTab,
+    currentQuestionnaireTab: state.currentQuestionnaireTab,
+    setCurrentQuestionnaireTab: state.setCurrentQuestionnaireTab,
   }));
 
   const [questions, setQuestions] = useState<any[]>([]);
@@ -21,8 +21,10 @@ function LayoutContent() {
   const router = useRouter();
 
   useEffect(() => {
-    setCurrentTab("Default");
-  }, [setCurrentTab]);
+    if (!currentQuestionnaireTab && chartInstances.length > 0) {
+      setCurrentQuestionnaireTab(chartInstances[0].name); // Set the first instance name as the default tab
+    }
+  }, [chartInstances, currentQuestionnaireTab, setCurrentQuestionnaireTab]);
 
   useEffect(() => {
     const fetchClaim = async () => {
@@ -45,8 +47,8 @@ function LayoutContent() {
   }, [status, session, searchParams]);
 
   useEffect(() => {
-    if (claim !== null && currentTab) {
-      const currentInstance = chartInstances.find(instance => instance.name === currentTab);
+    if (claim !== null && currentQuestionnaireTab) {
+      const currentInstance = chartInstances.find(instance => instance.name === currentQuestionnaireTab);
 
       if (currentInstance) {
         const generatedQuestions = generateQuestionsFromChart(currentInstance);
@@ -56,7 +58,7 @@ function LayoutContent() {
         }
       }
     }
-  }, [chartInstances, currentTab, claim, router]);
+  }, [chartInstances, currentQuestionnaireTab, claim, router]);
 
   return null;
 }

@@ -1,8 +1,8 @@
-import React, { useRef, useState } from "react";
-import useStore from "@/lib/store";
-import { saveAs } from "file-saver";
-import { Download, Upload, BookmarkPlus } from "lucide-react";
-import toast from "react-hot-toast";
+import React, { useRef, useState } from 'react';
+import useStore from '@/lib/store';
+import { saveAs } from 'file-saver';
+import { Download, Upload, BookmarkPlus } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface SidebarProps {
   onSave: () => void;
@@ -28,21 +28,21 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave, onDelete }) => {
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [showCommitModal, setShowCommitModal] = useState(false);
-  const [commitMessage, setCommitMessage] = useState("");
-  const [commitType, setCommitType] = useState<"local" | "global">("local");
+  const [commitMessage, setCommitMessage] = useState('');
+  const [commitType, setCommitType] = useState<'local' | 'global'>('local');
 
   const onDragStart = (event: React.DragEvent, nodeType: string): void => {
-    event.dataTransfer.setData("application/reactflow", nodeType);
-    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData('application/reactflow', nodeType);
+    event.dataTransfer.effectAllowed = 'move';
   };
 
   const exportToJSON = () => {
     const chartInstances = useStore.getState().chartInstances;
     const blob = new Blob([JSON.stringify(chartInstances, null, 2)], {
-      type: "application/json",
+      type: 'application/json',
     });
-    saveAs(blob, "chart-instances.json");
-    toast.success("Exported successfully.");
+    saveAs(blob, 'chart-instances.json');
+    toast.success('Exported successfully.');
   };
 
   const importFromJSON = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,12 +57,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave, onDelete }) => {
           const data = JSON.parse(text as string);
           if (Array.isArray(data)) {
             data.forEach((instance) => setChartInstance(instance));
-            toast.success("Imported successfully.");
+            toast.success('Imported successfully.');
           } else {
-            toast.error("Invalid file format.");
+            toast.error('Invalid file format.');
           }
         } catch (error) {
-          toast.error("Invalid file format.");
+          toast.error('Invalid file format.');
         }
       }
     };
@@ -70,52 +70,59 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave, onDelete }) => {
   };
 
   const handleCommitAndSave = () => {
-    if (commitType === "local") {
+    if (commitType === 'local') {
       commitLocalChanges(commitMessage);
     } else {
       commitGlobalChanges(commitMessage);
     }
     saveToDb();
     setShowCommitModal(false);
-    setCommitMessage("");
+    setCommitMessage('');
   };
 
   return (
     <aside className="flex flex-col space-y-4 p-4 pt-20">
       <div
         className="cursor-pointer rounded border bg-white p-2 hover:bg-gray-100"
-        onDragStart={(event) => onDragStart(event, "startNode")}
+        onDragStart={(event) => onDragStart(event, 'startNode')}
         draggable
       >
         Start Node
       </div>
       <div
         className="cursor-pointer rounded border bg-white p-2 hover:bg-gray-100"
-        onDragStart={(event) => onDragStart(event, "yesNo")}
+        onDragStart={(event) => onDragStart(event, 'yesNo')}
         draggable
       >
         Yes/No Question
       </div>
       <div
         className="cursor-pointer rounded border bg-white p-2 hover:bg-gray-100"
-        onDragStart={(event) => onDragStart(event, "singleChoice")}
+        onDragStart={(event) => onDragStart(event, 'singleChoice')}
         draggable
       >
         Single Choice Question
       </div>
       <div
         className="cursor-pointer rounded border bg-white p-2 hover:bg-gray-100"
-        onDragStart={(event) => onDragStart(event, "multipleChoice")}
+        onDragStart={(event) => onDragStart(event, 'multipleChoice')}
         draggable
       >
         Multiple Choice Question
       </div>
       <div
         className="cursor-pointer rounded border bg-white p-2 hover:bg-gray-100"
-        onDragStart={(event) => onDragStart(event, "endNode")}
+        onDragStart={(event) => onDragStart(event, 'endNode')}
         draggable
       >
         End Node
+      </div>
+      <div
+        className="cursor-pointer rounded border bg-white p-2 hover:bg-gray-100"
+        onDragStart={(event) => onDragStart(event, 'weightNode')}
+        draggable
+      >
+        Weight Node
       </div>
       <section className="flex h-full w-full flex-col pt-4" id="buttons">
         <button
@@ -143,7 +150,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave, onDelete }) => {
           type="file"
           ref={fileInputRef}
           accept="application/json"
-          style={{ display: "none" }}
+          style={{ display: 'none' }}
           onChange={importFromJSON}
         />
 
@@ -163,14 +170,14 @@ const Sidebar: React.FC<SidebarProps> = ({ onSave, onDelete }) => {
               </div>
               <div className="mt-4 flex space-x-2">
                 <button
-                  className={`btn ${commitType === "local" ? "btn-active" : ""}`}
-                  onClick={() => setCommitType("local")}
+                  className={`btn ${commitType === 'local' ? 'btn-active' : ''}`}
+                  onClick={() => setCommitType('local')}
                 >
                   Local
                 </button>
                 <button
-                  className={`btn ${commitType === "global" ? "btn-active" : ""}`}
-                  onClick={() => setCommitType("global")}
+                  className={`btn ${commitType === 'global' ? 'btn-active' : ''}`}
+                  onClick={() => setCommitType('global')}
                 >
                   Global
                 </button>

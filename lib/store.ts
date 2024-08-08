@@ -45,12 +45,15 @@ interface Commit {
 
 interface StoreState {
   chartInstances: ChartInstance[];
-  currentTab: string;
+  currentDashboardTab: string;
+  currentQuestionnaireTab: string;
   questions: any[];
   onePage: boolean;
   localCommits: Commit[];
   globalCommits: Commit[];
-  setCurrentTab: (tabName: string) => void;
+  currentWeight: number;
+  setCurrentDashboardTab: (tabName: string) => void;
+  setCurrentQuestionnaireTab: (tabName: string) => void;
   addNewTab: (newTabName: string) => void;
   setNodesAndEdges: (instanceName: string, nodes: Node[], edges: Edge[]) => void;
   setOnePage: (value: boolean) => void;
@@ -66,20 +69,29 @@ interface StoreState {
   revertToLocalCommit: (message: string) => void;
   addGlobalCommit: (message: string) => void;
   revertToGlobalCommit: (message: string) => void;
+  setCurrentWeight: (weight: number) => void;
+  resetCurrentWeight: () => void;
+  getCurrentWeight: () => number;
 }
 
 const useStore = create<StoreState>(
   persist(
     (set, get) => ({
       chartInstances: [],
-      currentTab: "",
+      currentDashboardTab: "",
+      currentQuestionnaireTab: "",
       questions: [],
       onePage: false,
       localCommits: [],
       globalCommits: [],
+      currentWeight: 1,
 
-      setCurrentTab: (tabName: string) => {
-        set({ currentTab: tabName });
+      setCurrentDashboardTab: (tabName: string) => {
+        set({ currentDashboardTab: tabName });
+      },
+
+      setCurrentQuestionnaireTab: (tabName: string) => {
+        set({ currentQuestionnaireTab: tabName });
       },
 
       addNewTab: (newTabName: string) => {
@@ -94,7 +106,7 @@ const useStore = create<StoreState>(
         const updatedTabs = [...get().chartInstances, newTab];
         set({
           chartInstances: updatedTabs,
-          currentTab: newTabName,
+          currentDashboardTab: newTabName,
           onePage: false,
         });
       },
@@ -110,9 +122,9 @@ const useStore = create<StoreState>(
       },
 
       setOnePage: (value: boolean) => {
-        const { currentTab, chartInstances } = get();
+        const { currentDashboardTab, chartInstances } = get();
         const updatedInstances = chartInstances.map((instance) => {
-          if (instance.name === currentTab) {
+          if (instance.name === currentDashboardTab) {
             return { ...instance, onePageMode: value };
           }
           return instance;
@@ -140,52 +152,15 @@ const useStore = create<StoreState>(
         const updatedInstances = get().chartInstances.filter(
           (instance) => instance.name !== tabName,
         );
-        const newCurrentTab = updatedInstances.length > 0 ? updatedInstances[0].name : "Default";
-        set({ chartInstances: updatedInstances, currentTab: newCurrentTab });
+        const newCurrentDashboardTab = updatedInstances.length > 0 ? updatedInstances[0].name : "";
+        const newCurrentQuestionnaireTab = updatedInstances.length > 0 ? updatedInstances[0].name : "";
+        set({ chartInstances: updatedInstances, currentDashboardTab: newCurrentDashboardTab, currentQuestionnaireTab: newCurrentQuestionnaireTab });
       },
-      updateChartInstanceName: (oldName, newName) => {
-        set((state) => {
-          const updatedInstances = state.chartInstances.map((instance) => {
-            if (instance.name === oldName) {
-              return { ...instance, name: newName };
-            }
-            return instance;
-          });
-      
-          // Update the nodes and edges of the new instance name
-          const currentInstance = state.chartInstances.find(
-            (instance) => instance.name === oldName,
-          );
-      
-          if (currentInstance) {
-            const nodes = currentInstance.initialNodes;
-            const edges = currentInstance.initialEdges;
-      
-            const updatedNodesAndEdges = updatedInstances.map((instance) => {
-              if (instance.name === newName) {
-                return {
-                  ...instance,
-                  initialNodes: nodes,
-                  initialEdges: edges,
-                };
-              }
-              return instance;
-            });
-      
-            return {
-              chartInstances: updatedNodesAndEdges,
-              currentTab: newName,
-            };
-          }
-      
-          return { chartInstances: updatedInstances, currentTab: newName };
-        });
-        toast.success(`Renamed ${oldName} to ${newName}`);
-      },      
+
       publishTab: () => {
-        const { currentTab, chartInstances } = get() as StoreState;
+        const { currentDashboardTab, chartInstances } = get() as StoreState;
         const updatedInstances = chartInstances.map((instance) => {
-          if (instance.name === currentTab) {
+          if (instance.name === currentDashboardTab) {
             const newVersion = {
               version: (instance.publishedVersions?.length || 0) + 1,
               date: new Date().toISOString(),
@@ -214,8 +189,8 @@ const useStore = create<StoreState>(
       },
 
       saveToDb: () => {
-        const { currentTab, chartInstances } = get();
-        const currentInstance = chartInstances.find((instance) => instance.name === currentTab);
+        const { currentDashboardTab, chartInstances } = get();
+        const currentInstance = chartInstances.find((instance) => instance.name === currentDashboardTab);
 
         axios.post("/api/charts", { currentInstance });
         toast.success(`Successfully saved ${currentInstance?.name} to the database.`);
@@ -228,7 +203,7 @@ const useStore = create<StoreState>(
           }
           return instance;
         });
-        set({ chartInstances: updatedInstances, currentTab: newInstance.name });
+        set({ chartInstances: updatedInstances, currentDashboardTab: newInstance.name, currentQuestionnaireTab: newInstance.name });
       },
 
       setChartInstances: (newInstances: ChartInstance[]) => {
@@ -236,8 +211,8 @@ const useStore = create<StoreState>(
       },
 
       generateQuestions: () => {
-        const { chartInstances, currentTab } = get();
-        const currentInstance = chartInstances.find((instance) => instance.name === currentTab);
+        const { chartInstances, currentQuestionnaireTab } = get();
+        const currentInstance = chartInstances.find((instance) => instance.name === currentQuestionnaireTab);
         if (currentInstance) {
           const questions = generateQuestionsFromChart(currentInstance);
           set({ questions });
@@ -248,8 +223,8 @@ const useStore = create<StoreState>(
       },
 
       addLocalCommit: (message: string) => {
-        const { chartInstances, currentTab, localCommits } = get();
-        const currentInstance = chartInstances.find((instance) => instance.name === currentTab);
+        const { chartInstances, currentDashboardTab, localCommits } = get();
+        const currentInstance = chartInstances.find((instance) => instance.name === currentDashboardTab);
 
         if (currentInstance) {
           const newCommit = {
@@ -294,11 +269,23 @@ const useStore = create<StoreState>(
           toast.success("Reverted to selected global commit.");
         }
       },
+
+      setCurrentWeight: (weight: number) => {
+        set({ currentWeight: weight });
+      },
+
+      resetCurrentWeight: () => {
+        set({ currentWeight: 1 });
+      },
+
+      getCurrentWeight: () => {
+        return get().currentWeight;
+      }
     }),
     {
       name: "flow-chart-store",
     },
-  ) as any,
+  ),
 );
 
 export default useStore;

@@ -1,5 +1,3 @@
-// app/questionnaire/[questionId]/page.tsx
-
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
@@ -14,10 +12,13 @@ export default function QuestionPage() {
   const { questionId } = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { chartInstances, currentTab, setCurrentTab } = useStore((state) => ({
+  const { chartInstances, currentQuestionnaireTab, setCurrentQuestionnaireTab, getCurrentWeight, setCurrentWeight, resetCurrentWeight } = useStore((state) => ({
     chartInstances: state.chartInstances,
-    currentTab: state.currentTab,
-    setCurrentTab: state.setCurrentTab,
+    currentQuestionnaireTab: state.currentQuestionnaireTab,
+    setCurrentQuestionnaireTab: state.setCurrentQuestionnaireTab,
+    getCurrentWeight: state.getCurrentWeight,
+    setCurrentWeight: state.setCurrentWeight,
+    resetCurrentWeight: state.resetCurrentWeight,
   }));
 
   const [questions, setQuestions] = useState<any[]>([]);
@@ -27,28 +28,81 @@ export default function QuestionPage() {
   const claim = searchParams.get('claim') || "Be a hero, fly carbon zero";
 
   useEffect(() => {
-    if (currentTab) {
-      const currentInstance = chartInstances.find(instance => instance.name === currentTab);
+    if (!currentQuestionnaireTab && chartInstances.length > 0) {
+      console.log("Setting current tab to:", chartInstances[0].name);
+      setCurrentQuestionnaireTab(chartInstances[0].name); // Set the first instance name as the default tab
+    }
+  }, [chartInstances, currentQuestionnaireTab, setCurrentQuestionnaireTab]);
+
+  useEffect(() => {
+    console.log("Current tab after setting default:", currentQuestionnaireTab);
+    if (currentQuestionnaireTab) {
+      const currentInstance = chartInstances.find(instance => instance.name === currentQuestionnaireTab);
+      console.log("Current instance:", currentInstance);
 
       if (currentInstance) {
         setOnePageMode(currentInstance.onePageMode || false);
         const generatedQuestions = generateQuestionsFromChart(currentInstance);
+        console.log("Generated questions:", generatedQuestions);
         setQuestions(generatedQuestions);
+        resetCurrentWeight(); // Reset weight at the start of the quiz
         const questionIndex = generatedQuestions.findIndex(question => question.id === questionId);
         if (questionIndex !== -1) {
           setCurrentQuestionIndex(questionIndex);
+          processInitialNodes(generatedQuestions[questionIndex].id);
         } else {
-          handleRedirectNode(generatedQuestions[0]?.id);
+          processInitialNodes(generatedQuestions[0]?.id);
         }
       }
     }
-  }, [chartInstances, currentTab, questionId]);
+  }, [chartInstances, currentQuestionnaireTab, questionId, resetCurrentWeight]);
 
   useEffect(() => {
     if (questions.length > 0 && currentQuestionIndex === -1) {
-      handleRedirectNode(questions[0].id);
+      processInitialNodes(questions[0].id);
     }
   }, [questions, currentQuestionIndex]);
+
+  useEffect(() => {
+    console.log("Current weight:", getCurrentWeight());
+  }, [getCurrentWeight]);
+
+  const processInitialNodes = (nodeId: string | null) => {
+    let accumulatedWeight = 1;
+    while (nodeId) {
+      const nextNode = questions.find(question => question.id === nodeId);
+      console.log("Next node:", nextNode);
+
+      if (nextNode && nextNode.type === "weightNode" && nextNode.weight) {
+        accumulatedWeight *= nextNode.weight;
+        console.log("Weight node encountered. Individual weight:", nextNode.weight, "Total accumulated weight:", accumulatedWeight);
+        nodeId = nextNode.connectedNodes[0]?.target;
+      } else if (nextNode && nextNode.type === "endNode") {
+        if (nextNode.endType === "redirect") {
+          const redirectInstance = chartInstances.find(instance => instance.name === nextNode.redirectTab);
+          if (redirectInstance) {
+            toast.success(`Redirected to ${nextNode.redirectTab} flow chart.`);
+            setCurrentQuestionnaireTab(nextNode.redirectTab);
+            const generatedQuestions = generateQuestionsFromChart(redirectInstance);
+            setQuestions(generatedQuestions);
+            setAnswers({});
+            router.replace(`/questionnaire/${generatedQuestions[0].id}?claim=${encodeURIComponent(claim)}`);
+            return;
+          } else {
+            toast.error("Redirect tab not found.");
+            break;
+          }
+        } else {
+          nodeId = nextNode.connectedNodes[0]?.target;
+        }
+      } else {
+        setCurrentWeight(accumulatedWeight); // Update store state
+        setCurrentQuestionIndex(questions.findIndex(q => q.id === nodeId));
+        router.replace(`/questionnaire/${nodeId}?claim=${encodeURIComponent(claim)}`);
+        return;
+      }
+    }
+  };
 
   const handleAnswer = (answer: string) => {
     setAnswers(prevAnswers => ({
@@ -63,7 +117,7 @@ export default function QuestionPage() {
 
     if (!currentQuestion) return;
 
-    const currentInstance = chartInstances.find(instance => instance.name === currentTab) as any;
+    const currentInstance = chartInstances.find(instance => instance.name === currentQuestionnaireTab) as any;
 
     let nextNodeId: string | null = null;
 
@@ -78,65 +132,59 @@ export default function QuestionPage() {
       nextNodeId = getNextNode(currentQuestion.id, currentInstance.initialEdges, currentAnswer);
     }
 
-    if (nextNodeId) {
-      handleRedirectNode(nextNodeId);
-      return;
-    }
+    const processNodes = (nodeId: string | null) => {
+      let accumulatedWeight = getCurrentWeight(); // Use store state for weight
+      while (nodeId) {
+        const nextNode = questions.find(question => question.id === nodeId);
+        console.log("Next node:", nextNode);
 
-    if (currentQuestion.endType === "redirect") {
-      const redirectInstance = chartInstances.find(instance => instance.name === currentQuestion.redirectTab);
-
-      if (redirectInstance) {
-        toast.success(`Redirected to ${currentQuestion.redirectTab} flow chart.`);
-        setCurrentTab(currentQuestion.redirectTab);
-        const generatedQuestions = generateQuestionsFromChart(redirectInstance);
-        setQuestions(generatedQuestions);
-        setCurrentQuestionIndex(0);
-        setAnswers({});
-        router.replace(`/questionnaire/${generatedQuestions[0].id}?claim=${encodeURIComponent(claim)}`);
-        return;
-      } else {
-        toast.error("Redirect tab not found.");
-      }
-    }
-
-    toast.success("Questionnaire completed!");
-    setCurrentTab("Default");
-    router.push("/questionnaire/results"); // Redirect to results page
-  };
-
-  const handleRedirectNode = (nextNodeId: string | null) => {
-    while (nextNodeId) {
-      const nextNode = questions.find(question => question.id === nextNodeId);
-
-      if (nextNode) {
-        if (nextNode.endType === "redirect") {
-          const redirectInstance = chartInstances.find(instance => instance.name === nextNode.redirectTab);
-
-          if (redirectInstance) {
-            toast.success(`Redirected to ${nextNode.redirectTab} flow chart.`);
-            setCurrentTab(nextNode.redirectTab);
-            const generatedQuestions = generateQuestionsFromChart(redirectInstance);
-            setQuestions(generatedQuestions);
-            setAnswers({});
-            router.replace(`/questionnaire/${generatedQuestions[0].id}?claim=${encodeURIComponent(claim)}`);
-            return;
+        if (nextNode && nextNode.type === "weightNode" && nextNode.weight) {
+          accumulatedWeight *= nextNode.weight;
+          console.log("Weight node encountered. Individual weight:", nextNode.weight, "Total accumulated weight:", accumulatedWeight);
+          nodeId = nextNode.connectedNodes[0]?.target;
+        } else if (nextNode && nextNode.type === "endNode") {
+          if (nextNode.endType === "redirect") {
+            const redirectInstance = chartInstances.find(instance => instance.name === nextNode.redirectTab);
+            if (redirectInstance) {
+              toast.success(`Redirected to ${nextNode.redirectTab} flow chart.`);
+              setCurrentQuestionnaireTab(nextNode.redirectTab);
+              const generatedQuestions = generateQuestionsFromChart(redirectInstance);
+              setQuestions(generatedQuestions);
+              setAnswers({});
+              router.replace(`/questionnaire/${generatedQuestions[0].id}?claim=${encodeURIComponent(claim)}`);
+              return { nodeId: null, accumulatedWeight };
+            } else {
+              toast.error("Redirect tab not found.");
+              break;
+            }
           } else {
-            toast.error("Redirect tab not found.");
-            break;
+            nodeId = nextNode.connectedNodes[0]?.target;
           }
         } else {
-          router.replace(`/questionnaire/${nextNode.id}?claim=${encodeURIComponent(claim)}`);
-          setCurrentQuestionIndex(questions.findIndex(q => q.id === nextNodeId));
-          return;
+          return { nodeId, accumulatedWeight };
         }
-      } else {
-        break;
       }
+      return { nodeId: null, accumulatedWeight };
+    };
+
+    const { nodeId, accumulatedWeight } = processNodes(nextNodeId);
+    setCurrentWeight(accumulatedWeight); // Update store state
+
+    if (nodeId) {
+      const nextNode = questions.find(question => question.id === nodeId);
+      if (nextNode) {
+        setCurrentQuestionIndex(questions.findIndex(q => q.id === nodeId));
+        router.replace(`/questionnaire/${nodeId}?claim=${encodeURIComponent(claim)}`);
+      }
+    } else {
+      toast.success("Questionnaire completed!");
+      setCurrentQuestionnaireTab(chartInstances.length > 0 ? chartInstances[0].name : ""); // Set the first tab as the default after completion
+      router.push(`/questionnaire/results?weight=${accumulatedWeight}`); // Redirect to results page with weight
     }
   };
 
   const renderQuestion = (question: any, onAnswer: (answer: string) => void) => {
+    console.log("Rendering question:", question);
     switch (question?.type) {
       case "yesNo":
         return <YesNoQuestion question={question.question} onAnswer={onAnswer} />;
@@ -176,12 +224,12 @@ export default function QuestionPage() {
         {onePageMode ? (
           questions.map((question, index) => (
             <div key={index} className="mb-auto">
-              {renderQuestion(question, handleAnswer)}
+              {!question.skipRender && renderQuestion(question, handleAnswer)}
             </div>
           ))
         ) : (
           <>
-            {questions[currentQuestionIndex] && renderQuestion(questions[currentQuestionIndex], handleAnswer)}
+            {questions[currentQuestionIndex] && !questions[currentQuestionIndex].skipRender && renderQuestion(questions[currentQuestionIndex], handleAnswer)}
             <button
               type="button"
               className="hover:bg-green-800 focus:ring-green-300 mt-auto w-40 rounded-full bg-green px-10 py-2.5 text-white focus:outline-none focus:ring-4"
