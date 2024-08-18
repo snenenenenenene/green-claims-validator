@@ -37,13 +37,7 @@ const edgeTypes = {
   editableEdge: EditableEdge,
 };
 
-interface InstancePageProps {
-  params: {
-    instanceId: string;
-  };
-}
-
-const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
+const InstancePage = ({ params }) => {
   const {
     chartInstances,
     setNodesAndEdges,
@@ -53,7 +47,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
     currentTab,
     setCurrentTab,
     setChartInstance,
-    updateChartInstanceName, // New function to update chart instance name
+    updateChartInstanceName,
   } = useStore((state) => ({
     chartInstances: state.chartInstances,
     setNodesAndEdges: state.setNodesAndEdges,
@@ -63,10 +57,10 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
     currentTab: state.currentTab,
     setCurrentTab: state.setCurrentTab,
     setChartInstance: state.setChartInstance,
-    updateChartInstanceName: state.updateChartInstanceName, // New function to update chart instance name
+    updateChartInstanceName: state.updateChartInstanceName,
   }));
 
-  const [currentInstance, setCurrentInstance] = useState<any | null>(null);
+  const [currentInstance, setCurrentInstance] = useState(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [showSettings, setShowSettings] = useState(false);
@@ -77,6 +71,8 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
   const [selectedGlobalVersion, setSelectedGlobalVersion] = useState("");
   const [activeTab, setActiveTab] = useState("local");
 
+  const { project } = useReactFlow();
+
   useEffect(() => {
     const instanceId = decodeURIComponent(params.instanceId);
     const instance = chartInstances.find(
@@ -85,101 +81,120 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
 
     if (instance) {
       if (currentInstance?.name !== instance.name) {
+        console.log("Setting current instance:", instance);
         setCurrentInstance(instance);
         setNodes(instance.initialNodes);
         setEdges(instance.initialEdges);
         setNewColor(instance.color || "#80B500");
         setOnePageMode(instance.onePageMode || false);
-        setNewTabName(instance.name); // Set the newTabName to the current instance name
+        setNewTabName(instance.name);
+        setNodesAndEdges(instance.name, instance.initialNodes, instance.initialEdges);
       }
     } else {
       if (currentInstance !== null) {
+        console.log("Clearing current instance");
         setCurrentInstance(null);
         setNodes([]);
         setEdges([]);
         setNewColor("#80B500");
         setOnePageMode(false);
-        setNewTabName(""); // Reset the newTabName when no instance is found
+        setNewTabName("");
       }
     }
-  }, [params.instanceId, chartInstances, currentInstance, setNodes, setEdges]);
+  }, [params.instanceId, chartInstances, currentInstance, setNodes, setEdges, setNodesAndEdges]);
 
-  const { project } = useReactFlow();
-
-  const onDragOver = useCallback((event: React.DragEvent) => {
+  const onDragOver = useCallback((event) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
   }, []);
 
   const onDrop = useCallback(
-    (event: React.DragEvent) => {
+    (event) => {
       event.preventDefault();
 
       const type = event.dataTransfer.getData('application/reactflow');
       const position = project({ x: event.clientX, y: event.clientY });
-      const newNode = {
-        id: `${+new Date()}`,
-        type,
-        position,
-        data: {
-          label: `${type} node`,
-          options: ['Option 1', 'Option 2'],
-          endType: 'end',
-          redirectTab: '',
-          weight: 1, // Default weight for new weight nodes
-          onChange: (value: number) => {
-            const updatedNodes = nodes.map((node) =>
-              node.id === newNode.id ? { ...node, data: { ...node.data, weight: value } } : node
-            );
-            setNodes(updatedNodes);
-          },
-        },
-      };
+      let newNode;
 
-      setNodes((nds) => [...nds, newNode]);
+      switch (type) {
+        case 'yesNo':
+          newNode = {
+            id: `${+new Date()}`,
+            type,
+            position,
+            data: {
+              label: `${type} node`,
+              options: [
+                { label: 'yes', nextNodeId: null },
+                { label: 'no', nextNodeId: null }
+              ],
+              endType: 'end',
+              redirectTab: '',
+              weight: 1,
+            },
+          };
+          break;
+
+        case 'singleChoice':
+        case 'multipleChoice':
+          newNode = {
+            id: `${+new Date()}`,
+            type,
+            position,
+            data: {
+              label: `${type} node`,
+              options: [
+                { label: 'Option 1', nextNodeId: null },
+                { label: 'Option 2', nextNodeId: null }
+              ],
+              endType: 'end',
+              redirectTab: '',
+              weight: 1,
+            },
+          };
+          break;
+
+        default:
+          newNode = {
+            id: `${+new Date()}`,
+            type,
+            position,
+            data: {
+              label: `${type} node`,
+              options: [
+                { label: "DEFAULT", nextNodeId: null }
+              ],
+              endType: 'end',
+              redirectTab: '',
+              weight: 1,
+            },
+          };
+          break;
+      }
+
+      console.log("Adding new node:", newNode);
+      const updatedNodes = [...nodes, newNode];
+      setNodes(updatedNodes);
+      setNodesAndEdges(currentInstance?.name || '', updatedNodes, edges);
       toast.success('Node added.');
     },
-    [project, setNodes, nodes]
+    [project, setNodes, setNodesAndEdges, currentInstance, edges, nodes]
   );
-
 
   const onConnect = useCallback(
-    (params) =>
-      setEdges((eds) =>
-        addEdge({ ...params, type: "editableEdge" }, eds),
-      ),
-    [setEdges],
+    (params) => {
+      console.log("Connecting nodes with params:", params);
+      const newEdges = addEdge({ ...params, type: 'editableEdge' }, edges);
+
+      setEdges(newEdges);
+      setNodesAndEdges(currentInstance?.name || '', nodes, newEdges);
+    },
+    [setEdges, setNodesAndEdges, currentInstance, nodes, edges]
   );
-
-  useEffect(() => {
-    if (currentInstance) {
-      setNodesAndEdges(currentInstance.name, nodes as any, edges as any);
-    }
-  }, [nodes, edges, currentInstance, setNodesAndEdges]);
-
-  const exportToJSON = () => {
-    if (!currentInstance) {
-      toast.error("No instance selected.");
-      return;
-    }
-
-    const { name, initialNodes, initialEdges } = currentInstance;
-    const dataToExport = {
-      name,
-      nodes: initialNodes,
-      edges: initialEdges,
-    };
-
-    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], {
-      type: "application/json",
-    });
-
-    saveAs(blob, `${name}.json`);
-    toast.success("Exported successfully.");
-  };
 
   const handleSaveSettings = () => {
     if (currentInstance) {
+      console.log("Saving settings for instance:", currentInstance.name);
       setCurrentTabColor(currentInstance.name, newColor);
       setOnePage(onePageMode);
       setShowSettings(false);
@@ -189,6 +204,7 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
 
   const handleDeleteTab = () => {
     if (currentInstance) {
+      console.log("Deleting tab:", currentInstance.name);
       deleteTab(currentInstance.name);
       setShowSettings(false);
       toast.success("Tab deleted.");
@@ -197,13 +213,14 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
 
   const handleRenameTab = () => {
     if (newTabName && currentInstance) {
-      updateChartInstanceName(currentInstance.name, newTabName); // Update the name in the store
-      setCurrentTab(newTabName); // Update the current tab name
+      console.log("Renaming tab from", currentInstance.name, "to", newTabName);
+      updateChartInstanceName(currentInstance.name, newTabName);
+      setCurrentTab(newTabName);
       toast.success("Tab renamed successfully.");
     }
   };
 
-  const handleVersionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleVersionChange = (event) => {
     const selectedVersion = event.target.value;
     setSelectedVersion(selectedVersion);
 
@@ -215,6 +232,8 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
       const { initialNodes, initialEdges } = versionData;
       setNodes(initialNodes);
       setEdges(initialEdges);
+      setNodesAndEdges(currentInstance?.name || '', initialNodes, initialEdges);
+      console.log("Reverting to selected version with nodes and edges:", initialNodes, initialEdges);
       toast.success("Reverted to selected version.");
     }
   };
@@ -235,7 +254,6 @@ const InstancePage: React.FC<InstancePageProps> = ({ params }) => {
         connectionLineType={ConnectionLineType.SmoothStep}
       >
         <Controls />
-        {/* @ts-ignore */}
         <Background variant="dots" gap={12} size={1} />
       </ReactFlow>
       <button

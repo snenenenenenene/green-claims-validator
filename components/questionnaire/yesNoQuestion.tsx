@@ -10,6 +10,8 @@ const YesNoQuestion: React.FC<YesNoQuestionProps> = ({
   question,
   onAnswer,
 }) => {
+  console.log("WALGOOM")
+  console.log(question)
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
   const handleOptionChange = (option: string) => {
@@ -25,24 +27,22 @@ const YesNoQuestion: React.FC<YesNoQuestionProps> = ({
 
   return (
     <motion.div initial="initial"
-    animate="animate"
-    exit="exit"
-    variants={fadeInUpVariants}
-    transition={{ duration: 0.5 }} className="rounded-lg">
+      animate="animate"
+      exit="exit"
+      variants={fadeInUpVariants}
+      transition={{ duration: 0.5 }} className="rounded-lg">
       <h3 className="mb-6 text-4xl font-semibold text-gray-700">{question}</h3>
       <div className="flex w-full gap-x-4">
         <button
-          className={`btn w-1/2 ${
-            selectedOption === "yes" ? "btn-neutral" : "btn-outline"
-          }`}
+          className={`btn w-1/2 ${selectedOption === "yes" ? "btn-neutral" : "btn-outline"
+            }`}
           onClick={() => handleOptionChange("yes")}
         >
           Yes
         </button>
         <button
-          className={`btn w-1/2 ${
-            selectedOption === "no" ? "btn-neutral" : "btn-outline"
-          }`}
+          className={`btn w-1/2 ${selectedOption === "no" ? "btn-neutral" : "btn-outline"
+            }`}
           onClick={() => handleOptionChange("no")}
         >
           No

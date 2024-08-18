@@ -17,11 +17,28 @@ const SingleChoiceNode = ({ id, data, isConnectable }) => {
   const { getEdges, setNodes, setEdges } = useReactFlow();
 
   useEffect(() => {
+    // Update the data object with the current state values
     data.label = label;
     data.style = { ...data.style, backgroundColor: nodeBg };
     data.hidden = nodeHidden;
-    data.options = options;
-  }, [label, nodeBg, nodeHidden, options, data]);
+
+    // Update nextNodeId for options based on current edges
+    const edges = getEdges().filter((edge) => edge.source === id);
+    const updatedOptions = options.map((option) => {
+      const correspondingEdge = edges.find((edge) => edge.sourceHandle === option.label);
+      return {
+        ...option,
+        nextNodeId: correspondingEdge ? correspondingEdge.target : null,
+      };
+    });
+
+    // Only update state if options have changed to prevent infinite loop
+    if (JSON.stringify(updatedOptions) !== JSON.stringify(options)) {
+      setOptions(updatedOptions);
+    }
+
+    data.options = updatedOptions;
+  }, [label, nodeBg, nodeHidden, options, data, id, getEdges]);
 
   const handleRemoveClick = () => {
     const edges = getEdges().filter(

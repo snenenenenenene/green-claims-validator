@@ -1,11 +1,10 @@
 "use client";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import useStore from "@/lib/store";
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from "next-auth/react";
 import axios from "axios";
-import { generateQuestionsFromChart } from "@/lib/utils";
 
 function LayoutContent() {
   const { chartInstances, currentQuestionnaireTab, setCurrentQuestionnaireTab } = useStore((state) => ({
@@ -14,17 +13,58 @@ function LayoutContent() {
     setCurrentQuestionnaireTab: state.setCurrentQuestionnaireTab,
   }));
 
-  const [questions, setQuestions] = useState<any[]>([]);
   const [claim, setClaim] = useState<string>("Be a hero, fly carbon zero");
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const hasInitialized = useRef(false); // To prevent infinite loop
+
+  // Helper function to remove publishedVersions from chartInstances
+  const sanitizeChartInstances = (chartInstances: any[]) => {
+    return chartInstances.map(({ publishedVersions, ...rest }) => rest);
+  };
 
   useEffect(() => {
-    if (!currentQuestionnaireTab && chartInstances.length > 0) {
-      setCurrentQuestionnaireTab(chartInstances[0].name); // Set the first instance name as the default tab
+    console.log("LayoutContent useEffect triggered");
+
+    // Sanitize chartInstances by removing publishedVersions
+    const sanitizedChartInstances = sanitizeChartInstances(chartInstances);
+
+    console.log("Current Questionnaire Tab:", currentQuestionnaireTab);
+    console.log("Chart Instances:", sanitizedChartInstances);
+
+    // Ensure chart instances are loaded
+    if (sanitizedChartInstances.length === 0) {
+      console.log("Chart instances not loaded yet.");
+      return;
     }
-  }, [chartInstances, currentQuestionnaireTab, setCurrentQuestionnaireTab]);
+
+    const chart = searchParams.get("chart");
+    const question = searchParams.get("question");
+
+    if (!hasInitialized.current) {
+      const firstChart = sanitizedChartInstances[0];
+      console.log("First Chart Name:", firstChart.name);
+
+      if (!chart || !question) {
+        console.log("No chart or question in the URL, setting default chart and question.");
+        setCurrentQuestionnaireTab(firstChart.name);
+
+        const firstValidQuestion = firstChart.initialNodes.find(node => !node.skipRender);
+        if (firstValidQuestion) {
+          console.log("Redirecting to the first valid question in the first chart.");
+          router.replace(`/questionnaire?chart=${firstChart.name}&question=${firstValidQuestion.id}&claim=${encodeURIComponent(claim)}`);
+        } else {
+          console.error("No valid question found in the first chart.");
+        }
+      } else if (currentQuestionnaireTab !== firstChart.name) {
+        console.log("Setting default questionnaire tab to:", firstChart.name);
+        setCurrentQuestionnaireTab(firstChart.name);
+      }
+
+      hasInitialized.current = true;
+    }
+  }, [chartInstances, currentQuestionnaireTab, setCurrentQuestionnaireTab, router, claim, searchParams]);
 
   useEffect(() => {
     const fetchClaim = async () => {
@@ -34,7 +74,7 @@ function LayoutContent() {
           const response = await axios.get(`/api/claim?userId=${(session.user as any).id}`);
           setClaim(response.data.claim || initialClaim);
         } catch (err) {
-          console.error(err);
+          console.error("Failed to fetch the claim", err);
           setClaim(initialClaim);
           toast.error("Failed to fetch the claim");
         }
@@ -46,21 +86,7 @@ function LayoutContent() {
     fetchClaim();
   }, [status, session, searchParams]);
 
-  useEffect(() => {
-    if (claim !== null && currentQuestionnaireTab) {
-      const currentInstance = chartInstances.find(instance => instance.name === currentQuestionnaireTab);
-
-      if (currentInstance) {
-        const generatedQuestions = generateQuestionsFromChart(currentInstance);
-        setQuestions(generatedQuestions);
-        if (generatedQuestions.length > 0) {
-          router.replace(`/questionnaire/${generatedQuestions[0].id}?claim=${encodeURIComponent(claim)}`);
-        }
-      }
-    }
-  }, [chartInstances, currentQuestionnaireTab, claim, router]);
-
-  return null;
+  return null; // No direct UI from layout; it's all handled in the page
 }
 
 export default function QuestionnaireLayout({ children }: { children: React.ReactNode }) {

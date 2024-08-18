@@ -1,223 +1,201 @@
-// "use client";
-// import React, { useState, useEffect } from "react";
-// import { Toaster, toast } from "react-hot-toast";
-// import useStore from "@/lib/store";
-// import YesNoQuestion from "@/components/questionnaire/yesNoQuestion";
-// import SingleChoiceQuestion from "@/components/questionnaire/singleChoiceQuestion";
-// import MultipleChoiceQuestion from "@/components/questionnaire/multipleChoiceQuestion";
-// import { generateQuestionsFromChart, getNextNode, fetcher } from "@/lib/utils";
-// import { useSession } from "next-auth/react";
-// import axios from "axios";
-// import { useSearchParams, useRouter } from 'next/navigation';
+"use client";
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Toaster, toast } from "react-hot-toast";
+import useStore from "@/lib/store";
+import YesNoQuestion from "@/components/questionnaire/yesNoQuestion";
+import SingleChoiceQuestion from "@/components/questionnaire/singleChoiceQuestion";
+import MultipleChoiceQuestion from "@/components/questionnaire/multipleChoiceQuestion";
+import { generateQuestionsFromChart, getNextNode } from "@/lib/utils";
 
-// export default function QuestionnairePage() {
-//   const searchParams = useSearchParams()
+export default function QuestionPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { chartInstances, setCurrentQuestionnaireTab, resetCurrentWeight, getCurrentWeight } = useStore((state) => ({
+    chartInstances: state.chartInstances,
+    setCurrentQuestionnaireTab: state.setCurrentQuestionnaireTab,
+    resetCurrentWeight: state.resetCurrentWeight,
+    getCurrentWeight: state.getCurrentWeight,
+  }));
 
-//   const initialClaim = searchParams.get("claim");
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [currentQuestion, setCurrentQuestion] = useState<any | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
-//   const { chartInstances, currentTab, setCurrentTab } = useStore((state) => ({
-//     chartInstances: state.chartInstances,
-//     currentTab: state.currentTab,
-//     setCurrentTab: state.setCurrentTab,
-//   }));
+  const chart = searchParams.get('chart');
+  const questionId = searchParams.get('question');
+  const claim = searchParams.get('claim') || "Be a hero, fly carbon zero";
 
-//   const router = useRouter();
-//   const [questions, setQuestions] = useState<any[]>([]);
-//   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-//   const [answers, setAnswers] = useState<{ [key: string]: string }>({});
-//   const [onePageMode, setOnePageMode] = useState(false);
-//   const [claim, setClaim] = useState<string | null>(null);
-//   const { data: session, status } = useSession();
+  useEffect(() => {
+    console.log("useEffect triggered - Initial loading");
 
-//   // Set the initial tab to "Default" if it's not set
-//   useEffect(() => {
-//     setCurrentTab("Default");
-//   }, [setCurrentTab]);
+    if (chartInstances.length > 0 && !isRedirecting) {
+      loadQuestion(chart, questionId);
+    }
+  }, [chartInstances, chart, questionId]);
 
-//   // Fetch the user's claim
-//   useEffect(() => {
-//     const fetchClaim = async () => {
-//       if (status === "authenticated" && session?.user) {
-//         try {
-//           const response = await axios.get(
-//             `/api/claim?userId=${(session.user as any).id}`
-//           );
-//           setClaim(response.data.claim || initialClaim);
-//         } catch (err) {
-//           console.error(err);
-//           setClaim(initialClaim as string);
-//           toast.error("Failed to fetch the claim");
-//         }
-//       } else {
-//         setClaim(initialClaim as string);
-//       }
-//     };
+  const loadQuestion = (chart: string | null, questionId: string | null) => {
+    console.log("Loading question based on query parameters");
 
-//     fetchClaim();
-//   }, [status, session, initialClaim]);
+    const currentInstance = chartInstances.find(instance => instance.name === chart);
 
-//   // Generate questions based on the current tab and claim
-//   useEffect(() => {
-//     if (claim !== null && currentTab) {
-//       const currentInstance = chartInstances.find(
-//         (instance) => instance.name === currentTab
-//       );
+    if (!currentInstance) {
+      console.error("Chart instance not found");
+      return;
+    }
 
-//       if (currentInstance) {
-//         setOnePageMode(currentInstance.onePageMode || false);
-//         const generatedQuestions = generateQuestionsFromChart(currentInstance);
-//         console.log("Generated Questions:", generatedQuestions);
-//         setQuestions(generatedQuestions);
-//         setCurrentQuestionIndex(0);
-//         setAnswers({});
-//       }
-//     }
-//   }, [chartInstances, currentTab, claim]);
+    setCurrentQuestionnaireTab(currentInstance.name);
 
-//   const handleAnswer = (answer: string) => {
-//     setAnswers((prevAnswers) => ({
-//       ...prevAnswers,
-//       [questions[currentQuestionIndex].id]: answer,
-//     }));
-//   };
+    const generatedQuestions = generateQuestionsFromChart(currentInstance);
+    console.log("Generated Questions:", generatedQuestions);
 
-//   const handleNextQuestion = () => {
-//     const currentQuestion = questions[currentQuestionIndex];
-//     const currentAnswer = answers[currentQuestion.id];
+    const foundQuestion = generatedQuestions.find(q => q.id === questionId);
 
-//     const currentInstance = chartInstances.find(
-//       (instance) => instance.name === currentTab
-//     ) as any;
+    if (foundQuestion) {
+      console.log("Found question:", JSON.stringify(foundQuestion, null, 2));
+      setQuestions(generatedQuestions);
+      setCurrentQuestion(foundQuestion);
+    } else {
+      console.log("Question not found, redirecting to the first valid question.");
+      const firstValidQuestion = generatedQuestions.find(q => !q.skipRender);
+      if (firstValidQuestion) {
+        router.replace(`/questionnaire?chart=${currentInstance.name}&question=${firstValidQuestion.id}&claim=${encodeURIComponent(claim)}`);
+      } else {
+        console.error("No valid question found in the generated questions.");
+      }
+    }
+  };
 
-//     let nextNodeId: string | null = null;
+  const handleNextQuestion = () => {
+    if (!currentQuestion) return;
 
-//     if (currentQuestion.type === "singleChoice") {
-//       const selectedOption = currentQuestion.options.find(
-//         (option: any) => option.label === currentAnswer
-//       );
-//       nextNodeId =
-//         selectedOption?.nextNodeId ||
-//         getNextNode(
-//           currentQuestion.id,
-//           currentInstance.initialEdges,
-//           `option-${currentAnswer}-next`
-//         );
-//     } else {
-//       nextNodeId = getNextNode(
-//         currentQuestion.id,
-//         currentInstance.initialEdges,
-//         currentAnswer
-//       );
-//     }
+    console.log("Handling next question. Current question:", currentQuestion);
 
-//     if (nextNodeId) {
-//       const nextNode = questions.find((question) => question.id === nextNodeId);
+    const nextNodeId = determineNextNodeId(currentQuestion);
+    console.log("Determined next node ID:", nextNodeId);
 
-//       if (nextNode) {
-//         setCurrentQuestionIndex(
-//           questions.findIndex((q) => q.id === nextNodeId)
-//         );
-//         return;
-//       }
-//     }
+    if (!nextNodeId) {
+      console.error("No next node ID found, stopping.");
+      return;
+    }
 
-//     if (currentQuestion.endType === "redirect") {
-//       const redirectInstance = chartInstances.find(
-//         (instance) => instance.name === currentQuestion.redirectTab
-//       );
+    const nextNode = findQuestionById(nextNodeId);
+    console.log("Next node found in all questions:", nextNode);
 
-//       if (redirectInstance) {
-//         setCurrentTab(currentQuestion.redirectTab);
-//         const generatedQuestions = generateQuestionsFromChart(
-//           redirectInstance
-//         );
-//         setQuestions(generatedQuestions);
-//         setCurrentQuestionIndex(0);
-//         setAnswers({});
-//         return;
-//       } else {
-//         toast.error("Redirect tab not found.");
-//       }
-//     }
+    if (nextNode) {
+      handleNodeRedirection(nextNode);
+    } else {
+      console.error("Next question not found in any chart.");
+    }
+  };
 
-//     toast.success("Questionnaire completed!");
-//     setCurrentTab("Default");
-//     router.push("/questionnaire/results");
-//   };
+  const determineNextNodeId = (currentQuestion: any): string | null => {
+    let nextNodeId: string | null = null;
 
-//   const renderQuestion = (question: any, onAnswer: (answer: string) => void) => {
-//     switch (question.type) {
-//       case "yesNo":
-//         return (
-//           <YesNoQuestion question={question.question} onAnswer={onAnswer} />
-//         );
-//       case "singleChoice":
-//         return (
-//           <SingleChoiceQuestion
-//             question={question.question}
-//             options={question.options}
-//             onAnswer={onAnswer}
-//           />
-//         );
-//       case "multipleChoice":
-//         return (
-//           <MultipleChoiceQuestion
-//             question={question.question}
-//             options={question.options}
-//             onAnswer={onAnswer as any}
-//           />
-//         );
-//       default:
-//         return null;
-//     }
-//   };
+    if (currentQuestion.type === "singleChoice" || currentQuestion.type === "yesNo") {
+      const selectedOption = currentQuestion.options?.find(
+        (option: any) => option.label === selectedAnswer
+      );
 
-//   const progressValue = ((currentQuestionIndex + 1) / questions.length) * 100;
+      if (selectedOption && selectedOption.nextQuestionId) {
+        nextNodeId = selectedOption.nextQuestionId;
+      } else {
+        nextNodeId = getNextNode(currentQuestion.id, chartInstances.find(instance => instance.name === chart).initialEdges, selectedAnswer);
+      }
+    }
 
-//   return (
-//     <div className="flex h-screen w-full flex-col justify-between px-60 text-dark-gray">
-//       <div className="my-6 flex justify-center font-roboto text-3xl">
-//         <p>{claim || "Be a hero, fly carbon zero"}</p>
-//       </div>
-//       <div className="w-full px-8 pb-4">
-//         <div className="relative h-12 w-full rounded-full bg-gray-200 p-2 dark:bg-gray-700">
-//           <div
-//             className="h-full rounded-full bg-green transition-all duration-500 ease-in-out dark:bg-green"
-//             style={{ width: `${progressValue}%` }}
-//           >
-//             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white">
-//               {Math.round(progressValue)}%
-//             </span>
-//           </div>
-//         </div>
-//       </div>
-//       <div className="mx-8 my-4 mb-auto flex min-h-[30%] flex-col overflow-y-auto rounded-3xl bg-light-gray p-8">
-//         {onePageMode ? (
-//           questions.map((question, index) => (
-//             <div key={index} className="mb-auto">
-//               {renderQuestion(question, handleAnswer)}
-//             </div>
-//           ))
-//         ) : (
-//           <>
-//             {questions[currentQuestionIndex] &&
-//               renderQuestion(questions[currentQuestionIndex], handleAnswer)}
-//             <button
-//               type="button"
-//               className="hover:bg-green-800 focus:ring-green-300 mt-auto w-40 rounded-full bg-green px-10 py-2.5 text-white focus:outline-none focus:ring-4"
-//               onClick={handleNextQuestion}
-//             >
-//               Volgende
-//             </button>
-//           </>
-//         )}
-//       </div>
-//       <Toaster />
-//     </div>
-//   );
-// }
+    console.log("Next Node ID:", nextNodeId);
+    return nextNodeId;
+  };
 
+  const findQuestionById = (questionId: string) => {
+    for (const instance of chartInstances) {
+      const foundQuestion = instance.initialNodes.find((node: any) => node.id === questionId);
+      if (foundQuestion) {
+        console.log(`Found question ${questionId} in chart ${instance.name}`);
+        return foundQuestion;
+      }
+    }
+    return null;
+  };
 
-export default function Page() {
-  return <></>
+  const handleNodeRedirection = (nextNode: any) => {
+    console.log("Handling node redirection to:", nextNode);
+
+    if (nextNode.type === "endNode") {
+      console.log("Next node is an end node, handling end node...");
+      handleEndNode(nextNode);
+    } else {
+      console.log("Redirecting to next question:", nextNode.id);
+      router.replace(`/questionnaire?chart=${chart}&question=${nextNode.id}&claim=${encodeURIComponent(claim)}`);
+    }
+  };
+
+  const handleEndNode = (nextNode: any) => {
+    console.log("Handling end node:", nextNode);
+
+    if (nextNode.endType === "redirect" && nextNode.redirectTab) {
+      setIsRedirecting(true);
+      const redirectInstance = chartInstances.find(instance => instance.name === nextNode.redirectTab);
+      if (redirectInstance) {
+        console.log("Redirecting to another chart:", nextNode.redirectTab);
+        setCurrentQuestionnaireTab(redirectInstance.name);
+        resetCurrentWeight();
+        const generatedQuestions = generateQuestionsFromChart(redirectInstance);
+        setQuestions(generatedQuestions);
+        const firstValidQuestion = generatedQuestions.find(q => !q.skipRender);
+        if (firstValidQuestion) {
+          router.replace(`/questionnaire?chart=${nextNode.redirectTab}&question=${firstValidQuestion.id}&claim=${encodeURIComponent(claim)}`);
+        }
+      } else {
+        toast.error("Redirect tab not found.");
+        setIsRedirecting(false);
+      }
+    } else {
+      toast.success("Questionnaire completed!");
+      router.push(`/questionnaire/results?weight=${getCurrentWeight()}`);
+    }
+  };
+
+  return (
+    <div className="flex h-screen w-full flex-col justify-between px-10 lg:px-20 xl:px-28 text-dark-gray">
+      <div className="my-6 flex justify-center font-roboto text-3xl">
+        <p>{claim}</p>
+      </div>
+      <div className="w-full px-8 pb-4">
+        <div className="relative h-12 w-full rounded-full bg-gray-200 p-2 dark:bg-gray-700">
+          <div
+            className="h-full rounded-full bg-green transition-all duration-500 ease-in-out dark:bg-green"
+            style={{ width: `${((questions.findIndex(q => q.id === questionId) + 1) / questions.length) * 100}%` }}
+          >
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white">
+              {Math.round(((questions.findIndex(q => q.id === questionId) + 1) / questions.length) * 100)}%
+            </span>
+          </div>
+        </div>
+      </div>
+      <div className="mx-8 my-4 mb-auto flex min-h-[30%] flex-col rounded-3xl bg-light-gray p-8">
+        {currentQuestion ? (
+          currentQuestion.type === "yesNo" ? (
+            <YesNoQuestion question={currentQuestion.question} onAnswer={setSelectedAnswer} />
+          ) : currentQuestion.type === "singleChoice" ? (
+            <SingleChoiceQuestion question={currentQuestion.label} options={currentQuestion.data.options} onAnswer={setSelectedAnswer} />
+          ) : currentQuestion.type === "multipleChoice" ? (
+            <MultipleChoiceQuestion question={currentQuestion.label} options={currentQuestion.data.options} onAnswer={setSelectedAnswer as any} />
+          ) : <div>Unknown question type: {currentQuestion.type}</div>
+
+        ) : <div>No question available</div>}
+        <button
+          type="button"
+          className={`hover:bg-green-800 focus:ring-green-300 mt-auto w-40 rounded-full bg-green px-10 py-2.5 text-white focus:outline-none focus:ring-4 ${!selectedAnswer ? 'opacity-50 cursor-not-allowed' : ''}`}
+          onClick={handleNextQuestion}
+          disabled={!selectedAnswer}
+        >
+          Volgende
+        </button>
+      </div>
+      <Toaster />
+    </div>
+  );
 }
