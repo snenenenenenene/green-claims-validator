@@ -18,16 +18,16 @@ import MultipleChoiceNode from "@/components/dashboard/multipleChoiceNode";
 import EndNode from "@/components/dashboard/endNode";
 import StartNode from "@/components/dashboard/startNode";
 import EditableEdge from "@/components/dashboard/editableEdge";
+import WeightNode from "@/components/dashboard/weightNode";
 import useStore from "@/lib/store";
 import { Settings } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { saveAs } from "file-saver";
-import WeightNode from "@/components/dashboard/weightNode";
 
 const nodeTypes = {
   yesNo: YesNoNode,
   singleChoice: SingleChoiceNode,
-  multipleChoice: MultipleChoiceNode,
+  multipleChoice: SingleChoiceNode,
   endNode: EndNode,
   startNode: StartNode,
   weightNode: WeightNode,
@@ -73,22 +73,85 @@ const InstancePage = ({ params }) => {
 
   const { project } = useReactFlow();
 
+  const updateNodesWithLogic = (nodes, edges, allCharts) => {
+    return nodes.map(node => {
+      const connectedEdges = edges.filter(edge => edge.source === node.id || edge.target === node.id);
+
+      if (node.type === "weightNode") {
+        const nextEdge = connectedEdges.find(edge => edge.source === node.id);
+        node.data.nextNodeId = nextEdge ? nextEdge.target : null;
+        node.data.options = [
+          {
+            label: "DEFAULT",
+            nextNodeId: nextEdge ? nextEdge.target : null
+          }
+        ];
+      } else if (node.type === "yesNo" || node.type === "singleChoice" || node.type === "multipleChoice") {
+        node.data.options.forEach(option => {
+          const correspondingEdge = connectedEdges.find(edge => edge.source === node.id && edge.sourceHandle === option.label);
+          if (correspondingEdge) {
+            option.nextNodeId = correspondingEdge.target;
+          }
+        });
+      } else if (node.type === "endNode") {
+        if (node.data.endType === "redirect") {
+          const targetChart = allCharts.find(chart => chart.name === node.data.redirectTab);
+          if (targetChart) {
+            const startNode = targetChart.initialNodes.find(n => n.type === "startNode");
+            if (startNode) {
+              node.data.nextNodeId = startNode.id;
+              node.data.options = [
+                {
+                  label: "DEFAULT",
+                  nextNodeId: startNode.id
+                }
+              ];
+            } else {
+              console.error(`Start node not found in chart: ${node.data.redirectTab}`);
+            }
+          } else {
+            console.error(`Target chart not found: ${node.data.redirectTab}`);
+          }
+        } else {
+          const nextEdge = connectedEdges.find(edge => edge.source === node.id);
+          node.data.nextNodeId = nextEdge ? nextEdge.target : "-1";
+          node.data.options = [
+            {
+              label: "DEFAULT",
+              nextNodeId: "-1"
+            }
+          ];
+        }
+      } else if (node.type === "startNode") {
+        const nextEdge = connectedEdges.find(edge => edge.source === node.id);
+        node.data.nextNodeId = nextEdge ? nextEdge.target : null;
+      }
+
+      return node;
+    });
+  };
+
   useEffect(() => {
     const instanceId = decodeURIComponent(params.instanceId);
     const instance = chartInstances.find(
-      (instance) => instance.name === instanceId,
+      (instance) => instance.name === instanceId
     );
 
     if (instance) {
       if (currentInstance?.name !== instance.name) {
         console.log("Setting current instance:", instance);
         setCurrentInstance(instance);
-        setNodes(instance.initialNodes);
+        const updatedNodes = updateNodesWithLogic(instance.initialNodes, instance.initialEdges, chartInstances);
+        setNodes(updatedNodes);
         setEdges(instance.initialEdges);
         setNewColor(instance.color || "#80B500");
         setOnePageMode(instance.onePageMode || false);
         setNewTabName(instance.name);
-        setNodesAndEdges(instance.name, instance.initialNodes, instance.initialEdges);
+        setNodesAndEdges(
+          instance.name,
+          updatedNodes,
+          instance.initialEdges
+        );
       }
     } else {
       if (currentInstance !== null) {
@@ -101,7 +164,14 @@ const InstancePage = ({ params }) => {
         setNewTabName("");
       }
     }
-  }, [params.instanceId, chartInstances, currentInstance, setNodes, setEdges, setNodesAndEdges]);
+  }, [
+    params.instanceId,
+    chartInstances,
+    currentInstance,
+    setNodes,
+    setEdges,
+    setNodesAndEdges,
+  ]);
 
   const onDragOver = useCallback((event) => {
     event.preventDefault();
@@ -112,12 +182,12 @@ const InstancePage = ({ params }) => {
     (event) => {
       event.preventDefault();
 
-      const type = event.dataTransfer.getData('application/reactflow');
+      const type = event.dataTransfer.getData("application/reactflow");
       const position = project({ x: event.clientX, y: event.clientY });
       let newNode;
 
       switch (type) {
-        case 'yesNo':
+        case "yesNo":
           newNode = {
             id: `${+new Date()}`,
             type,
@@ -125,18 +195,18 @@ const InstancePage = ({ params }) => {
             data: {
               label: `${type} node`,
               options: [
-                { label: 'yes', nextNodeId: null },
-                { label: 'no', nextNodeId: null }
+                { label: "yes", nextNodeId: null },
+                { label: "no", nextNodeId: null },
               ],
-              endType: 'end',
-              redirectTab: '',
+              endType: "end",
+              redirectTab: "",
               weight: 1,
             },
           };
           break;
 
-        case 'singleChoice':
-        case 'multipleChoice':
+        case "singleChoice":
+        case "multipleChoice":
           newNode = {
             id: `${+new Date()}`,
             type,
@@ -144,12 +214,27 @@ const InstancePage = ({ params }) => {
             data: {
               label: `${type} node`,
               options: [
-                { label: 'Option 1', nextNodeId: null },
-                { label: 'Option 2', nextNodeId: null }
+                { label: "Option 1", nextNodeId: null },
+                { label: "Option 2", nextNodeId: null },
               ],
-              endType: 'end',
-              redirectTab: '',
+              endType: "end",
+              redirectTab: "",
               weight: 1,
+            },
+          };
+          break;
+
+        case "weightNode":
+          newNode = {
+            id: `${+new Date()}`,
+            type,
+            position,
+            data: {
+              label: `${type} node`,
+              weight: 1,
+              nextNodeId: null,
+              previousQuestionIds: [],
+              options: [{ label: "DEFAULT", nextNodeId: null }],
             },
           };
           break;
@@ -161,11 +246,9 @@ const InstancePage = ({ params }) => {
             position,
             data: {
               label: `${type} node`,
-              options: [
-                { label: "DEFAULT", nextNodeId: null }
-              ],
-              endType: 'end',
-              redirectTab: '',
+              options: [{ label: "DEFAULT", nextNodeId: null }],
+              endType: "end",
+              redirectTab: "",
               weight: 1,
             },
           };
@@ -175,8 +258,8 @@ const InstancePage = ({ params }) => {
       console.log("Adding new node:", newNode);
       const updatedNodes = [...nodes, newNode];
       setNodes(updatedNodes);
-      setNodesAndEdges(currentInstance?.name || '', updatedNodes, edges);
-      toast.success('Node added.');
+      setNodesAndEdges(currentInstance?.name || "", updatedNodes, edges);
+      toast.success("Node added.");
     },
     [project, setNodes, setNodesAndEdges, currentInstance, edges, nodes]
   );
@@ -184,12 +267,15 @@ const InstancePage = ({ params }) => {
   const onConnect = useCallback(
     (params) => {
       console.log("Connecting nodes with params:", params);
-      const newEdges = addEdge({ ...params, type: 'editableEdge' }, edges);
+      const newEdges = addEdge({ ...params, type: "editableEdge" }, edges);
 
+      const updatedNodes = updateNodesWithLogic(nodes, newEdges, chartInstances);
+
+      setNodes(updatedNodes);
       setEdges(newEdges);
-      setNodesAndEdges(currentInstance?.name || '', nodes, newEdges);
+      setNodesAndEdges(currentInstance?.name || "", updatedNodes, newEdges);
     },
-    [setEdges, setNodesAndEdges, currentInstance, nodes, edges]
+    [setEdges, setNodesAndEdges, currentInstance, nodes, edges, chartInstances]
   );
 
   const handleSaveSettings = () => {
@@ -225,15 +311,24 @@ const InstancePage = ({ params }) => {
     setSelectedVersion(selectedVersion);
 
     const versionData = currentInstance?.publishedVersions?.find(
-      (version) => version.version.toString() === selectedVersion,
+      (version) => version.version.toString() === selectedVersion
     );
 
     if (versionData) {
       const { initialNodes, initialEdges } = versionData;
-      setNodes(initialNodes);
+      const updatedNodes = updateNodesWithLogic(initialNodes, initialEdges, chartInstances);
+      setNodes(updatedNodes);
       setEdges(initialEdges);
-      setNodesAndEdges(currentInstance?.name || '', initialNodes, initialEdges);
-      console.log("Reverting to selected version with nodes and edges:", initialNodes, initialEdges);
+      setNodesAndEdges(
+        currentInstance?.name || "",
+        updatedNodes,
+        initialEdges
+      );
+      console.log(
+        "Reverting to selected version with nodes and edges:",
+        initialNodes,
+        initialEdges
+      );
       toast.success("Reverted to selected version.");
     }
   };
@@ -348,7 +443,7 @@ const InstancePage = ({ params }) => {
                     {currentInstance?.publishedVersions?.map((version) => (
                       <option key={version.version} value={version.version}>
                         {`${version.message} - ${new Date(
-                          version.date,
+                          version.date
                         ).toLocaleString()}`}
                       </option>
                     ))}
@@ -358,7 +453,7 @@ const InstancePage = ({ params }) => {
                       className="btn btn-warning mt-2"
                       onClick={() =>
                         useStore.getState().revertToGlobalCommit(
-                          selectedGlobalVersion,
+                          selectedGlobalVersion
                         )
                       }
                     >

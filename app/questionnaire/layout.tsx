@@ -1,10 +1,12 @@
 "use client";
+
 import { useEffect, useState, useRef, Suspense } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import useStore from "@/lib/store";
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import axios from "axios";
+import { generateQuestionsFromAllCharts } from "@/lib/utils";
 
 function LayoutContent() {
   const { chartInstances, currentQuestionnaireTab, setCurrentQuestionnaireTab } = useStore((state) => ({
@@ -14,57 +16,75 @@ function LayoutContent() {
   }));
 
   const [claim, setClaim] = useState<string>("Be a hero, fly carbon zero");
+  const [currentQuestion, setCurrentQuestion] = useState<any>(null);
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const router = useRouter();
   const hasInitialized = useRef(false); // To prevent infinite loop
 
-  // Helper function to remove publishedVersions from chartInstances
-  const sanitizeChartInstances = (chartInstances: any[]) => {
-    return chartInstances.map(({ publishedVersions, ...rest }) => rest);
-  };
-
   useEffect(() => {
-    console.log("LayoutContent useEffect triggered");
+    console.log("LayoutContent useEffect triggered - Initial loading");
 
-    // Sanitize chartInstances by removing publishedVersions
-    const sanitizedChartInstances = sanitizeChartInstances(chartInstances);
-
-    console.log("Current Questionnaire Tab:", currentQuestionnaireTab);
-    console.log("Chart Instances:", sanitizedChartInstances);
-
-    // Ensure chart instances are loaded
-    if (sanitizedChartInstances.length === 0) {
-      console.log("Chart instances not loaded yet.");
-      return;
-    }
+    const allQuestions = generateQuestionsFromAllCharts(chartInstances);
+    console.log("All generated questions:", allQuestions);
 
     const chart = searchParams.get("chart");
-    const question = searchParams.get("question");
+    const questionId = searchParams.get("question");
 
     if (!hasInitialized.current) {
-      const firstChart = sanitizedChartInstances[0];
-      console.log("First Chart Name:", firstChart.name);
+      const currentInstance = chartInstances.find((ci) => ci.name === chart);
+      if (!currentInstance) {
+        console.error("Chart not found:", chart);
+        return;
+      }
 
-      if (!chart || !question) {
-        console.log("No chart or question in the URL, setting default chart and question.");
-        setCurrentQuestionnaireTab(firstChart.name);
+      setCurrentQuestionnaireTab(currentInstance.name);
 
-        const firstValidQuestion = firstChart.initialNodes.find(node => !node.skipRender);
-        if (firstValidQuestion) {
-          console.log("Redirecting to the first valid question in the first chart.");
-          router.replace(`/questionnaire?chart=${firstChart.name}&question=${firstValidQuestion.id}&claim=${encodeURIComponent(claim)}`);
-        } else {
-          console.error("No valid question found in the first chart.");
-        }
-      } else if (currentQuestionnaireTab !== firstChart.name) {
-        console.log("Setting default questionnaire tab to:", firstChart.name);
-        setCurrentQuestionnaireTab(firstChart.name);
+      const generatedQuestions = allQuestions.filter(q => q.previousQuestionIds.includes(questionId) || q.id === questionId);
+      console.log("Generated Questions:", generatedQuestions);
+
+      const foundQuestion = generatedQuestions.find(q => q.id === questionId);
+
+      if (foundQuestion) {
+        setCurrentQuestion(foundQuestion);
+      } else {
+        console.error("Question not found, redirecting to the first valid question.");
+        const firstValidQuestion = generatedQuestions[0];
+        router.replace(`/questionnaire?chart=${chart}&question=${firstValidQuestion.id}&claim=${encodeURIComponent(claim)}`);
       }
 
       hasInitialized.current = true;
     }
   }, [chartInstances, currentQuestionnaireTab, setCurrentQuestionnaireTab, router, claim, searchParams]);
+
+  useEffect(() => {
+    console.log("ASDASJBDIABOASBDSA")
+    if (currentQuestion?.type === "weightNode" || currentQuestion?.skipRender) {
+      const nextNodeId = currentQuestion.options[0]?.nextQuestionId;
+      console.log(`Skipping ${currentQuestion.type} and moving to next question with ID: ${nextNodeId}`);
+      router.replace(`/questionnaire?chart=${searchParams.get("chart")}&question=${nextNodeId}&claim=${encodeURIComponent(claim)}`);
+    } else if (currentQuestion?.type === "endNode" && currentQuestion?.endType === "redirect") {
+      console.log("IS THIS DOING ANYTHING")
+      const nextNodeId = currentQuestion.options[0]?.nextQuestionId;
+      console.log(`Redirecting to chart ${currentQuestion.redirectTab} and start node with ID: ${nextNodeId}`);
+      router.replace(`/questionnaire?chart=${currentQuestion.redirectTab}&question=${nextNodeId}&claim=${encodeURIComponent(claim)}`);
+    }
+  }, [currentQuestion, router, searchParams, claim]);
+
+  const handleNext = () => {
+    if (currentQuestion) {
+      const nextNodeId = currentQuestion.options?.[0]?.nextQuestionId || null;
+
+      console.log("Handling next question. Current question:", currentQuestion);
+      console.log("Next Node ID:", nextNodeId);
+
+      if (nextNodeId) {
+        router.push(`/questionnaire?chart=${searchParams.get("chart")}&question=${nextNodeId}&claim=${encodeURIComponent(claim)}`);
+      } else {
+        console.error("No next node ID found");
+      }
+    }
+  };
 
   useEffect(() => {
     const fetchClaim = async () => {
@@ -86,7 +106,21 @@ function LayoutContent() {
     fetchClaim();
   }, [status, session, searchParams]);
 
-  return null; // No direct UI from layout; it's all handled in the page
+  if (!currentQuestion) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <div>
+      <h1>{currentQuestion.question}</h1>
+      {currentQuestion.options && currentQuestion.options.map((option: any, index: number) => (
+        <button key={index} onClick={handleNext}>
+          {option.label}
+        </button>
+      ))}
+      <button onClick={handleNext}>Volgende</button>
+    </div>
+  );
 }
 
 export default function QuestionnaireLayout({ children }: { children: React.ReactNode }) {

@@ -10,8 +10,6 @@ const YesNoQuestion: React.FC<YesNoQuestionProps> = ({
   question,
   onAnswer,
 }) => {
-  console.log("WALGOOM")
-  console.log(question)
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
   const handleOptionChange = (option: string) => {

@@ -6,9 +6,7 @@ import { generateQuestionsFromChart } from "@/lib/utils";
 
 interface NodeData {
   label: string;
-  options?: { label: string; nextNodeId?: string }[];
-  endType?: string;
-  redirectTab?: string;
+  options?: { label: string; nextNodeId?: string, nextChartId?: string, nextChartName?: string }[];
 }
 
 interface Node {
@@ -105,69 +103,13 @@ const useStore = create<StoreState>(
         });
       },
       setNodesAndEdges: (instanceName, nodes, edges) => {
-        console.log(`Updating nodes and edges for instance: ${instanceName}`);
-        console.log("Nodes:", nodes);
-        console.log("Edges:", edges);
-
-        const updatedNodes = nodes.map((node) => {
-          console.log(`Processing node: ${node.id}, type: ${node.type}`);
-          if (node.data.options) {
-            const updatedOptions = node.data.options.map((option) => {
-              console.log(`Processing option: ${option.label}`);
-              
-              const sourceHandleValue =
-                node.type === "yesNo" ? option.label : `option-${option.label}-next`;
-
-              const correspondingEdge = edges.find(
-                (edge) =>
-                  edge.source === node.id &&
-                  edge.sourceHandle === sourceHandleValue
-              );
-
-              console.log(
-                `For node ${node.id}, option "${option.label}" (sourceHandleValue: ${sourceHandleValue}): corresponding edge found:`,
-                correspondingEdge
-              );
-
-              return {
-                ...option,
-                nextNodeId: correspondingEdge ? correspondingEdge.target : null,
-              };
-            });
-
-            console.log(`Updated options for node ${node.id}:`, updatedOptions);
-            return {
-              ...node,
-              data: {
-                ...node.data,
-                options: updatedOptions,
-              },
-            };
-          } else {
-            return {
-              ...node,
-              data: {
-                ...node.data,
-                options: [
-                  {
-                    label: "DEFAULT",
-                    nextNodeId: null,
-                  },
-                ],
-              },
-            };
-          }
-        });
-
         set({
           chartInstances: get().chartInstances.map((instance) =>
             instance.name === instanceName
-              ? { ...instance, initialNodes: updatedNodes, initialEdges: edges }
+              ? { ...instance, initialNodes: nodes, initialEdges: edges }
               : instance
           ),
         });
-
-        console.log("Updated chart instances:", get().chartInstances);
       },
       setOnePage: (value) => {
         const { currentDashboardTab, chartInstances } = get();
@@ -184,14 +126,14 @@ const useStore = create<StoreState>(
           chartInstances: get().chartInstances.map((instance) =>
             instance.name === instanceName
               ? {
-                ...instance,
-                initialNodes: instance.initialNodes.filter(
-                  (node) => node.id !== nodeId
-                ),
-                initialEdges: instance.initialEdges.filter(
-                  (edge) => edge.source !== nodeId && edge.target !== nodeId
-                ),
-              }
+                  ...instance,
+                  initialNodes: instance.initialNodes.filter(
+                    (node) => node.id !== nodeId
+                  ),
+                  initialEdges: instance.initialEdges.filter(
+                    (edge) => edge.source !== nodeId && edge.target !== nodeId
+                  ),
+                }
               : instance
           ),
         });
@@ -213,15 +155,15 @@ const useStore = create<StoreState>(
           chartInstances: chartInstances.map((instance) =>
             instance.name === currentDashboardTab
               ? {
-                ...instance,
-                publishedVersions: [
-                  ...(instance.publishedVersions || []),
-                  {
-                    version: (instance.publishedVersions?.length || 0) + 1,
-                    date: new Date().toISOString(),
-                  },
-                ],
-              }
+                  ...instance,
+                  publishedVersions: [
+                    ...(instance.publishedVersions || []),
+                    {
+                      version: (instance.publishedVersions?.length || 0) + 1,
+                      date: new Date().toISOString(),
+                    },
+                  ],
+                }
               : instance
           ),
         });
@@ -254,7 +196,9 @@ const useStore = create<StoreState>(
           let questions = generateQuestionsFromChart(currentInstance);
           let index = 0;
 
-          console.log(questions[index]);
+          // Skip initial weight nodes
+        
+          console.log(questions[index])
           while (questions[index] && questions[index].type === "weightNode") {
             const accumulatedWeight = get().currentWeight * questions[index].weight;
             set({ currentWeight: accumulatedWeight });
@@ -271,7 +215,7 @@ const useStore = create<StoreState>(
       setCurrentWeight: (weight) => set({ currentWeight: weight }),
       resetCurrentWeight: () => set({ currentWeight: 1 }),
       getCurrentWeight: () => get().currentWeight,
-      incrementCurrentQuestionIndex: () => set((state) => ({ currentQuestionIndex: state.currentQuestionIndex + 1 })),
+      incrementCurrentQuestionIndex: () => set(state => ({ currentQuestionIndex: state.currentQuestionIndex + 1 })),
       resetCurrentQuestionIndex: () => set({ currentQuestionIndex: 0 }),
       addLocalCommit: (message) => {
         const { chartInstances, currentDashboardTab, localCommits } = get();
