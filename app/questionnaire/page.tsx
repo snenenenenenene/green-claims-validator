@@ -74,29 +74,42 @@ export default function QuestionPage() {
 
   useEffect(() => {
     if (currentQuestion) {
-      // Automatically skip non-renderable nodes
-      if (["weightNode", "startNode", "endNode"].includes(currentQuestion.type)) {
-        const weightToAdd = currentQuestion.data.weight || 1; // Use the weight from the node
-        if (currentQuestion.type === "weightNode") {
-          const currentWeight = getCurrentWeight();
-          console.log(`Current weight before update: ${currentWeight}`);
-          console.log(`Multiplying weight by ${weightToAdd}`);
-          const newWeight = currentWeight * weightToAdd;
-          updateCurrentWeight(newWeight); // Multiply the current weight
-          console.log(`New weight after update: ${newWeight}`);
-        }
-
-        // Auto-skip the node
-        const nextNodeId = currentQuestion.data.nextNodeId || currentQuestion.options?.[0]?.nextNodeId;
-        if (nextNodeId) {
-          console.log(`Auto-skipping ${currentQuestion.type} and moving to next question with ID: ${nextNodeId}`);
-          router.replace(`/questionnaire?question=${nextNodeId}&claim=${encodeURIComponent(claim)}`);
-        } else {
-          console.error("No next node ID found for skipping.");
-        }
-      }
+      handleCurrentQuestion(currentQuestion);
     }
   }, [currentQuestion]);
+
+  const handleCurrentQuestion = (question: any) => {
+    if (["weightNode", "startNode", "endNode"].includes(question.type)) {
+      processNode(question);
+    }
+  };
+
+  const processNode = (question: any) => {
+    if (question.type === "weightNode") {
+      const weightToAdd = question.data.weight || 1;
+      const currentWeight = getCurrentWeight();
+      console.log(`Current weight before update: ${currentWeight}`);
+      console.log(`Multiplying weight by ${weightToAdd}`);
+      const newWeight = currentWeight * weightToAdd;
+      updateCurrentWeight(newWeight); // Multiply the current weight
+      console.log(`New weight after update: ${newWeight}`);
+    }
+
+    if (question.type === "endNode") {
+      handleEndNode(question);
+    } else {
+      moveToNextNode(question.data.nextNodeId || question.options?.[0]?.nextNodeId);
+    }
+  };
+
+  const moveToNextNode = (nextNodeId: string | null) => {
+    if (nextNodeId) {
+      console.log(`Moving to next question with ID: ${nextNodeId}`);
+      router.replace(`/questionnaire?question=${nextNodeId}&claim=${encodeURIComponent(claim)}`);
+    } else {
+      console.error("No next node ID found for moving.");
+    }
+  };
 
   const handleNextQuestion = () => {
     if (!currentQuestion) return;
@@ -157,7 +170,13 @@ export default function QuestionPage() {
   const handleEndNode = (nextNode: any) => {
     console.log("Handling end node:", nextNode);
 
-    if (nextNode.data.endType === "redirect" && nextNode.data.redirectTab) {
+    // Check if the node is an end type or has a nextNodeId of -1
+    if (nextNode.data.endType === "end" || nextNode.data.nextNodeId === "-1") {
+      console.log("Quiz has ended. Redirecting to results.");
+      toast.success("Questionnaire completed!");
+      router.push(`/questionnaire/results?weight=${getCurrentWeight()}`);
+    } else if (nextNode.data.endType === "redirect" && nextNode.data.redirectTab) {
+      // Handle redirection to another chart
       const redirectInstance = chartInstances.find(instance => instance.name === nextNode.data.redirectTab);
       if (redirectInstance) {
         console.log("Redirecting to another chart:", nextNode.data.redirectTab);
@@ -182,12 +201,10 @@ export default function QuestionPage() {
         toast.error("Redirect tab not found.");
       }
     } else {
-      console.log("End of the questionnaire reached. Redirecting to results.");
-      toast.success("Questionnaire completed!");
-      router.push(`/questionnaire/results?weight=${getCurrentWeight()}`);
+      console.error("Invalid end node configuration.");
+      toast.error("An error occurred while processing the end node.");
     }
   };
-
 
   return (
     <div className="flex h-screen w-full flex-col justify-between px-10 lg:px-20 xl:px-28 text-dark-gray">
