@@ -19,6 +19,7 @@ export default function QuestionPage() {
   }));
 
   const [questions, setQuestions] = useState<any[]>([]);
+  const [visualQuestions, setVisualQuestions] = useState<any[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<any | null>(null);
 
@@ -42,6 +43,13 @@ export default function QuestionPage() {
 
     const generatedQuestions = generateQuestionsFromAllCharts(chartInstances);
     console.log("Generated Questions:", generatedQuestions);
+
+    // Filter out non-visual questions for the progress bar
+    const visualOnlyQuestions = generatedQuestions.filter(
+      (q) => !["weightNode", "startNode", "endNode"].includes(q.type)
+    );
+
+    setVisualQuestions(visualOnlyQuestions);
 
     const foundQuestion = generatedQuestions.find((q) => q.id === questionId);
 
@@ -215,10 +223,10 @@ export default function QuestionPage() {
         <div className="relative h-12 w-full rounded-full bg-gray-200 p-2 dark:bg-gray-700">
           <div
             className="h-full rounded-full bg-green transition-all duration-500 ease-in-out dark:bg-green"
-            style={{ width: `${((questions.findIndex((q) => q.id === questionId) + 1) / questions.length) * 100}%` }}
+            style={{ width: `${((visualQuestions.findIndex((q) => q.id === questionId) + 1) / visualQuestions.length) * 100}%` }}
           >
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white">
-              {Math.round(((questions.findIndex((q) => q.id === questionId) + 1) / questions.length) * 100)}%
+              {Math.round(((visualQuestions.findIndex((q) => q.id === questionId) + 1) / visualQuestions.length) * 100)}%
             </span>
           </div>
         </div>

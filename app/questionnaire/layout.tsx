@@ -107,7 +107,7 @@ function LayoutContent() {
   }, [status, session, searchParams]);
 
   if (!currentQuestion) {
-    return <div>Loading...</div>;
+    return <></>;
   }
 
   return (
