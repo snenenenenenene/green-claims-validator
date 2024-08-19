@@ -67,6 +67,7 @@ interface StoreState {
   setCurrentWeight: (weight: number) => void;
   resetCurrentWeight: () => void;
   getCurrentWeight: () => number;
+  updateCurrentWeight: (weightMultiplier: number) => void;
   incrementCurrentQuestionIndex: () => void;
   resetCurrentQuestionIndex: () => void;
 }
@@ -197,8 +198,6 @@ const useStore = create<StoreState>(
           let index = 0;
 
           // Skip initial weight nodes
-        
-          console.log(questions[index])
           while (questions[index] && questions[index].type === "weightNode") {
             const accumulatedWeight = get().currentWeight * questions[index].weight;
             set({ currentWeight: accumulatedWeight });
@@ -215,8 +214,15 @@ const useStore = create<StoreState>(
       setCurrentWeight: (weight) => set({ currentWeight: weight }),
       resetCurrentWeight: () => set({ currentWeight: 1 }),
       getCurrentWeight: () => get().currentWeight,
+
+      // The function to multiply and update the current weight
+      updateCurrentWeight: (weightMultiplier: number) => set((state) => ({
+        currentWeight: state.currentWeight * weightMultiplier,
+      })),
+
       incrementCurrentQuestionIndex: () => set(state => ({ currentQuestionIndex: state.currentQuestionIndex + 1 })),
       resetCurrentQuestionIndex: () => set({ currentQuestionIndex: 0 }),
+
       addLocalCommit: (message) => {
         const { chartInstances, currentDashboardTab, localCommits } = get();
         const currentInstance = chartInstances.find(

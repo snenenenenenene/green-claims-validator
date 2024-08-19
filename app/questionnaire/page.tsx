@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from "next/navigation";
 import { Toaster, toast } from "react-hot-toast";
 import useStore from "@/lib/store";
 import YesNoQuestion from "@/components/questionnaire/yesNoQuestion";
@@ -11,24 +11,24 @@ import { generateQuestionsFromAllCharts } from "@/lib/utils";
 export default function QuestionPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { chartInstances, resetCurrentWeight, getCurrentWeight } = useStore((state) => ({
+  const { chartInstances, resetCurrentWeight, getCurrentWeight, updateCurrentWeight } = useStore((state) => ({
     chartInstances: state.chartInstances,
     resetCurrentWeight: state.resetCurrentWeight,
     getCurrentWeight: state.getCurrentWeight,
+    updateCurrentWeight: state.setCurrentWeight,
   }));
 
   const [questions, setQuestions] = useState<any[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<any | null>(null);
-  const [isRedirecting, setIsRedirecting] = useState(false);
 
-  const questionId = searchParams.get('question');
-  const claim = searchParams.get('claim') || "Be a hero, fly carbon zero";
+  const questionId = searchParams.get("question");
+  const claim = searchParams.get("claim") || "Be a hero, fly carbon zero";
 
   useEffect(() => {
     console.log("useEffect triggered - Initial loading");
 
-    if (chartInstances.length > 0 && !isRedirecting) {
+    if (chartInstances.length > 0) {
       loadQuestion(questionId);
     }
   }, [chartInstances, questionId]);
@@ -36,30 +36,23 @@ export default function QuestionPage() {
   const loadQuestion = (questionId: string | null) => {
     console.log("Loading question based on query parameters");
 
+    if (!questionId) {
+      resetCurrentWeight(); // Reset weight at the start of a new questionnaire
+    }
+
     const generatedQuestions = generateQuestionsFromAllCharts(chartInstances);
     console.log("Generated Questions:", generatedQuestions);
 
-    if (!questionId) {
-      // If no question ID is provided, redirect to the first node ID in the first chart
-      const firstNode = generatedQuestions[0];
-      if (firstNode) {
-        console.log("Redirecting to the first node ID in the first chart");
-        router.replace(`/questionnaire?question=${firstNode.id}&claim=${encodeURIComponent(claim)}`);
-      } else {
-        console.error("No valid question found in the generated questions.");
-      }
-      return;
-    }
-
-    const foundQuestion = generatedQuestions.find(q => q.id === questionId);
+    const foundQuestion = generatedQuestions.find((q) => q.id === questionId);
 
     if (foundQuestion) {
+      normalizeOptions(foundQuestion);
       console.log("Found question:", JSON.stringify(foundQuestion, null, 2));
       setQuestions(generatedQuestions);
       setCurrentQuestion(foundQuestion);
     } else {
       console.log("Question not found, redirecting to the first valid question.");
-      const firstValidQuestion = generatedQuestions.find(q => !q.skipRender);
+      const firstValidQuestion = generatedQuestions.find((q) => !q.skipRender);
       if (firstValidQuestion) {
         router.replace(`/questionnaire?question=${firstValidQuestion.id}&claim=${encodeURIComponent(claim)}`);
       } else {
@@ -68,13 +61,42 @@ export default function QuestionPage() {
     }
   };
 
-  useEffect(() => {
-    if (currentQuestion?.skipRender || currentQuestion?.type === "weightNode") {
-      const nextNodeId = currentQuestion.options[0]?.nextQuestionId;
-      console.log(`Auto-skipping ${currentQuestion.type} and moving to next question with ID: ${nextNodeId}`);
-      router.replace(`/questionnaire?question=${nextNodeId}&claim=${encodeURIComponent(claim)}`);
+  const normalizeOptions = (question: any) => {
+    if (question.data && Array.isArray(question.data.options)) {
+      question.data.options = question.data.options.map((option: any) => {
+        if (typeof option === "string") {
+          return { label: option, nextNodeId: null };
+        }
+        return option;
+      });
     }
-  }, [currentQuestion, router, claim]);
+  };
+
+  useEffect(() => {
+    if (currentQuestion) {
+      // Automatically skip non-renderable nodes
+      if (["weightNode", "startNode", "endNode"].includes(currentQuestion.type)) {
+        const weightToAdd = currentQuestion.data.weight || 1; // Use the weight from the node
+        if (currentQuestion.type === "weightNode") {
+          const currentWeight = getCurrentWeight();
+          console.log(`Current weight before update: ${currentWeight}`);
+          console.log(`Multiplying weight by ${weightToAdd}`);
+          const newWeight = currentWeight * weightToAdd;
+          updateCurrentWeight(newWeight); // Multiply the current weight
+          console.log(`New weight after update: ${newWeight}`);
+        }
+
+        // Auto-skip the node
+        const nextNodeId = currentQuestion.data.nextNodeId || currentQuestion.options?.[0]?.nextNodeId;
+        if (nextNodeId) {
+          console.log(`Auto-skipping ${currentQuestion.type} and moving to next question with ID: ${nextNodeId}`);
+          router.replace(`/questionnaire?question=${nextNodeId}&claim=${encodeURIComponent(claim)}`);
+        } else {
+          console.error("No next node ID found for skipping.");
+        }
+      }
+    }
+  }, [currentQuestion]);
 
   const handleNextQuestion = () => {
     if (!currentQuestion) return;
@@ -103,15 +125,13 @@ export default function QuestionPage() {
     let nextNodeId: string | null = null;
 
     if (currentQuestion.type === "singleChoice" || currentQuestion.type === "yesNo") {
-      const selectedOption = currentQuestion.options?.find(
+      const selectedOption = currentQuestion.data.options?.find(
         (option: any) => option.label === selectedAnswer
       );
 
-      if (selectedOption && selectedOption.nextQuestionId) {
-        nextNodeId = selectedOption.nextQuestionId;
+      if (selectedOption && selectedOption.nextNodeId) {
+        nextNodeId = selectedOption.nextNodeId;
       }
-    } else if (currentQuestion.type === "endNode" && currentQuestion.endType === "redirect") {
-      nextNodeId = currentQuestion.nextNodeId;
     }
 
     console.log("Next Node ID:", nextNodeId);
@@ -119,7 +139,7 @@ export default function QuestionPage() {
   };
 
   const findQuestionById = (questionId: string) => {
-    return questions.find(q => q.id === questionId) || null;
+    return questions.find((q) => q.id === questionId) || null;
   };
 
   const handleNodeRedirection = (nextNode: any) => {
@@ -137,17 +157,37 @@ export default function QuestionPage() {
   const handleEndNode = (nextNode: any) => {
     console.log("Handling end node:", nextNode);
 
-    if (nextNode.endType === "redirect" && nextNode.redirectTab) {
-      console.log("Redirecting to another chart:", nextNode.redirectTab);
-      resetCurrentWeight();
+    if (nextNode.data.endType === "redirect" && nextNode.data.redirectTab) {
+      const redirectInstance = chartInstances.find(instance => instance.name === nextNode.data.redirectTab);
+      if (redirectInstance) {
+        console.log("Redirecting to another chart:", nextNode.data.redirectTab);
+        const generatedQuestions = generateQuestionsFromAllCharts(chartInstances);
 
-      // Redirect to the next node in the new chart
-      router.replace(`/questionnaire?question=${nextNode.nextNodeId || ''}&claim=${encodeURIComponent(claim)}`);
+        // Find the next node in the redirected chart
+        const nextNodeInRedirect = generatedQuestions.find(q => q.id === nextNode.data.nextNodeId);
+        if (nextNodeInRedirect) {
+          router.replace(`/questionnaire?question=${nextNodeInRedirect.id}&claim=${encodeURIComponent(claim)}`);
+        } else {
+          // Fallback to the first valid question in the redirected chart
+          const firstValidQuestion = generatedQuestions.find(q => q.data.label === nextNode.data.redirectTab && !q.skipRender);
+          if (firstValidQuestion) {
+            router.replace(`/questionnaire?question=${firstValidQuestion.id}&claim=${encodeURIComponent(claim)}`);
+          } else {
+            console.error("No valid question found in the redirected chart.");
+            toast.error("Failed to find the starting question in the redirected chart.");
+          }
+        }
+      } else {
+        console.error("Redirect tab not found in chart instances.");
+        toast.error("Redirect tab not found.");
+      }
     } else {
+      console.log("End of the questionnaire reached. Redirecting to results.");
       toast.success("Questionnaire completed!");
       router.push(`/questionnaire/results?weight=${getCurrentWeight()}`);
     }
   };
+
 
   return (
     <div className="flex h-screen w-full flex-col justify-between px-10 lg:px-20 xl:px-28 text-dark-gray">
@@ -158,10 +198,10 @@ export default function QuestionPage() {
         <div className="relative h-12 w-full rounded-full bg-gray-200 p-2 dark:bg-gray-700">
           <div
             className="h-full rounded-full bg-green transition-all duration-500 ease-in-out dark:bg-green"
-            style={{ width: `${((questions.findIndex(q => q.id === questionId) + 1) / questions.length) * 100}%` }}
+            style={{ width: `${((questions.findIndex((q) => q.id === questionId) + 1) / questions.length) * 100}%` }}
           >
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white">
-              {Math.round(((questions.findIndex(q => q.id === questionId) + 1) / questions.length) * 100)}%
+              {Math.round(((questions.findIndex((q) => q.id === questionId) + 1) / questions.length) * 100)}%
             </span>
           </div>
         </div>
@@ -169,17 +209,21 @@ export default function QuestionPage() {
       <div className="mx-8 my-4 mb-auto flex min-h-[30%] flex-col rounded-3xl bg-light-gray p-8">
         {currentQuestion ? (
           currentQuestion.type === "yesNo" ? (
-            <YesNoQuestion question={currentQuestion.question} onAnswer={setSelectedAnswer} />
+            <YesNoQuestion question={currentQuestion.data.label} options={currentQuestion.data.options} onAnswer={setSelectedAnswer} />
           ) : currentQuestion.type === "singleChoice" ? (
-            <SingleChoiceQuestion question={currentQuestion.label} options={currentQuestion.data.options} onAnswer={setSelectedAnswer} />
+            <SingleChoiceQuestion question={currentQuestion.data.label} options={currentQuestion.data.options} onAnswer={setSelectedAnswer} />
           ) : currentQuestion.type === "multipleChoice" ? (
-            <MultipleChoiceQuestion question={currentQuestion.label} options={currentQuestion.data.options} onAnswer={setSelectedAnswer as any} />
-          ) : <div>Unknown question type: {currentQuestion.type}</div>
-
-        ) : <div>No question available</div>}
+            <MultipleChoiceQuestion question={currentQuestion.data.label} options={currentQuestion.data.options} onAnswer={setSelectedAnswer as any} />
+          ) : (
+            <div>Unknown question type: {currentQuestion.type}</div>
+          )
+        ) : (
+          <div>No question available</div>
+        )}
         <button
           type="button"
-          className={`hover:bg-green-800 focus:ring-green-300 mt-auto w-40 rounded-full bg-green px-10 py-2.5 text-white focus:outline-none focus:ring-4 ${!selectedAnswer ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`hover:bg-green-800 focus:ring-green-300 mt-auto w-40 rounded-full bg-green px-10 py-2.5 text-white focus:outline-none focus:ring-4 ${!selectedAnswer ? "opacity-50 cursor-not-allowed" : ""
+            }`}
           onClick={handleNextQuestion}
           disabled={!selectedAnswer}
         >
