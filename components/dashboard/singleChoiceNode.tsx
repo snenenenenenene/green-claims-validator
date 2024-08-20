@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Handle, Position, useReactFlow } from "reactflow";
 import useStore from "@/lib/store";
 import { Trash2 } from "lucide-react";
+import { v4 as uuidv4 } from 'uuid'; // To generate unique IDs
 
 const SingleChoiceNode = ({ id, data, isConnectable }) => {
   const [label, setLabel] = useState(data.label);
@@ -25,7 +26,7 @@ const SingleChoiceNode = ({ id, data, isConnectable }) => {
     // Update nextNodeId for options based on current edges
     const edges = getEdges().filter((edge) => edge.source === id);
     const updatedOptions = options.map((option) => {
-      const correspondingEdge = edges.find((edge) => edge.sourceHandle === option.label);
+      const correspondingEdge = edges.find((edge) => edge.sourceHandle === `SCN-${id}-${option.id}-next`);
       return {
         ...option,
         nextNodeId: correspondingEdge ? correspondingEdge.target : null,
@@ -68,7 +69,8 @@ const SingleChoiceNode = ({ id, data, isConnectable }) => {
   };
 
   const handleAddOption = () => {
-    setOptions([...options, { label: "", nextNodeId: null }]);
+    const newOption = { id: uuidv4(), label: "", nextNodeId: null }; // Add unique ID to option
+    setOptions([...options, newOption]);
   };
 
   const handleRemoveOption = (index) => {
@@ -103,7 +105,7 @@ const SingleChoiceNode = ({ id, data, isConnectable }) => {
         className="w-full rounded border p-2"
       />
       {options.map((option, index) => (
-        <div key={index} className="relative mt-2 flex items-center">
+        <div key={option.id} className="relative mt-2 flex items-center">
           <input type="radio" name={`single-choice-${id}`} className="mr-2" />
           <div className="relative w-full">
             <input
@@ -122,7 +124,7 @@ const SingleChoiceNode = ({ id, data, isConnectable }) => {
           <Handle
             type="source"
             position={Position.Bottom}
-            id={`option-${option.label}-next`}
+            id={`SCN-${id}-${option.id}-next`}
             className="absolute bottom-0 left-1/2 h-4 w-4 -translate-x-1/2 transform bg-blue-500"
           />
         </div>

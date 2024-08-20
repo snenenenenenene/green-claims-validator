@@ -22,7 +22,7 @@ import WeightNode from "@/components/dashboard/weightNode";
 import useStore from "@/lib/store";
 import { Settings } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
-import { saveAs } from "file-saver";
+import { v4 as uuidv4 } from 'uuid';
 
 const nodeTypes = {
   yesNo: YesNoNode,
@@ -74,56 +74,95 @@ const InstancePage = ({ params }) => {
   const { project } = useReactFlow();
 
   const updateNodesWithLogic = (nodes, edges, allCharts) => {
-    return nodes.map(node => {
-      const connectedEdges = edges.filter(edge => edge.source === node.id || edge.target === node.id);
+    return nodes.map((node) => {
+      const connectedEdges = edges.filter(
+        (edge) => edge.source === node.id || edge.target === node.id
+      );
 
       if (node.type === "weightNode") {
-        const nextEdge = connectedEdges.find(edge => edge.source === node.id);
+        const nextEdge = connectedEdges.find((edge) => edge.source === node.id);
         node.data.nextNodeId = nextEdge ? nextEdge.target : null;
         node.data.options = [
           {
             label: "DEFAULT",
-            nextNodeId: nextEdge ? nextEdge.target : null
-          }
+            nextNodeId: nextEdge ? nextEdge.target : null,
+          },
         ];
-      } else if (node.type === "yesNo" || node.type === "singleChoice" || node.type === "multipleChoice") {
-        node.data.options.forEach(option => {
-          const correspondingEdge = connectedEdges.find(edge => edge.source === node.id && edge.sourceHandle === option.label);
-          if (correspondingEdge) {
-            option.nextNodeId = correspondingEdge.target;
-          }
+      } else if (node.type === "yesNo") {
+        // Ensure yesNo nodes do not have unnecessary properties
+        delete node.data.endType;
+        delete node.data.redirectTab;
+        delete node.data.weight;
+
+        node.data.options = node.data.options.map((option) => {
+          const correspondingEdge = connectedEdges.find(
+            (edge) =>
+              edge.source === node.id &&
+              edge.sourceHandle === option.label
+          );
+          return {
+            ...option,
+            nextNodeId: correspondingEdge ? correspondingEdge.target : null,
+          };
+        });
+      } else if (node.type === "singleChoice" || node.type === "multipleChoice") {
+        // Assign unique IDs to options if they don't have one
+        node.data.options = node.data.options.map((option) => ({
+          ...option,
+          id: option.id || uuidv4(),  // Assign a new unique id if not present
+        }));
+
+        // Update nextNodeId based on connected edges
+        node.data.options = node.data.options.map((option) => {
+          const correspondingEdge = connectedEdges.find(
+            (edge) =>
+              edge.source === node.id &&
+              edge.sourceHandle === `SCN-${node.id}-${option.id}-next`
+          );
+          return {
+            ...option,
+            nextNodeId: correspondingEdge ? correspondingEdge.target : null,
+          };
         });
       } else if (node.type === "endNode") {
         if (node.data.endType === "redirect") {
-          const targetChart = allCharts.find(chart => chart.name === node.data.redirectTab);
+          const targetChart = allCharts.find(
+            (chart) => chart.name === node.data.redirectTab
+          );
           if (targetChart) {
-            const startNode = targetChart.initialNodes.find(n => n.type === "startNode");
+            const startNode = targetChart.initialNodes.find(
+              (n) => n.type === "startNode"
+            );
             if (startNode) {
               node.data.nextNodeId = startNode.id;
               node.data.options = [
                 {
                   label: "DEFAULT",
-                  nextNodeId: startNode.id
-                }
+                  nextNodeId: startNode.id,
+                },
               ];
             } else {
-              console.error(`Start node not found in chart: ${node.data.redirectTab}`);
+              console.error(
+                `Start node not found in chart: ${node.data.redirectTab}`
+              );
             }
           } else {
             console.error(`Target chart not found: ${node.data.redirectTab}`);
           }
         } else {
-          const nextEdge = connectedEdges.find(edge => edge.source === node.id);
+          const nextEdge = connectedEdges.find(
+            (edge) => edge.source === node.id
+          );
           node.data.nextNodeId = nextEdge ? nextEdge.target : "-1";
           node.data.options = [
             {
               label: "DEFAULT",
-              nextNodeId: "-1"
-            }
+              nextNodeId: "-1",
+            },
           ];
         }
       } else if (node.type === "startNode") {
-        const nextEdge = connectedEdges.find(edge => edge.source === node.id);
+        const nextEdge = connectedEdges.find((edge) => edge.source === node.id);
         node.data.nextNodeId = nextEdge ? nextEdge.target : null;
       }
 
@@ -141,17 +180,17 @@ const InstancePage = ({ params }) => {
       if (currentInstance?.name !== instance.name) {
         console.log("Setting current instance:", instance);
         setCurrentInstance(instance);
-        const updatedNodes = updateNodesWithLogic(instance.initialNodes, instance.initialEdges, chartInstances);
+        const updatedNodes = updateNodesWithLogic(
+          instance.initialNodes,
+          instance.initialEdges,
+          chartInstances
+        );
         setNodes(updatedNodes);
         setEdges(instance.initialEdges);
         setNewColor(instance.color || "#80B500");
         setOnePageMode(instance.onePageMode || false);
         setNewTabName(instance.name);
-        setNodesAndEdges(
-          instance.name,
-          updatedNodes,
-          instance.initialEdges
-        );
+        setNodesAndEdges(instance.name, updatedNodes, instance.initialEdges);
       }
     } else {
       if (currentInstance !== null) {
@@ -214,8 +253,8 @@ const InstancePage = ({ params }) => {
             data: {
               label: `${type} node`,
               options: [
-                { label: "Option 1", nextNodeId: null },
-                { label: "Option 2", nextNodeId: null },
+                { id: uuidv4(), label: "Option 1", nextNodeId: null },
+                { id: uuidv4(), label: "Option 2", nextNodeId: null },
               ],
               endType: "end",
               redirectTab: "",
@@ -269,7 +308,11 @@ const InstancePage = ({ params }) => {
       console.log("Connecting nodes with params:", params);
       const newEdges = addEdge({ ...params, type: "editableEdge" }, edges);
 
-      const updatedNodes = updateNodesWithLogic(nodes, newEdges, chartInstances);
+      const updatedNodes = updateNodesWithLogic(
+        nodes,
+        newEdges,
+        chartInstances
+      );
 
       setNodes(updatedNodes);
       setEdges(newEdges);
@@ -316,7 +359,11 @@ const InstancePage = ({ params }) => {
 
     if (versionData) {
       const { initialNodes, initialEdges } = versionData;
-      const updatedNodes = updateNodesWithLogic(initialNodes, initialEdges, chartInstances);
+      const updatedNodes = updateNodesWithLogic(
+        initialNodes,
+        initialEdges,
+        chartInstances
+      );
       setNodes(updatedNodes);
       setEdges(initialEdges);
       setNodesAndEdges(
