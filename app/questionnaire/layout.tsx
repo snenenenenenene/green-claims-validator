@@ -46,10 +46,12 @@ function LayoutContent() {
       const foundQuestion = generatedQuestions.find(q => q.id === questionId);
 
       if (foundQuestion) {
+        console.log("Found question:", foundQuestion);
         setCurrentQuestion(foundQuestion);
       } else {
         console.error("Question not found, redirecting to the first valid question.");
         const firstValidQuestion = generatedQuestions[0];
+        console.log("Redirecting to first valid question with ID:", firstValidQuestion.id);
         router.replace(`/questionnaire?chart=${chart}&question=${firstValidQuestion.id}&claim=${encodeURIComponent(claim)}`);
       }
 
@@ -58,13 +60,14 @@ function LayoutContent() {
   }, [chartInstances, currentQuestionnaireTab, setCurrentQuestionnaireTab, router, claim, searchParams]);
 
   useEffect(() => {
-    console.log("ASDASJBDIABOASBDSA")
+    console.log("Processing current question type:", currentQuestion?.type);
+
     if (currentQuestion?.type === "weightNode" || currentQuestion?.skipRender) {
       const nextNodeId = currentQuestion.options[0]?.nextQuestionId;
       console.log(`Skipping ${currentQuestion.type} and moving to next question with ID: ${nextNodeId}`);
       router.replace(`/questionnaire?chart=${searchParams.get("chart")}&question=${nextNodeId}&claim=${encodeURIComponent(claim)}`);
     } else if (currentQuestion?.type === "endNode" && currentQuestion?.endType === "redirect") {
-      console.log("IS THIS DOING ANYTHING")
+      console.log("Handling endNode redirection");
       const nextNodeId = currentQuestion.options[0]?.nextQuestionId;
       console.log(`Redirecting to chart ${currentQuestion.redirectTab} and start node with ID: ${nextNodeId}`);
       router.replace(`/questionnaire?chart=${currentQuestion.redirectTab}&question=${nextNodeId}&claim=${encodeURIComponent(claim)}`);
@@ -73,10 +76,27 @@ function LayoutContent() {
 
   const handleNext = () => {
     if (currentQuestion) {
-      const nextNodeId = currentQuestion.options?.[0]?.nextQuestionId || null;
+      // console.log("Handling next question. Current question:", currentQuestion);
+      console.log("LOLOLOL", currentQuestion.type)
 
-      console.log("Handling next question. Current question:", currentQuestion);
-      console.log("Next Node ID:", nextNodeId);
+      let nextNodeId = null;
+
+      if (currentQuestion.type === "multipleChoice") {
+        console.log("Multiple choice question detected. Options:", currentQuestion.options);
+
+        // Find the DEFAULT option
+        const defaultOption = currentQuestion.options?.find(option => option.label === "DEFAULT");
+        nextNodeId = defaultOption?.nextNodeId || null;
+
+        console.log("Default option found:", defaultOption);
+        console.log("Next Node ID (from DEFAULT):", nextNodeId);
+      } else {
+        // Use the nextNodeId from the first option as a fallback
+        nextNodeId = currentQuestion.options?.[0]?.nextNodeId || null;
+        console.log("Handling other question type. Next Node ID:", nextNodeId);
+      }
+
+      console.log("Determined next node ID:", nextNodeId);
 
       if (nextNodeId) {
         router.push(`/questionnaire?chart=${searchParams.get("chart")}&question=${nextNodeId}&claim=${encodeURIComponent(claim)}`);
@@ -113,11 +133,13 @@ function LayoutContent() {
   return (
     <div>
       <h1>{currentQuestion.question}</h1>
-      {currentQuestion.options && currentQuestion.options.map((option: any, index: number) => (
-        <button key={index} onClick={handleNext}>
-          {option.label}
-        </button>
-      ))}
+      {currentQuestion.options && currentQuestion.options
+        .filter(option => option.label !== "DEFAULT") // Filter out the DEFAULT option from rendering
+        .map((option: any, index: number) => (
+          <button key={index} onClick={handleNext}>
+            {option.label}
+          </button>
+        ))}
       <button onClick={handleNext}>Volgende</button>
     </div>
   );

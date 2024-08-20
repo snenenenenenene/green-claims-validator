@@ -153,6 +153,14 @@ export default function QuestionPage() {
       if (selectedOption && selectedOption.nextNodeId) {
         nextNodeId = selectedOption.nextNodeId;
       }
+    } else if (currentQuestion.type === "multipleChoice") {
+      const defaultOption = currentQuestion.data.options?.find(
+        (option: any) => option.label === "DEFAULT"
+      );
+      if (defaultOption) {
+        nextNodeId = defaultOption.nextNodeId;
+        console.log("Using DEFAULT option for multipleChoice. Next Node ID:", nextNodeId);
+      }
     }
 
     console.log("Next Node ID:", nextNodeId);
@@ -178,24 +186,20 @@ export default function QuestionPage() {
   const handleEndNode = (nextNode: any) => {
     console.log("Handling end node:", nextNode);
 
-    // Check if the node is an end type or has a nextNodeId of -1
     if (nextNode.data.endType === "end" || nextNode.data.nextNodeId === "-1") {
       console.log("Quiz has ended. Redirecting to results.");
       toast.success("Questionnaire completed!");
       router.push(`/questionnaire/results?weight=${getCurrentWeight()}`);
     } else if (nextNode.data.endType === "redirect" && nextNode.data.redirectTab) {
-      // Handle redirection to another chart
       const redirectInstance = chartInstances.find(instance => instance.name === nextNode.data.redirectTab);
       if (redirectInstance) {
         console.log("Redirecting to another chart:", nextNode.data.redirectTab);
         const generatedQuestions = generateQuestionsFromAllCharts(chartInstances);
 
-        // Find the next node in the redirected chart
         const nextNodeInRedirect = generatedQuestions.find(q => q.id === nextNode.data.nextNodeId);
         if (nextNodeInRedirect) {
           router.replace(`/questionnaire?question=${nextNodeInRedirect.id}&claim=${encodeURIComponent(claim)}`);
         } else {
-          // Fallback to the first valid question in the redirected chart
           const firstValidQuestion = generatedQuestions.find(q => q.data.label === nextNode.data.redirectTab && !q.skipRender);
           if (firstValidQuestion) {
             router.replace(`/questionnaire?question=${firstValidQuestion.id}&claim=${encodeURIComponent(claim)}`);

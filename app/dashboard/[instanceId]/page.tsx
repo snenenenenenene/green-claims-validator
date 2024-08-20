@@ -22,12 +22,12 @@ import WeightNode from "@/components/dashboard/weightNode";
 import useStore from "@/lib/store";
 import { Settings } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 
 const nodeTypes = {
   yesNo: YesNoNode,
   singleChoice: SingleChoiceNode,
-  multipleChoice: SingleChoiceNode,
+  multipleChoice: MultipleChoiceNode,
   endNode: EndNode,
   startNode: StartNode,
   weightNode: WeightNode,
@@ -105,11 +105,11 @@ const InstancePage = ({ params }) => {
             nextNodeId: correspondingEdge ? correspondingEdge.target : null,
           };
         });
-      } else if (node.type === "singleChoice" || node.type === "multipleChoice") {
+      } else if (node.type === "singleChoice") {
         // Assign unique IDs to options if they don't have one
         node.data.options = node.data.options.map((option) => ({
           ...option,
-          id: option.id || uuidv4(),  // Assign a new unique id if not present
+          id: option.id || uuidv4(), // Assign a new unique id if not present
         }));
 
         // Update nextNodeId based on connected edges
@@ -123,6 +123,25 @@ const InstancePage = ({ params }) => {
             ...option,
             nextNodeId: correspondingEdge ? correspondingEdge.target : null,
           };
+        });
+      } else if (node.type === "multipleChoice") {
+        // Assign unique IDs to options if they don't have one
+        node.data.options = node.data.options.map((option) => ({
+          ...option,
+          id: option.id || uuidv4(),
+          nextNodeId: "-1", // Set -1 for all options initially
+        }));
+
+        // Remove existing DEFAULT option if it exists
+        node.data.options = node.data.options.filter(
+          (option) => option.label !== "DEFAULT"
+        );
+
+        // Add the single DEFAULT option
+        const nextEdge = connectedEdges.find((edge) => edge.source === node.id);
+        node.data.options.push({
+          label: "DEFAULT",
+          nextNodeId: nextEdge ? nextEdge.target : null,
         });
       } else if (node.type === "endNode") {
         if (node.data.endType === "redirect") {
@@ -237,9 +256,6 @@ const InstancePage = ({ params }) => {
                 { label: "yes", nextNodeId: null },
                 { label: "no", nextNodeId: null },
               ],
-              endType: "end",
-              redirectTab: "",
-              weight: 1,
             },
           };
           break;
@@ -253,12 +269,9 @@ const InstancePage = ({ params }) => {
             data: {
               label: `${type} node`,
               options: [
-                { id: uuidv4(), label: "Option 1", nextNodeId: null },
-                { id: uuidv4(), label: "Option 2", nextNodeId: null },
+                { id: uuidv4(), label: "Option 1", nextNodeId: "-1" },
+                { id: uuidv4(), label: "Option 2", nextNodeId: "-1" },
               ],
-              endType: "end",
-              redirectTab: "",
-              weight: 1,
             },
           };
           break;
@@ -286,9 +299,6 @@ const InstancePage = ({ params }) => {
             data: {
               label: `${type} node`,
               options: [{ label: "DEFAULT", nextNodeId: null }],
-              endType: "end",
-              redirectTab: "",
-              weight: 1,
             },
           };
           break;

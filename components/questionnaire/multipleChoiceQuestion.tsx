@@ -30,15 +30,25 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
     exit: { opacity: 0, y: 20 }
   };
 
+  // Log options before filtering
+  console.log("Original options:", options);
+
+  // Filter out the "DEFAULT" option
+  const visibleOptions = options.filter(option => option.label !== "DEFAULT");
+
+  // Log options after filtering
+  console.log("Visible options after filtering:", visibleOptions);
+
   return (
     <motion.div initial="initial"
-    animate="animate"
-    exit="exit"
-    variants={fadeInUpVariants}
-    transition={{ duration: 0.5 }}  className="p-4">
+      animate="animate"
+      exit="exit"
+      variants={fadeInUpVariants}
+      transition={{ duration: 0.5 }}
+      className="p-4">
       <h3 className="mb-6 text-4xl font-semibold text-gray-700">{question}</h3>
       <div className="form-control">
-        {options.map((option, index) => (
+        {visibleOptions.map((option, index) => (
           <label key={index} className="label cursor-pointer">
             <span className="label-text">{option.label}</span>
             <input
