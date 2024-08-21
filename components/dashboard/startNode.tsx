@@ -44,8 +44,7 @@ const StartNode = ({ id, data, isConnectable }) => {
 
   return (
     <div
-      style={{ backgroundColor: nodeBg }}
-      className={`relative rounded border-2 p-4 ${nodeHidden ? "hidden" : ""}`}
+      className={`relative bg-white rounded border-2 p-4 dark:bg-gray-800 ${nodeHidden ? "hidden" : ""}`}
       onMouseEnter={() => setShowRemoveButton(true)}
       onMouseLeave={() => setShowRemoveButton(false)}
     >
@@ -61,7 +60,7 @@ const StartNode = ({ id, data, isConnectable }) => {
         type="text"
         value={label}
         onChange={(e) => setLabel(e.target.value)}
-        className="w-full rounded border p-2"
+        className="w-full dark:bg-gray-800 rounded border p-2"
       />
       <Handle
         type="source"

@@ -59,6 +59,7 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
 
   const [loading, setLoading] = useState(false);
   const [newColor, setNewColor] = useState("#000");
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -91,19 +92,18 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
 
   const handleDelete = () => {
     if (currentDashboardTab) {
-      if (confirm(`Are you sure you want to delete the tab ${currentDashboardTab}?`)) {
-        deleteTab(currentDashboardTab);
-        setCurrentDashboardTab(chartInstances[0]?.name);
-        window.history.pushState(
-          {},
-          "",
-          `/dashboard/${chartInstances[0]?.name}`,
-        );
-        alert(`Tab ${currentDashboardTab} has been deleted.`);
-      }
+      setShowDeleteConfirmation(true);
     } else {
       alert("No tab selected to delete.");
     }
+  };
+
+  const confirmDelete = () => {
+    deleteTab(currentDashboardTab);
+    setCurrentDashboardTab(chartInstances[0]?.name);
+    window.history.pushState({}, "", `/dashboard/${chartInstances[0]?.name}`);
+    alert(`Tab ${currentDashboardTab} has been deleted.`);
+    setShowDeleteConfirmation(false);
   };
 
   const handleColorChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -139,9 +139,9 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
   return (
     <ReactFlowProvider>
       <section className="flex h-full w-full">
-        <Sidebar onSave={onSave} onDelete={handleDelete} />
+        <Sidebar />
         <div className="flex h-full w-full flex-col">
-          <div className="font-display flex h-20 w-full gap-2 overflow-x-auto py-4">
+          <div className="font-display flex h-20 w-full gap-2 overflow-x-auto px-2 py-4">
             {chartInstances.map((chart) => {
               const tabColor =
                 chart.color && chart.color !== "#000"
@@ -159,7 +159,7 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
                       chart.name === currentDashboardTab ? tabColor : "transparent",
                     color: chart.name === currentDashboardTab ? tabColor : textColor,
                   }}
-                  className={`flex h-full items-center justify-center overflow-hidden text-ellipsis whitespace-nowrap rounded-xl p-2 px-4 text-xl hover:bg-gray-200 ${chart.name === currentDashboardTab ? "border-2" : ""
+                  className={`flex h-full hover:scale-105 transition-all duration-200 items-center justify-center overflow-hidden text-ellipsis whitespace-nowrap rounded-xl p-2 px-4 text-xl hover:bg-gray-200 ${chart.name === currentDashboardTab ? "border-2" : ""
                     }`}
                 >
                   {chart.name}
@@ -221,6 +221,23 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
           <button>Close</button>
         </form>
       </dialog>
+
+      {showDeleteConfirmation && (
+        <dialog open className="modal">
+          <div className="modal-box">
+            <h3 className="text-lg font-bold">Confirm Delete</h3>
+            <p>Are you sure you want to delete the tab "{currentDashboardTab}"?</p>
+            <div className="mt-4 flex justify-end space-x-2">
+              <button className="btn" onClick={() => setShowDeleteConfirmation(false)}>
+                Cancel
+              </button>
+              <button className="btn btn-error" onClick={confirmDelete}>
+                Delete
+              </button>
+            </div>
+          </div>
+        </dialog>
+      )}
     </ReactFlowProvider>
   );
 }

@@ -9,7 +9,7 @@ const WeightNode = ({ id, data, isConnectable }) => {
 	}, [weight, data]);
 
 	return (
-		<div className="bg-gray-100 border border-gray-300 rounded p-2 text-center">
+		<div className="bg-white dark:bg-gray-800 border border-gray-300 rounded p-2 text-center">
 			<Handle
 				type="target"
 				position={Position.Top}
@@ -22,7 +22,7 @@ const WeightNode = ({ id, data, isConnectable }) => {
 					type="number"
 					value={weight}
 					onChange={(e) => setWeight(Number(e.target.value))}
-					className="nodrag w-full"
+					className="nodrag w-full dark:bg-gray-800"
 					step="0.1"
 					min="0"
 				/>

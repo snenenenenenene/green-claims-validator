@@ -70,6 +70,7 @@ const InstancePage = ({ params }) => {
   const [selectedVersion, setSelectedVersion] = useState("");
   const [selectedGlobalVersion, setSelectedGlobalVersion] = useState("");
   const [activeTab, setActiveTab] = useState("local");
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   const { project } = useReactFlow();
 
@@ -89,7 +90,6 @@ const InstancePage = ({ params }) => {
           },
         ];
       } else if (node.type === "yesNo") {
-        // Ensure yesNo nodes do not have unnecessary properties
         delete node.data.endType;
         delete node.data.redirectTab;
         delete node.data.weight;
@@ -106,13 +106,11 @@ const InstancePage = ({ params }) => {
           };
         });
       } else if (node.type === "singleChoice") {
-        // Assign unique IDs to options if they don't have one
         node.data.options = node.data.options.map((option) => ({
           ...option,
-          id: option.id || uuidv4(), // Assign a new unique id if not present
+          id: option.id || uuidv4(),
         }));
 
-        // Update nextNodeId based on connected edges
         node.data.options = node.data.options.map((option) => {
           const correspondingEdge = connectedEdges.find(
             (edge) =>
@@ -125,19 +123,16 @@ const InstancePage = ({ params }) => {
           };
         });
       } else if (node.type === "multipleChoice") {
-        // Assign unique IDs to options if they don't have one
         node.data.options = node.data.options.map((option) => ({
           ...option,
           id: option.id || uuidv4(),
-          nextNodeId: "-1", // Set -1 for all options initially
+          nextNodeId: "-1",
         }));
 
-        // Remove existing DEFAULT option if it exists
         node.data.options = node.data.options.filter(
           (option) => option.label !== "DEFAULT"
         );
 
-        // Add the single DEFAULT option
         const nextEdge = connectedEdges.find((edge) => edge.source === node.id);
         node.data.options.push({
           label: "DEFAULT",
@@ -342,10 +337,15 @@ const InstancePage = ({ params }) => {
   };
 
   const handleDeleteTab = () => {
+    setShowDeleteConfirmation(true);
+  };
+
+  const confirmDeleteTab = () => {
     if (currentInstance) {
       console.log("Deleting tab:", currentInstance.name);
       deleteTab(currentInstance.name);
       setShowSettings(false);
+      setShowDeleteConfirmation(false);
       toast.success("Tab deleted.");
     }
   };
@@ -473,7 +473,10 @@ const InstancePage = ({ params }) => {
                   </button>
                 </div>
                 <div className="mt-4 flex justify-end space-x-2">
-                  <button className="btn btn-error" onClick={handleDeleteTab}>
+                  <button
+                    className="btn btn-error"
+                    onClick={handleDeleteTab}
+                  >
                     Delete
                   </button>
                   <button className="btn" onClick={() => setShowSettings(false)}>
@@ -524,6 +527,29 @@ const InstancePage = ({ params }) => {
           <form method="dialog" className="modal-backdrop">
             <button>Close</button>
           </form>
+        </dialog>
+      )}
+
+      {showDeleteConfirmation && (
+        <dialog open className="modal">
+          <div className="modal-box">
+            <h3 className="text-lg font-bold">Confirm Delete</h3>
+            <p>Are you sure you want to delete the tab "{currentInstance?.name}"?</p>
+            <div className="mt-4 flex justify-end space-x-2">
+              <button
+                className="btn"
+                onClick={() => setShowDeleteConfirmation(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-error"
+                onClick={confirmDeleteTab}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </dialog>
       )}
     </div>

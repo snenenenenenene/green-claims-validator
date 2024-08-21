@@ -47,7 +47,7 @@ export default function ButtonEdge({
           className="nodrag nopan"
         >
           <button
-            className="w-5 h-5 bg-gray-200 border border-white rounded-full text-xs leading-none hover:shadow-md"
+            className="w-5 h-5 bg-gray-200 dark:bg-gray-800 border border-white rounded-full text-xs leading-none hover:shadow-md"
             onClick={onEdgeClick}
           >
             ×

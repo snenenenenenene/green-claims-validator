@@ -80,8 +80,7 @@ const SingleChoiceNode = ({ id, data, isConnectable }) => {
 
   return (
     <div
-      style={{ backgroundColor: nodeBg }}
-      className={`relative rounded border-2 p-4 ${nodeHidden ? "hidden" : ""}`}
+      className={`relative bg-white dark:bg-gray-800 rounded border-2 p-4 ${nodeHidden ? "hidden" : ""}`}
       onMouseEnter={() => setShowRemoveButton(true)}
       onMouseLeave={() => setShowRemoveButton(false)}
     >
@@ -102,7 +101,7 @@ const SingleChoiceNode = ({ id, data, isConnectable }) => {
         type="text"
         value={label}
         onChange={(e) => setLabel(e.target.value)}
-        className="w-full rounded border p-2"
+        className="w-full rounded border p-2 dark:bg-gray-800"
       />
       {options.map((option, index) => (
         <div key={option.id} className="relative mt-2 flex items-center">
@@ -112,7 +111,7 @@ const SingleChoiceNode = ({ id, data, isConnectable }) => {
               type="text"
               value={option.label}
               onChange={(e) => handleOptionChange(index, e.target.value)}
-              className="w-full rounded border p-2 pr-8"
+              className="w-full rounded border p-2 pr-8 dark:bg-gray-800"
             />
             <button
               className="absolute right-2 top-1/2 -translate-y-1/2 transform text-gray-500 hover:text-red-500"
