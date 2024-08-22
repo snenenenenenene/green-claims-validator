@@ -9,6 +9,8 @@ import ReactFlow, {
   addEdge,
   ConnectionLineType,
   useReactFlow,
+  Node as FlowNode,
+  Edge,
 } from "reactflow";
 
 import "reactflow/dist/style.css";
@@ -19,7 +21,7 @@ import EndNode from "@/components/dashboard/endNode";
 import StartNode from "@/components/dashboard/startNode";
 import EditableEdge from "@/components/dashboard/editableEdge";
 import WeightNode from "@/components/dashboard/weightNode";
-import useStore from "@/lib/store";
+import useStore, { ChartInstance } from "@/lib/store";
 import { Settings } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { v4 as uuidv4 } from "uuid";
@@ -37,7 +39,7 @@ const edgeTypes = {
   editableEdge: EditableEdge,
 };
 
-const InstancePage = ({ params }) => {
+const InstancePage = ({ params }: { params: { instanceId: string } }) => {
   const {
     chartInstances,
     setNodesAndEdges,
@@ -60,9 +62,9 @@ const InstancePage = ({ params }) => {
     updateChartInstanceName: state.updateChartInstanceName,
   }));
 
-  const [currentInstance, setCurrentInstance] = useState(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [currentInstance, setCurrentInstance] = useState<ChartInstance | null>(null);
+  const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode[]>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
   const [showSettings, setShowSettings] = useState(false);
   const [newColor, setNewColor] = useState("#80B500");
   const [onePageMode, setOnePageMode] = useState(false);
@@ -74,7 +76,7 @@ const InstancePage = ({ params }) => {
 
   const { project } = useReactFlow();
 
-  const updateNodesWithLogic = (nodes, edges, allCharts) => {
+  const updateNodesWithLogic = (nodes: FlowNode[], edges: Edge[], allCharts: ChartInstance[]) => {
     return nodes.map((node) => {
       const connectedEdges = edges.filter(
         (edge) => edge.source === node.id || edge.target === node.id
@@ -94,7 +96,7 @@ const InstancePage = ({ params }) => {
         delete node.data.redirectTab;
         delete node.data.weight;
 
-        node.data.options = node.data.options.map((option) => {
+        node.data.options = node.data.options.map((option: any) => {
           const correspondingEdge = connectedEdges.find(
             (edge) =>
               edge.source === node.id &&
@@ -106,12 +108,12 @@ const InstancePage = ({ params }) => {
           };
         });
       } else if (node.type === "singleChoice") {
-        node.data.options = node.data.options.map((option) => ({
+        node.data.options = node.data.options.map((option: any) => ({
           ...option,
           id: option.id || uuidv4(),
         }));
 
-        node.data.options = node.data.options.map((option) => {
+        node.data.options = node.data.options.map((option: any) => {
           const correspondingEdge = connectedEdges.find(
             (edge) =>
               edge.source === node.id &&
@@ -123,14 +125,14 @@ const InstancePage = ({ params }) => {
           };
         });
       } else if (node.type === "multipleChoice") {
-        node.data.options = node.data.options.map((option) => ({
+        node.data.options = node.data.options.map((option: any) => ({
           ...option,
           id: option.id || uuidv4(),
           nextNodeId: "-1",
         }));
 
         node.data.options = node.data.options.filter(
-          (option) => option.label !== "DEFAULT"
+          (option: any) => option.label !== "DEFAULT"
         );
 
         const nextEdge = connectedEdges.find((edge) => edge.source === node.id);
@@ -194,7 +196,7 @@ const InstancePage = ({ params }) => {
       if (currentInstance?.name !== instance.name) {
         console.log("Setting current instance:", instance);
         setCurrentInstance(instance);
-        const updatedNodes = updateNodesWithLogic(
+        const updatedNodes: any = updateNodesWithLogic(
           instance.initialNodes,
           instance.initialEdges,
           chartInstances
@@ -226,18 +228,18 @@ const InstancePage = ({ params }) => {
     setNodesAndEdges,
   ]);
 
-  const onDragOver = useCallback((event) => {
+  const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
   }, []);
 
   const onDrop = useCallback(
-    (event) => {
+    (event: React.DragEvent) => {
       event.preventDefault();
 
       const type = event.dataTransfer.getData("application/reactflow");
       const position = project({ x: event.clientX, y: event.clientY });
-      let newNode;
+      let newNode: FlowNode;
 
       switch (type) {
         case "yesNo":
@@ -300,9 +302,9 @@ const InstancePage = ({ params }) => {
       }
 
       console.log("Adding new node:", newNode);
-      const updatedNodes = [...nodes, newNode];
+      const updatedNodes: any = [...nodes, newNode];
       setNodes(updatedNodes);
-      setNodesAndEdges(currentInstance?.name || "", updatedNodes, edges);
+      setNodesAndEdges(currentInstance?.name || "", updatedNodes, edges as any);
       toast.success("Node added.");
     },
     [project, setNodes, setNodesAndEdges, currentInstance, edges, nodes]
@@ -311,9 +313,9 @@ const InstancePage = ({ params }) => {
   const onConnect = useCallback(
     (params) => {
       console.log("Connecting nodes with params:", params);
-      const newEdges = addEdge({ ...params, type: "editableEdge" }, edges);
+      const newEdges: any = addEdge({ ...params, type: "editableEdge" }, edges);
 
-      const updatedNodes = updateNodesWithLogic(
+      const updatedNodes: any = updateNodesWithLogic(
         nodes,
         newEdges,
         chartInstances
@@ -321,7 +323,7 @@ const InstancePage = ({ params }) => {
 
       setNodes(updatedNodes);
       setEdges(newEdges);
-      setNodesAndEdges(currentInstance?.name || "", updatedNodes, newEdges);
+      setNodesAndEdges(currentInstance?.name || "", updatedNodes as any, newEdges);
     },
     [setEdges, setNodesAndEdges, currentInstance, nodes, edges, chartInstances]
   );
@@ -359,7 +361,7 @@ const InstancePage = ({ params }) => {
     }
   };
 
-  const handleVersionChange = (event) => {
+  const handleVersionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedVersion = event.target.value;
     setSelectedVersion(selectedVersion);
 
@@ -368,7 +370,7 @@ const InstancePage = ({ params }) => {
     );
 
     if (versionData) {
-      const { initialNodes, initialEdges } = versionData;
+      const { initialNodes, initialEdges }: any = versionData;
       const updatedNodes = updateNodesWithLogic(
         initialNodes,
         initialEdges,
@@ -378,7 +380,7 @@ const InstancePage = ({ params }) => {
       setEdges(initialEdges);
       setNodesAndEdges(
         currentInstance?.name || "",
-        updatedNodes,
+        updatedNodes as any,
         initialEdges
       );
       console.log(
@@ -406,6 +408,7 @@ const InstancePage = ({ params }) => {
         connectionLineType={ConnectionLineType.SmoothStep}
       >
         <Controls />
+        {/* @ts-ignore */}
         <Background variant="dots" gap={12} size={1} />
       </ReactFlow>
       <button
@@ -502,7 +505,7 @@ const InstancePage = ({ params }) => {
                     <option value="">Select a version</option>
                     {currentInstance?.publishedVersions?.map((version) => (
                       <option key={version.version} value={version.version}>
-                        {`${version.message} - ${new Date(
+                        {`${(version as any).message} - ${new Date(
                           version.date
                         ).toLocaleString()}`}
                       </option>
@@ -534,7 +537,7 @@ const InstancePage = ({ params }) => {
         <dialog open className="modal">
           <div className="modal-box">
             <h3 className="text-lg font-bold">Confirm Delete</h3>
-            <p>Are you sure you want to delete the tab "{currentInstance?.name}"?</p>
+            <p>Are you sure you want to delete the tab &quot;{currentInstance?.name}&quot;?</p>
             <div className="mt-4 flex justify-end space-x-2">
               <button
                 className="btn"

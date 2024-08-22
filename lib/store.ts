@@ -54,6 +54,9 @@ interface StoreState {
   localCommits: Commit[];
   globalCommits: Commit[];
   currentWeight: number;
+  currentTab: string; // Added currentTab
+  setCurrentTab: (tabName: string) => void; // Added setCurrentTab method
+  updateChartInstanceName: (oldName: string, newName: string) => void; // Added updateChartInstanceName method
 
   // Setters and Methods
   setCurrentDashboardTab: (tabName: string) => void;
@@ -96,9 +99,11 @@ const useStore = create<StoreState>(
       localCommits: [],
       globalCommits: [],
       currentWeight: 1,
+      currentTab: "", // Initialized currentTab
 
       setCurrentDashboardTab: (tabName) => set({ currentDashboardTab: tabName }),
       setCurrentQuestionnaireTab: (tabName) => set({ currentQuestionnaireTab: tabName }),
+      setCurrentTab: (tabName) => set({ currentTab: tabName }), // Implementation of setCurrentTab
       addNewTab: (newTabName) => {
         const newTab: ChartInstance = {
           name: newTabName,
@@ -109,14 +114,14 @@ const useStore = create<StoreState>(
           publishedVersions: [],
         };
         set({
-          chartInstances: [...(get()as StoreState).chartInstances, newTab],
+          chartInstances: [...(get() as StoreState).chartInstances, newTab],
           currentDashboardTab: newTabName,
           onePage: false,
         });
       },
       setNodesAndEdges: (instanceName, nodes, edges) => {
         set({
-          chartInstances: (get()as StoreState).chartInstances.map((instance) =>
+          chartInstances: (get() as StoreState).chartInstances.map((instance) =>
             instance.name === instanceName
               ? { ...instance, initialNodes: nodes, initialEdges: edges }
               : instance
@@ -124,7 +129,7 @@ const useStore = create<StoreState>(
         });
       },
       setOnePage: (value) => {
-        const { currentDashboardTab, chartInstances } = get()as StoreState;
+        const { currentDashboardTab, chartInstances } = get() as StoreState;
         set({
           chartInstances: chartInstances.map((instance) =>
             instance.name === currentDashboardTab
@@ -135,7 +140,7 @@ const useStore = create<StoreState>(
       },
       removeNode: (instanceName, nodeId) => {
         set({
-          chartInstances: (get()as StoreState).chartInstances.map((instance) =>
+          chartInstances: (get() as StoreState).chartInstances.map((instance) =>
             instance.name === instanceName
               ? {
                   ...instance,
@@ -162,7 +167,7 @@ const useStore = create<StoreState>(
         });
       },
       publishTab: () => {
-        const { currentDashboardTab, chartInstances } = get()as StoreState;
+        const { currentDashboardTab, chartInstances } = get() as StoreState;
         set({
           chartInstances: chartInstances.map((instance) =>
             instance.name === currentDashboardTab
@@ -182,7 +187,7 @@ const useStore = create<StoreState>(
         toast.success("Published successfully.");
       },
       saveToDb: () => {
-        const { currentDashboardTab, chartInstances } = get()as StoreState;
+        const { currentDashboardTab, chartInstances } = get() as StoreState;
         const currentInstance = chartInstances.find(
           (instance) => instance.name === currentDashboardTab
         );
@@ -200,7 +205,7 @@ const useStore = create<StoreState>(
       },
       setChartInstances: (newInstances) => set({ chartInstances: newInstances }),
       generateQuestions: () => {
-        const { chartInstances, currentQuestionnaireTab } = get()as StoreState;
+        const { chartInstances, currentQuestionnaireTab } = get() as StoreState;
         const currentInstance = chartInstances.find(
           (instance) => instance.name === currentQuestionnaireTab
         );
@@ -210,7 +215,7 @@ const useStore = create<StoreState>(
 
           // Skip initial weight nodes
           while (questions[index] && (questions[index] as any).type === "weightNode") {
-            const accumulatedWeight = (get()as StoreState).currentWeight * (questions[index] as any).weight;
+            const accumulatedWeight = (get() as StoreState).currentWeight * (questions[index] as any).weight;
             set({ currentWeight: accumulatedWeight });
             index += 1;
           }
@@ -234,7 +239,7 @@ const useStore = create<StoreState>(
       resetCurrentQuestionIndex: () => set({ currentQuestionIndex: 0 }),
 
       addLocalCommit: (message) => {
-        const { chartInstances, currentDashboardTab, localCommits } = get()as StoreState;
+        const { chartInstances, currentDashboardTab, localCommits } = get() as StoreState;
         const currentInstance = chartInstances.find(
           (instance) => instance.name === currentDashboardTab
         );
@@ -254,7 +259,7 @@ const useStore = create<StoreState>(
         }
       },
       revertToLocalCommit: (message) => {
-        const { localCommits, setChartInstance } = get()as StoreState;
+        const { localCommits, setChartInstance } = get() as StoreState;
         const commit = localCommits.find((commit) => commit.message === message);
         if (commit && commit.chartInstances.length > 0) {
           setChartInstance(commit.chartInstances[0]);
@@ -262,7 +267,7 @@ const useStore = create<StoreState>(
         }
       },
       addGlobalCommit: (message) => {
-        const { chartInstances, globalCommits } = get()as StoreState;
+        const { chartInstances, globalCommits } = get() as StoreState;
         set({
           globalCommits: [
             ...globalCommits,
@@ -283,6 +288,15 @@ const useStore = create<StoreState>(
           set({ chartInstances: commit.chartInstances });
           toast.success("Reverted to selected global commit.");
         }
+      },
+
+      // Implementation of updateChartInstanceName
+      updateChartInstanceName: (oldName, newName) => {
+        const updatedInstances = (get() as StoreState).chartInstances.map((instance) =>
+          instance.name === oldName ? { ...instance, name: newName } : instance
+        );
+        set({ chartInstances: updatedInstances });
+        set({ currentTab: newName });
       },
     }),
     {
