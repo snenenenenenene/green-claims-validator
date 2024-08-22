@@ -4,7 +4,6 @@ import { twMerge } from "tailwind-merge";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
-import { Node, Edge } from "@/lib/types"; 
 
 // Generates questions from a single chart instance
 export function generateQuestionsFromChart(chartInstances) {
@@ -12,7 +11,7 @@ export function generateQuestionsFromChart(chartInstances) {
     chartInstances = [chartInstances];
   }
 
-  const allQuestions = [];
+  const allQuestions: any = [];
 
   chartInstances.forEach((chartInstance, index) => {
     const { initialNodes: nodes, initialEdges: edges } = chartInstance;
@@ -22,7 +21,7 @@ export function generateQuestionsFromChart(chartInstances) {
       throw new Error(`Start node not found in chart: ${chartInstance.name}`);
     }
 
-    const questions = [];
+    const questions: any = [];
     const visited = new Set();
 
     function traverse(nodeId, currentChartIndex) {

@@ -7,6 +7,7 @@ import Popover from "@/components/shared/popover";
 import Image from "next/image";
 import { Session } from "next-auth";
 import Link from "next/link";
+import { User } from "@prisma/client";
 
 export default function UserDropdown({ session }: { session: Session }) {
   const { email, image } = session?.user || {};
@@ -28,7 +29,7 @@ export default function UserDropdown({ session }: { session: Session }) {
                 {session?.user?.email}
               </p>
             </div>
-            {session?.user?.role === "admin" && (
+            {(session?.user as User).role === "admin" && (
               <>
                 <Link
                   href="/dashboard"

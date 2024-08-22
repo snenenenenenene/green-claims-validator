@@ -12,7 +12,7 @@ const StartNode = ({ id, data, isConnectable }) => {
   const { removeNode } = useStore((state) => ({
     removeNode: state.removeNode,
   }));
-  const currentTab = useStore((state) => state.currentTab);
+  const currentTab = useStore((state) => state.currentDashboardTab);
   const { getEdges, setNodes, setEdges } = useReactFlow();
 
   useEffect(() => {

@@ -58,7 +58,7 @@ const Sidebar = () => {
     reader.onload = (e) => {
       const text = e.target?.result;
       try {
-        const data = JSON.parse(text);
+        const data = JSON.parse(text as string);
         if (Array.isArray(data)) {
           data.forEach(setChartInstance);
           toast.success('Imported successfully.');
@@ -137,7 +137,7 @@ const Sidebar = () => {
           <div className="tooltip" data-tip="Import from JSON">
             <button
               className="btn btn-ghost"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => (fileInputRef.current as any).click()}
             >
               <Upload />
             </button>
