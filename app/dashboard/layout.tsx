@@ -226,7 +226,7 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
         <dialog open className="modal">
           <div className="modal-box">
             <h3 className="text-lg font-bold">Confirm Delete</h3>
-            <p>Are you sure you want to delete the tab "{currentDashboardTab}"?</p>
+            <p>Are you sure you want to delete the tab &quot;{currentDashboardTab}&quot;?</p>
             <div className="mt-4 flex justify-end space-x-2">
               <button className="btn" onClick={() => setShowDeleteConfirmation(false)}>
                 Cancel
