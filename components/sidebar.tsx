@@ -13,6 +13,7 @@ import {
   HelpCircle,
   MessageSquare,
   Save,
+  FunctionSquare,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -21,14 +22,14 @@ const Sidebar = () => {
     publishTab,
     saveToDb,
     setChartInstance,
-    commitLocalChanges,
-    commitGlobalChanges,
+    addLocalCommit,
+    addGlobalCommit,
   } = useStore((state) => ({
     publishTab: state.publishTab,
     saveToDb: state.saveToDb,
     setChartInstance: state.setChartInstance,
-    commitLocalChanges: state.addLocalCommit,
-    commitGlobalChanges: state.addGlobalCommit,
+    addLocalCommit: state.addLocalCommit,
+    addGlobalCommit: state.addGlobalCommit,
   }));
 
   const fileInputRef = useRef(null);
@@ -73,7 +74,7 @@ const Sidebar = () => {
   };
 
   const handleCommitAndSave = () => {
-    const commitAction = commitType === 'local' ? commitLocalChanges : commitGlobalChanges;
+    const commitAction = commitType === 'local' ? addLocalCommit : addGlobalCommit;
     commitAction(commitMessage);
     saveToDb();
     setShowCommitModal(false);
@@ -104,11 +105,12 @@ const Sidebar = () => {
     { Icon: CircleDot, nodeType: 'singleChoice', tooltip: 'Single Choice Question' },
     { Icon: List, nodeType: 'multipleChoice', tooltip: 'Multiple Choice Question' },
     { Icon: HelpCircle, nodeType: 'yesNo', tooltip: 'Yes/No Question' },
+    { Icon: FunctionSquare, nodeType: 'functionNode', tooltip: 'Function Node' }, // Added Function Node
   ];
 
   return (
-    <aside className="flex flex-col h-full justify-between  p-4 pt-20">
-      <section className='flex flex-col space-y-4'>
+    <aside className="flex flex-col h-full justify-between p-4 pt-20">
+      <section className="flex flex-col space-y-4">
         {nodes.map(({ Icon, nodeType, tooltip }) => (
           <NodeButton key={nodeType} Icon={Icon} nodeType={nodeType} tooltip={tooltip} />
         ))}

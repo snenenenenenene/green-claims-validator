@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import ReactFlow, {
-  MiniMap,
   Controls,
   Background,
   useNodesState,
@@ -21,10 +20,12 @@ import EndNode from "@/components/dashboard/endNode";
 import StartNode from "@/components/dashboard/startNode";
 import EditableEdge from "@/components/dashboard/editableEdge";
 import WeightNode from "@/components/dashboard/weightNode";
+import FunctionNode from "@/components/dashboard/functionNode";
 import useStore, { ChartInstance } from "@/lib/store";
-import { Settings } from "lucide-react";
+import { Settings, Trash } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { v4 as uuidv4 } from "uuid";
+import UtilityModal from "@/components/utilityModal";
 
 const nodeTypes = {
   yesNo: YesNoNode,
@@ -33,6 +34,7 @@ const nodeTypes = {
   endNode: EndNode,
   startNode: StartNode,
   weightNode: WeightNode,
+  functionNode: FunctionNode,
 };
 
 const edgeTypes = {
@@ -50,6 +52,8 @@ const InstancePage = ({ params }: { params: { instanceId: string } }) => {
     setCurrentTab,
     setChartInstance,
     updateChartInstanceName,
+    variables,
+    setVariables,
   } = useStore((state) => ({
     chartInstances: state.chartInstances,
     setNodesAndEdges: state.setNodesAndEdges,
@@ -60,6 +64,8 @@ const InstancePage = ({ params }: { params: { instanceId: string } }) => {
     setCurrentTab: state.setCurrentTab,
     setChartInstance: state.setChartInstance,
     updateChartInstanceName: state.updateChartInstanceName,
+    variables: state.variables,
+    setVariables: state.setVariables,
   }));
 
   const [currentInstance, setCurrentInstance] = useState<ChartInstance | null>(null);
@@ -73,6 +79,12 @@ const InstancePage = ({ params }: { params: { instanceId: string } }) => {
   const [selectedGlobalVersion, setSelectedGlobalVersion] = useState("");
   const [activeTab, setActiveTab] = useState("local");
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+
+  const [localVariables, setLocalVariables] = useState(variables.local || []);
+  const [globalVariables, setGlobalVariables] = useState(variables.global || []);
+  const [newVariableName, setNewVariableName] = useState("");
+  const [newVariableValue, setNewVariableValue] = useState("");
+  const [tabToDelete, setTabToDelete] = useState<ChartInstance | null>(null);
 
   const { project } = useReactFlow();
 
@@ -189,11 +201,11 @@ const InstancePage = ({ params }: { params: { instanceId: string } }) => {
   useEffect(() => {
     const instanceId = decodeURIComponent(params.instanceId);
     const instance = chartInstances.find(
-      (instance) => instance.name === instanceId
+      (instance) => instance.id === instanceId
     );
 
     if (instance) {
-      if (currentInstance?.name !== instance.name) {
+      if (currentInstance?.id !== instance.id) {
         console.log("Setting current instance:", instance);
         setCurrentInstance(instance);
         const updatedNodes: any = updateNodesWithLogic(
@@ -216,7 +228,7 @@ const InstancePage = ({ params }: { params: { instanceId: string } }) => {
         setEdges([]);
         setNewColor("#80B500");
         setOnePageMode(false);
-        setNewTabName("");
+        setNewTabName("DEFAULT");
       }
     }
   }, [
@@ -288,6 +300,18 @@ const InstancePage = ({ params }: { params: { instanceId: string } }) => {
           };
           break;
 
+        case "functionNode":
+          newNode = {
+            id: `${+new Date()}`,
+            type,
+            position,
+            data: {
+              expression: "",
+              result: null,
+            },
+          };
+          break;
+
         default:
           newNode = {
             id: `${+new Date()}`,
@@ -329,6 +353,7 @@ const InstancePage = ({ params }: { params: { instanceId: string } }) => {
   );
 
   const handleSaveSettings = () => {
+    setVariables({ local: localVariables, global: globalVariables });
     if (currentInstance) {
       console.log("Saving settings for instance:", currentInstance.name);
       setCurrentTabColor(currentInstance.name, newColor);
@@ -339,24 +364,28 @@ const InstancePage = ({ params }: { params: { instanceId: string } }) => {
   };
 
   const handleDeleteTab = () => {
-    setShowDeleteConfirmation(true);
+    if (currentInstance) {
+      setTabToDelete(currentInstance);
+      setShowDeleteConfirmation(true);
+    }
   };
 
   const confirmDeleteTab = () => {
-    if (currentInstance) {
-      console.log("Deleting tab:", currentInstance.name);
-      deleteTab(currentInstance.name);
+    if (tabToDelete) {
+      console.log("Deleting tab:", tabToDelete.name);
+      deleteTab(tabToDelete.id);
       setShowSettings(false);
       setShowDeleteConfirmation(false);
-      toast.success("Tab deleted.");
+      setTabToDelete(null);
+      toast.success(`Tab "${tabToDelete.name}" deleted.`);
     }
   };
 
   const handleRenameTab = () => {
     if (newTabName && currentInstance) {
       console.log("Renaming tab from", currentInstance.name, "to", newTabName);
-      updateChartInstanceName(currentInstance.name, newTabName);
-      setCurrentTab(newTabName);
+      updateChartInstanceName(currentInstance.id, newTabName);
+      setCurrentTab(currentInstance.id);
       toast.success("Tab renamed successfully.");
     }
   };
@@ -379,7 +408,7 @@ const InstancePage = ({ params }: { params: { instanceId: string } }) => {
       setNodes(updatedNodes);
       setEdges(initialEdges);
       setNodesAndEdges(
-        currentInstance?.name || "",
+        currentInstance?.id || "",
         updatedNodes as any,
         initialEdges
       );
@@ -390,6 +419,36 @@ const InstancePage = ({ params }: { params: { instanceId: string } }) => {
       );
       toast.success("Reverted to selected version.");
     }
+  };
+
+  const handleAddVariable = (scope: "local" | "global") => {
+    if (newVariableName.trim() && newVariableValue.trim()) {
+      const newVariable = { name: newVariableName.trim(), value: newVariableValue.trim() };
+      console.log(`Creating ${scope} variable:`, newVariable);
+      if (scope === "local") {
+        setLocalVariables((prev) => [...prev, newVariable]);
+      } else {
+        setGlobalVariables((prev) => [...prev, newVariable]);
+      }
+      setNewVariableName("");
+      setNewVariableValue("");
+      toast.success(`${scope.charAt(0).toUpperCase() + scope.slice(1)} variable created.`);
+    } else {
+      toast.error("Please enter both a name and a value for the variable.");
+    }
+  };
+
+  const deleteVariable = (scope: "local" | "global", index: number) => {
+    if (scope === "local") {
+      const updatedVariables = [...localVariables];
+      updatedVariables.splice(index, 1);
+      setLocalVariables(updatedVariables);
+    } else {
+      const updatedVariables = [...globalVariables];
+      updatedVariables.splice(index, 1);
+      setGlobalVariables(updatedVariables);
+    }
+    toast.success(`${scope.charAt(0).toUpperCase() + scope.slice(1)} variable deleted.`);
   };
 
   return (
@@ -475,6 +534,59 @@ const InstancePage = ({ params }: { params: { instanceId: string } }) => {
                     Rename
                   </button>
                 </div>
+                <div className="mt-4">
+                  <label className="block">Add Local Variable</label>
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      value={newVariableName}
+                      onChange={(e) => setNewVariableName(e.target.value)}
+                      className="input input-bordered w-1/2"
+                      placeholder="Variable Name"
+                    />
+                    <input
+                      type="text"
+                      value={newVariableValue}
+                      onChange={(e) => setNewVariableValue(e.target.value)}
+                      className="input input-bordered w-1/2"
+                      placeholder="Variable Value"
+                    />
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => handleAddVariable("local")}
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <label className="block">Local Variables</label>
+                  <table className="table-auto w-full">
+                    <thead>
+                      <tr>
+                        <th className="px-4 py-2">Name</th>
+                        <th className="px-4 py-2">Value</th>
+                        <th className="px-4 py-2">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {localVariables.map((variable, index) => (
+                        <tr key={index}>
+                          <td className="border px-4 py-2">{variable.name}</td>
+                          <td className="border px-4 py-2">{variable.value}</td>
+                          <td className="border px-4 py-2">
+                            <button
+                              className="btn btn-error btn-sm"
+                              onClick={() => deleteVariable("local", index)}
+                            >
+                              <Trash size={16} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
                 <div className="mt-4 flex justify-end space-x-2">
                   <button
                     className="btn btn-error"
@@ -524,6 +636,64 @@ const InstancePage = ({ params }: { params: { instanceId: string } }) => {
                     </button>
                   )}
                 </div>
+                <div className="mt-4">
+                  <label className="block">Add Global Variable</label>
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      value={newVariableName}
+                      onChange={(e) => setNewVariableName(e.target.value)}
+                      className="input input-bordered w-1/2"
+                      placeholder="Variable Name"
+                    />
+                    <input
+                      type="text"
+                      value={newVariableValue}
+                      onChange={(e) => setNewVariableValue(e.target.value)}
+                      className="input input-bordered w-1/2"
+                      placeholder="Variable Value"
+                    />
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => handleAddVariable("global")}
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <label className="block">Global Variables</label>
+                  <table className="table-auto w-full">
+                    <thead>
+                      <tr>
+                        <th className="px-4 py-2">Name</th>
+                        <th className="px-4 py-2">Value</th>
+                        <th className="px-4 py-2">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {globalVariables.map((variable, index) => (
+                        <tr key={index}>
+                          <td className="border px-4 py-2">{variable.name}</td>
+                          <td className="border px-4 py-2">{variable.value}</td>
+                          <td className="border px-4 py-2">
+                            <button
+                              className="btn btn-error btn-sm"
+                              onClick={() => deleteVariable("global", index)}
+                            >
+                              <Trash size={16} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="mt-4 flex justify-end space-x-2">
+                  <button className="btn btn-success" onClick={handleSaveSettings}>
+                    Save
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -537,7 +707,7 @@ const InstancePage = ({ params }: { params: { instanceId: string } }) => {
         <dialog open className="modal">
           <div className="modal-box">
             <h3 className="text-lg font-bold">Confirm Delete</h3>
-            <p>Are you sure you want to delete the tab &quot;{currentInstance?.name}&quot;?</p>
+            <p>Are you sure you want to delete the tab &quot;{tabToDelete?.name}&quot;?</p>
             <div className="mt-4 flex justify-end space-x-2">
               <button
                 className="btn"
@@ -555,6 +725,8 @@ const InstancePage = ({ params }: { params: { instanceId: string } }) => {
           </div>
         </dialog>
       )}
+
+      <UtilityModal />
     </div>
   );
 };

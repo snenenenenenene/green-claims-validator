@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { generateQuestionsFromChart } from "@/lib/utils";
+import { v4 as uuidv4 } from "uuid";
 
 // Interfaces for Nodes, Edges, and Chart Instances
 interface NodeData {
@@ -27,6 +28,7 @@ interface Edge {
 }
 
 export interface ChartInstance {
+  id: string;
   name: string;
   initialNodes: Node[];
   initialEdges: Edge[];
@@ -55,20 +57,33 @@ interface StoreState {
   globalCommits: Commit[];
   currentWeight: number;
   currentTab: string; // Added currentTab
-  setCurrentTab: (tabName: string) => void; // Added setCurrentTab method
-  updateChartInstanceName: (oldName: string, newName: string) => void; // Added updateChartInstanceName method
+  setCurrentTab: (tabId: string) => void; // Changed to use tabId
+  updateChartInstanceName: (tabId: string, newName: string) => void; // Changed to use tabId
+
+  // Variables
+  variables: {
+    local: { name: string; value: string }[];
+    global: { name: string; value: string }[];
+  };
+  setVariables: (variables: { local: any[]; global: any[] }) => void;
+
+  // Modal state
+  modalContent: React.ReactNode;
+  isModalOpen: boolean;
+  openModal: (content: React.ReactNode) => void;
+  closeModal: () => void;
 
   // Setters and Methods
-  setCurrentDashboardTab: (tabName: string) => void;
-  setCurrentQuestionnaireTab: (tabName: string) => void;
+  setCurrentDashboardTab: (tabId: string) => void; // Changed to use tabId
+  setCurrentQuestionnaireTab: (tabId: string) => void; // Changed to use tabId
   addNewTab: (newTabName: string) => void;
-  setNodesAndEdges: (instanceName: string, nodes: Node[], edges: Edge[]) => void;
+  setNodesAndEdges: (tabId: string, nodes: Node[], edges: Edge[]) => void; // Changed to use tabId
   setOnePage: (value: boolean) => void;
-  removeNode: (instanceName: string, nodeId: string) => void;
-  deleteTab: (tabName: string) => void;
+  removeNode: (tabId: string, nodeId: string) => void; // Changed to use tabId
+  deleteTab: (tabId: string) => void; // Changed to use tabId
   publishTab: () => void;
   saveToDb: () => void;
-  setCurrentTabColor: (instanceName: string, color: string) => void;
+  setCurrentTabColor: (tabId: string, color: string) => void; // Changed to use tabId
   setChartInstance: (newInstance: ChartInstance) => void;
   setChartInstances: (newInstances: ChartInstance[]) => void;
   generateQuestions: () => void;
@@ -101,11 +116,22 @@ const useStore = create<StoreState>(
       currentWeight: 1,
       currentTab: "", // Initialized currentTab
 
-      setCurrentDashboardTab: (tabName) => set({ currentDashboardTab: tabName }),
-      setCurrentQuestionnaireTab: (tabName) => set({ currentQuestionnaireTab: tabName }),
-      setCurrentTab: (tabName) => set({ currentTab: tabName }), // Implementation of setCurrentTab
+      variables: {
+        local: [],
+        global: [],
+      },
+      modalContent: null,
+      isModalOpen: false,
+      openModal: (content) => set({ modalContent: content, isModalOpen: true }),
+      closeModal: () => set({ isModalOpen: false }),
+
+      setCurrentDashboardTab: (tabId) => set({ currentDashboardTab: tabId }),
+      setCurrentQuestionnaireTab: (tabId) => set({ currentQuestionnaireTab: tabId }),
+      setCurrentTab: (tabId) => set({ currentTab: tabId }),
+
       addNewTab: (newTabName) => {
         const newTab: ChartInstance = {
+          id: uuidv4(),
           name: newTabName,
           initialNodes: [],
           initialEdges: [],
@@ -115,33 +141,36 @@ const useStore = create<StoreState>(
         };
         set({
           chartInstances: [...(get() as StoreState).chartInstances, newTab],
-          currentDashboardTab: newTabName,
+          currentDashboardTab: newTab.id,
           onePage: false,
         });
       },
-      setNodesAndEdges: (instanceName, nodes, edges) => {
+
+      setNodesAndEdges: (tabId, nodes, edges) => {
         set({
           chartInstances: (get() as StoreState).chartInstances.map((instance) =>
-            instance.name === instanceName
+            instance.id === tabId
               ? { ...instance, initialNodes: nodes, initialEdges: edges }
               : instance
           ),
         });
       },
+
       setOnePage: (value) => {
         const { currentDashboardTab, chartInstances } = get() as StoreState;
         set({
           chartInstances: chartInstances.map((instance) =>
-            instance.name === currentDashboardTab
+            instance.id === currentDashboardTab
               ? { ...instance, onePageMode: value }
               : instance
           ),
         });
       },
-      removeNode: (instanceName, nodeId) => {
+
+      removeNode: (tabId, nodeId) => {
         set({
           chartInstances: (get() as StoreState).chartInstances.map((instance) =>
-            instance.name === instanceName
+            instance.id === tabId
               ? {
                   ...instance,
                   initialNodes: instance.initialNodes.filter(
@@ -155,22 +184,24 @@ const useStore = create<StoreState>(
           ),
         });
       },
-      deleteTab: (tabName) => {
+
+      deleteTab: (tabId) => {
         const updatedInstances = (get() as StoreState).chartInstances.filter(
-          (instance) => instance.name !== tabName
+          (instance) => instance.id !== tabId
         );
-        const newCurrentTab = updatedInstances.length > 0 ? updatedInstances[0].name : "";
+        const newCurrentTab = updatedInstances.length > 0 ? updatedInstances[0].id : "";
         set({
           chartInstances: updatedInstances,
           currentDashboardTab: newCurrentTab,
           currentQuestionnaireTab: newCurrentTab,
         });
       },
+
       publishTab: () => {
         const { currentDashboardTab, chartInstances } = get() as StoreState;
         set({
           chartInstances: chartInstances.map((instance) =>
-            instance.name === currentDashboardTab
+            instance.id === currentDashboardTab
               ? {
                   ...instance,
                   publishedVersions: [
@@ -186,28 +217,32 @@ const useStore = create<StoreState>(
         });
         toast.success("Published successfully.");
       },
+
       saveToDb: () => {
         const { currentDashboardTab, chartInstances } = get() as StoreState;
         const currentInstance = chartInstances.find(
-          (instance) => instance.name === currentDashboardTab
+          (instance) => instance.id === currentDashboardTab
         );
         axios.post("/api/charts", { currentInstance });
         toast.success(`Successfully saved ${currentInstance?.name} to the database.`);
       },
+
       setChartInstance: (newInstance) => {
         set({
           chartInstances: (get() as StoreState).chartInstances.map((instance) =>
-            instance.name === newInstance.name ? newInstance : instance
+            instance.id === newInstance.id ? newInstance : instance
           ),
-          currentDashboardTab: newInstance.name,
-          currentQuestionnaireTab: newInstance.name,
+          currentDashboardTab: newInstance.id,
+          currentQuestionnaireTab: newInstance.id,
         });
       },
+
       setChartInstances: (newInstances) => set({ chartInstances: newInstances }),
+
       generateQuestions: () => {
         const { chartInstances, currentQuestionnaireTab } = get() as StoreState;
         const currentInstance = chartInstances.find(
-          (instance) => instance.name === currentQuestionnaireTab
+          (instance) => instance.id === currentQuestionnaireTab
         );
         if (currentInstance) {
           let questions = generateQuestionsFromChart(currentInstance);
@@ -227,6 +262,7 @@ const useStore = create<StoreState>(
           toast.error("No current instance found.");
         }
       },
+
       setCurrentWeight: (weight) => set({ currentWeight: weight }),
       resetCurrentWeight: () => set({ currentWeight: 1 }),
       getCurrentWeight: () => (get() as StoreState).currentWeight,
@@ -241,7 +277,7 @@ const useStore = create<StoreState>(
       addLocalCommit: (message) => {
         const { chartInstances, currentDashboardTab, localCommits } = get() as StoreState;
         const currentInstance = chartInstances.find(
-          (instance) => instance.name === currentDashboardTab
+          (instance) => instance.id === currentDashboardTab
         );
         if (currentInstance) {
           set({
@@ -258,6 +294,7 @@ const useStore = create<StoreState>(
           toast.success("Local commit added.");
         }
       },
+
       revertToLocalCommit: (message) => {
         const { localCommits, setChartInstance } = get() as StoreState;
         const commit = localCommits.find((commit) => commit.message === message);
@@ -266,6 +303,7 @@ const useStore = create<StoreState>(
           toast.success("Reverted to selected local commit.");
         }
       },
+
       addGlobalCommit: (message) => {
         const { chartInstances, globalCommits } = get() as StoreState;
         set({
@@ -281,6 +319,7 @@ const useStore = create<StoreState>(
         });
         toast.success("Global commit added.");
       },
+
       revertToGlobalCommit: (message) => {
         const { globalCommits } = get() as StoreState;
         const commit = globalCommits.find((commit) => commit.message === message);
@@ -290,19 +329,20 @@ const useStore = create<StoreState>(
         }
       },
 
-      // Implementation of updateChartInstanceName
-      updateChartInstanceName: (oldName, newName) => {
+      updateChartInstanceName: (tabId, newName) => {
         const updatedInstances = (get() as StoreState).chartInstances.map((instance) =>
-          instance.name === oldName ? { ...instance, name: newName } : instance
+          instance.id === tabId ? { ...instance, name: newName } : instance
         );
         set({ chartInstances: updatedInstances });
-        set({ currentTab: newName });
+        set({ currentTab: tabId });
       },
+
+      setVariables: (variables) => set({ variables }),
     }),
     {
       name: "flow-chart-store", // unique name for the storage key
     }
-  ) as any
+  )
 );
 
 export default useStore;

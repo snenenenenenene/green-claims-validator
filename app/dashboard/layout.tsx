@@ -9,6 +9,7 @@ import dynamic from "next/dynamic";
 import Loader from "@/components/shared/loader";
 import { Settings } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
+import { v4 as uuidv4 } from "uuid";
 
 const DynamicInstancePage = dynamic(
   () => import("@/app/dashboard/[instanceId]/page"),
@@ -44,22 +45,14 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
     currentDashboardTab,
     setCurrentDashboardTab,
     addNewTab,
-    deleteTab,
-    setOnePage,
-    onePage,
   } = useStore((state) => ({
     chartInstances: state.chartInstances,
     currentDashboardTab: state.currentDashboardTab,
     setCurrentDashboardTab: state.setCurrentDashboardTab,
     addNewTab: state.addNewTab,
-    deleteTab: state.deleteTab,
-    onePage: state.onePage,
-    setOnePage: state.setOnePage,
   }));
 
   const [loading, setLoading] = useState(false);
-  const [newColor, setNewColor] = useState("#000");
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -70,62 +63,37 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const currentPath = window.location.pathname.split("/").pop();
-    setCurrentDashboardTab(currentPath || chartInstances[0]?.name);
-  }, [setCurrentDashboardTab, chartInstances]);
+    if (chartInstances.length === 0) {
+      const defaultId = uuidv4();
+      router.replace(`/dashboard/${defaultId}`);
+    } else {
+      const currentPath = decodeURIComponent(pathname.split("/").pop() || "");
+      const instance = chartInstances.find((instance) => instance.id === currentPath);
+      if (!instance) {
+        router.replace(`/dashboard/${encodeURIComponent(chartInstances[0].id)}`);
+      } else {
+        setCurrentDashboardTab(currentPath);
+      }
+    }
+  }, [setCurrentDashboardTab, chartInstances, pathname, router]);
 
   const handleAddNewTab = () => {
     const newTabName = prompt("Enter the name for the new tab:");
     if (newTabName) {
       addNewTab(newTabName);
-      setCurrentDashboardTab(newTabName);
-      window.history.pushState({}, "", `/dashboard/${newTabName}`);
+      const newTab = chartInstances.find(tab => tab.name === newTabName);
+      if (newTab) {
+        setCurrentDashboardTab(newTab.id);
+        window.history.pushState({}, "", `/dashboard/${newTab.id}`);
+      }
     }
   };
 
-  const handleTabClick = (tabName: string) => {
+  const handleTabClick = (tabId: string) => {
     setLoading(true);
-    setCurrentDashboardTab(tabName);
-    window.history.pushState({}, "", `/dashboard/${tabName}`);
+    setCurrentDashboardTab(tabId);
+    window.history.pushState({}, "", `/dashboard/${tabId}`);
     setTimeout(() => setLoading(false), 300); // Simulate loading delay
-  };
-
-  const handleDelete = () => {
-    if (currentDashboardTab) {
-      setShowDeleteConfirmation(true);
-    } else {
-      alert("No tab selected to delete.");
-    }
-  };
-
-  const confirmDelete = () => {
-    deleteTab(currentDashboardTab);
-    setCurrentDashboardTab(chartInstances[0]?.name);
-    window.history.pushState({}, "", `/dashboard/${chartInstances[0]?.name}`);
-    alert(`Tab ${currentDashboardTab} has been deleted.`);
-    setShowDeleteConfirmation(false);
-  };
-
-  const handleColorChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setNewColor(event.target.value);
-  };
-
-  useEffect(() => {
-    if (pathname.endsWith("/dashboard")) {
-      router.replace(`/dashboard/${encodeURIComponent(chartInstances[0].name)}`);
-    } else {
-      const currentPath = decodeURIComponent(pathname.split("/").pop() || "");
-      setCurrentDashboardTab(currentPath);
-    }
-  }, [setCurrentDashboardTab, chartInstances, pathname, router]);
-
-  const handleSaveSettings = () => {
-    setOnePage(onePage);
-    (document.getElementById("settings_modal") as any).close();
-  };
-
-  const onSave = () => {
-    console.log(`boop`);
   };
 
   if (!session) {
@@ -150,16 +118,16 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
               const textColor = getContrastingTextColor(tabColor);
               return (
                 <button
-                  key={chart.name}
-                  onClick={() => handleTabClick(chart.name)}
+                  key={chart.id}
+                  onClick={() => handleTabClick(chart.id)}
                   style={{
                     backgroundColor:
-                      chart.name === currentDashboardTab ? "#ffffff" : tabColor,
+                      chart.id === currentDashboardTab ? "#ffffff" : tabColor,
                     borderColor:
-                      chart.name === currentDashboardTab ? tabColor : "transparent",
-                    color: chart.name === currentDashboardTab ? tabColor : textColor,
+                      chart.id === currentDashboardTab ? tabColor : "transparent",
+                    color: chart.id === currentDashboardTab ? tabColor : textColor,
                   }}
-                  className={`flex h-full hover:scale-105 transition-all duration-200 items-center justify-center overflow-hidden text-ellipsis whitespace-nowrap rounded-xl p-2 px-4 text-xl hover:bg-gray-200 ${chart.name === currentDashboardTab ? "border-2" : ""
+                  className={`flex h-full hover:scale-105 transition-all duration-200 items-center justify-center overflow-hidden text-ellipsis whitespace-nowrap rounded-xl p-2 px-4 text-xl hover:bg-gray-200 ${chart.id === currentDashboardTab ? "border-2" : ""
                     }`}
                 >
                   {chart.name}
@@ -181,48 +149,7 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
         </div>
       </section>
 
-      <dialog id="settings_modal" className="modal">
-        <div className="modal-box">
-          <h3 className="text-lg font-bold">Diagram Settings</h3>
-          <label className="mb-2 block">
-            Tab Color:
-            <input
-              type="color"
-              value={newColor}
-              onChange={handleColorChange}
-              className="ml-2"
-            />
-          </label>
-          <div className="mt-4 flex items-center">
-            <label className="mr-2">One Page Mode:</label>
-            <input
-              type="checkbox"
-              checked={onePage}
-              onChange={(e) => setOnePage(e.target.checked)}
-              className="form-checkbox"
-            />
-          </div>
-          <div className="mt-4">
-            <button
-              className="bg-green-500 mr-2 rounded p-2 text-white"
-              onClick={handleSaveSettings}
-            >
-              Save
-            </button>
-            <button
-              className="rounded bg-red-500 p-2 text-white"
-              onClick={handleDelete}
-            >
-              Delete Tab
-            </button>
-          </div>
-        </div>
-        <form method="dialog" className="modal-backdrop">
-          <button>Close</button>
-        </form>
-      </dialog>
-
-      {showDeleteConfirmation && (
+      {/* {showDeleteConfirmation && (
         <dialog open className="modal">
           <div className="modal-box">
             <h3 className="text-lg font-bold">Confirm Delete</h3>
@@ -237,7 +164,7 @@ export default function Dashboard({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </dialog>
-      )}
+      )} */}
     </ReactFlowProvider>
   );
 }
