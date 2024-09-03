@@ -35,6 +35,7 @@ export interface ChartInstance {
   color: string;
   onePageMode?: boolean;
   publishedVersions?: { version: number; date: string }[];
+  variables?: { name: string; value: string }[]; // Local variables specific to this chart
 }
 
 // Interface for Commit
@@ -56,16 +57,17 @@ interface StoreState {
   localCommits: Commit[];
   globalCommits: Commit[];
   currentWeight: number;
-  currentTab: string; // Added currentTab
-  setCurrentTab: (tabId: string) => void; // Changed to use tabId
-  updateChartInstanceName: (tabId: string, newName: string) => void; // Changed to use tabId
+  currentTab: string;
+  setCurrentTab: (tabId: string) => void;
+  updateChartInstanceName: (tabId: string, newName: string) => void;
 
   // Variables
   variables: {
-    local: { name: string; value: string }[];
     global: { name: string; value: string }[];
   };
-  setVariables: (variables: { local: any[]; global: any[] }) => void;
+  setVariables: (variables: { global: any[] }) => void;
+  addLocalVariable: (tabId: string, variable: { name: string; value: string }) => void;
+  deleteLocalVariable: (tabId: string, variableIndex: number) => void;
 
   // Modal state
   modalContent: React.ReactNode;
@@ -74,16 +76,16 @@ interface StoreState {
   closeModal: () => void;
 
   // Setters and Methods
-  setCurrentDashboardTab: (tabId: string) => void; // Changed to use tabId
-  setCurrentQuestionnaireTab: (tabId: string) => void; // Changed to use tabId
+  setCurrentDashboardTab: (tabId: string) => void;
+  setCurrentQuestionnaireTab: (tabId: string) => void;
   addNewTab: (newTabName: string) => void;
-  setNodesAndEdges: (tabId: string, nodes: Node[], edges: Edge[]) => void; // Changed to use tabId
+  setNodesAndEdges: (tabId: string, nodes: Node[], edges: Edge[]) => void;
   setOnePage: (value: boolean) => void;
-  removeNode: (tabId: string, nodeId: string) => void; // Changed to use tabId
-  deleteTab: (tabId: string) => void; // Changed to use tabId
+  removeNode: (tabId: string, nodeId: string) => void;
+  deleteTab: (tabId: string) => void;
   publishTab: () => void;
   saveToDb: () => void;
-  setCurrentTabColor: (tabId: string, color: string) => void; // Changed to use tabId
+  setCurrentTabColor: (tabId: string, color: string) => void;
   setChartInstance: (newInstance: ChartInstance) => void;
   setChartInstances: (newInstances: ChartInstance[]) => void;
   generateQuestions: () => void;
@@ -114,10 +116,9 @@ const useStore = create<StoreState>(
       localCommits: [],
       globalCommits: [],
       currentWeight: 1,
-      currentTab: "", // Initialized currentTab
+      currentTab: "",
 
       variables: {
-        local: [],
         global: [],
       },
       modalContent: null,
@@ -138,6 +139,7 @@ const useStore = create<StoreState>(
           onePageMode: false,
           color: "#80B500",
           publishedVersions: [],
+          variables: [], // Initialize with an empty array for local variables
         };
         set({
           chartInstances: [...(get() as StoreState).chartInstances, newTab],
@@ -338,6 +340,35 @@ const useStore = create<StoreState>(
       },
 
       setVariables: (variables) => set({ variables }),
+
+      addLocalVariable: (tabId, variable) => {
+        set({
+          chartInstances: (get() as StoreState).chartInstances.map((instance) =>
+            instance.id === tabId
+              ? {
+                  ...instance,
+                  variables: [...(instance.variables || []), variable],
+                }
+              : instance
+          ),
+        });
+      },
+
+      deleteLocalVariable: (tabId, variableIndex) => {
+        set({
+          chartInstances: (get() as StoreState).chartInstances.map((instance) => {
+            if (instance.id === tabId) {
+              const updatedVariables = [...(instance.variables || [])];
+              updatedVariables.splice(variableIndex, 1);
+              return {
+                ...instance,
+                variables: updatedVariables,
+              };
+            }
+            return instance;
+          }),
+        });
+      },
     }),
     {
       name: "flow-chart-store", // unique name for the storage key

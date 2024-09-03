@@ -79,7 +79,6 @@ const InstancePage = ({ params }: { params: { instanceId: string } }) => {
   const [selectedGlobalVersion, setSelectedGlobalVersion] = useState("");
   const [activeTab, setActiveTab] = useState("local");
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-
   const [localVariables, setLocalVariables] = useState(variables.local || []);
   const [globalVariables, setGlobalVariables] = useState(variables.global || []);
   const [newVariableName, setNewVariableName] = useState("");
@@ -88,7 +87,11 @@ const InstancePage = ({ params }: { params: { instanceId: string } }) => {
 
   const { project } = useReactFlow();
 
-  const updateNodesWithLogic = (nodes: FlowNode[], edges: Edge[], allCharts: ChartInstance[]) => {
+  const updateNodesWithLogic = (
+    nodes: FlowNode[],
+    edges: Edge[],
+    allCharts: ChartInstance[]
+  ) => {
     return nodes.map((node) => {
       const connectedEdges = edges.filter(
         (edge) => edge.source === node.id || edge.target === node.id
@@ -111,8 +114,7 @@ const InstancePage = ({ params }: { params: { instanceId: string } }) => {
         node.data.options = node.data.options.map((option: any) => {
           const correspondingEdge = connectedEdges.find(
             (edge) =>
-              edge.source === node.id &&
-              edge.sourceHandle === option.label
+              edge.source === node.id && edge.sourceHandle === option.label
           );
           return {
             ...option,
@@ -178,9 +180,7 @@ const InstancePage = ({ params }: { params: { instanceId: string } }) => {
             console.error(`Target chart not found: ${node.data.redirectTab}`);
           }
         } else {
-          const nextEdge = connectedEdges.find(
-            (edge) => edge.source === node.id
-          );
+          const nextEdge = connectedEdges.find((edge) => edge.source === node.id);
           node.data.nextNodeId = nextEdge ? nextEdge.target : "-1";
           node.data.options = [
             {
@@ -425,11 +425,17 @@ const InstancePage = ({ params }: { params: { instanceId: string } }) => {
     if (newVariableName.trim() && newVariableValue.trim()) {
       const newVariable = { name: newVariableName.trim(), value: newVariableValue.trim() };
       console.log(`Creating ${scope} variable:`, newVariable);
+
       if (scope === "local") {
         setLocalVariables((prev) => [...prev, newVariable]);
-      } else {
+      } else if (scope === "global") {
         setGlobalVariables((prev) => [...prev, newVariable]);
+        setVariables((prev) => ({
+          ...prev,
+          global: [...prev.global, newVariable],
+        }));
       }
+
       setNewVariableName("");
       setNewVariableValue("");
       toast.success(`${scope.charAt(0).toUpperCase() + scope.slice(1)} variable created.`);
@@ -447,6 +453,10 @@ const InstancePage = ({ params }: { params: { instanceId: string } }) => {
       const updatedVariables = [...globalVariables];
       updatedVariables.splice(index, 1);
       setGlobalVariables(updatedVariables);
+      setVariables((prev) => ({
+        ...prev,
+        global: updatedVariables,
+      }));
     }
     toast.success(`${scope.charAt(0).toUpperCase() + scope.slice(1)} variable deleted.`);
   };
@@ -467,14 +477,13 @@ const InstancePage = ({ params }: { params: { instanceId: string } }) => {
         connectionLineType={ConnectionLineType.SmoothStep}
       >
         <Controls />
-        {/* @ts-ignore */}
         <Background variant="dots" gap={12} size={1} />
       </ReactFlow>
       <button
-        className="btn btn-ghost absolute right-4 top-4"
+        className="btn btn-ghost absolute right-4 top-4 z-10"
         onClick={() => setShowSettings(true)}
       >
-        <Settings size={20} />
+        <Settings size={24} />
       </button>
       <Toaster />
       {showSettings && (

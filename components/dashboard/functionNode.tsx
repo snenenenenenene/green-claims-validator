@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Handle, Position, NodeProps, useReactFlow } from "reactflow";
 import useStore from "@/lib/store";
 import { Trash2, ExternalLink } from "lucide-react";
@@ -25,42 +25,51 @@ const FunctionNode = ({ id, data, isConnectable }: NodeProps) => {
 		setEdges((edges) => edges.filter((edge) => edge.source !== id && edge.target !== id));
 	};
 
-	const showModal = () => {
-		openModal(
-			<div>
-				<h3 className="text-lg font-bold">Select Variable</h3>
-				<div className="mt-4 flex justify-center space-x-4">
-					<button
-						className={`btn ${variableScope === "local" ? "btn-active" : ""}`}
-						onClick={() => setVariableScope("local")}
-					>
-						Local
-					</button>
-					<button
-						className={`btn ${variableScope === "global" ? "btn-active" : ""}`}
-						onClick={() => setVariableScope("global")}
-					>
-						Global
-					</button>
-				</div>
-				<div className="mt-4">
-					<label className="block">
-						Select {variableScope.charAt(0).toUpperCase() + variableScope.slice(1)} Variable
-					</label>
-					<select
-						onChange={(e) => handleSelectVariable(e.target.value)}
-						className="select select-bordered w-full"
-					>
-						<option value="">Select a variable</option>
-						{variables[variableScope].map((variable, index) => (
-							<option key={index} value={variable.name}>
-								{variable.name}
-							</option>
-						))}
-					</select>
-				</div>
+	const renderModalContent = () => (
+		<div>
+			<h3 className="text-lg font-bold">Select Variable</h3>
+			<div role="tablist" className="tabs tabs-bordered mt-4 flex justify-center space-x-4">
+				<a
+					role="tab"
+					className={`tab ${variableScope === "local" ? "tab-active" : ""}`}
+					onClick={() => setVariableScope("local")}
+				>
+					Local
+				</a>
+				<a
+					role="tab"
+					className={`tab ${variableScope === "global" ? "tab-active" : ""}`}
+					onClick={() => setVariableScope("global")}
+				>
+					Global
+				</a>
 			</div>
-		);
+			<div className="mt-4">
+				<label className="block">
+					Select {variableScope.charAt(0).toUpperCase() + variableScope.slice(1)} Variable
+				</label>
+				<select
+					onChange={(e) => handleSelectVariable(e.target.value)}
+					className="select select-bordered w-full"
+				>
+					<option value="">Select a variable</option>
+					{variables[variableScope].map((variable, index) => (
+						<option key={index} value={variable.name}>
+							{variable.name}
+						</option>
+					))}
+				</select>
+			</div>
+		</div>
+	);
+
+	useEffect(() => {
+		// Re-open the modal with updated content when variableScope changes
+		openModal(renderModalContent());
+	}, [variableScope]);
+
+	const showModal = () => {
+		openModal(renderModalContent());
 	};
 
 	return (
