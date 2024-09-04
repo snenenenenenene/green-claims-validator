@@ -734,8 +734,6 @@ const InstancePage = ({ params }: { params: { instanceId: string } }) => {
           </div>
         </dialog>
       )}
-
-      <UtilityModal />
     </div>
   );
 };
