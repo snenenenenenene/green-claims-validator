@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  url      = env("POSTGRES_PRISMA_URL") // uses connection pooling
   directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
 }
 
@@ -41,16 +41,17 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String         @id @default(cuid())
   name          String?
-  role          String   @default("user")
-  credits     Int      @default(0)
-  email         String?   @unique
+  role          String         @default("user")
+  credits       Int            @default(0)
+  email         String?        @unique
   emailVerified DateTime?
   image         String?
   accounts      Account[]
   sessions      Session[]
   claims        Claim[]
+  chartInstance ChartInstance?
 }
 
 model VerificationToken {
@@ -62,8 +63,10 @@ model VerificationToken {
 }
 
 model ChartInstance {
-  id String @id @default(cuid())
-  content String
+  id      String @id @default(cuid())
+  content String @db.Text
+  userId  String @unique
+  user    User   @relation(fields: [userId], references: [id])
 }
 
 model Claim {

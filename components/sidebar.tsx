@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import useStore from '@/lib/store';
+import React, { useRef, useState, useEffect } from 'react';
+import { useStores } from '@/hooks/useStores';
 import { saveAs } from 'file-saver';
 import {
   Download,
@@ -18,24 +18,35 @@ import {
 import toast from 'react-hot-toast';
 
 const Sidebar = () => {
+  const { chartStore, commitStore, utilityStore } = useStores();
+
   const {
-    publishTab,
-    saveToDb,
+    chartInstances,
     setChartInstance,
+    currentDashboardTab,
+    publishTab,
+  } = chartStore;
+
+  const {
     addLocalCommit,
     addGlobalCommit,
-  } = useStore((state) => ({
-    publishTab: state.publishTab,
-    saveToDb: state.saveToDb,
-    setChartInstance: state.setChartInstance,
-    addLocalCommit: state.addLocalCommit,
-    addGlobalCommit: state.addGlobalCommit,
-  }));
+  } = commitStore;
+
+  const {
+    saveToDb,
+    loadSavedData,
+  } = utilityStore;
 
   const fileInputRef = useRef(null);
   const [showCommitModal, setShowCommitModal] = useState(false);
   const [commitMessage, setCommitMessage] = useState('');
   const [commitType, setCommitType] = useState('local');
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    loadSavedData();
+  }, [loadSavedData]);
 
   const handleDragStart = (event, nodeType) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
@@ -43,12 +54,15 @@ const Sidebar = () => {
   };
 
   const exportToJSON = () => {
-    const chartInstances = useStore.getState().chartInstances;
-    const blob = new Blob([JSON.stringify(chartInstances, null, 2)], {
-      type: 'application/json',
-    });
-    saveAs(blob, 'chart-instances.json');
-    toast.success('Exported successfully.');
+    try {
+      const blob = new Blob([JSON.stringify(chartInstances, null, 2)], {
+        type: 'application/json',
+      });
+      saveAs(blob, 'chart-instances.json');
+      toast.success('Chart exported successfully');
+    } catch (error) {
+      toast.error('Failed to export chart');
+    }
   };
 
   const importFromJSON = (event) => {
@@ -62,38 +76,83 @@ const Sidebar = () => {
         const data = JSON.parse(text as string);
         if (Array.isArray(data)) {
           data.forEach(setChartInstance);
-          toast.success('Imported successfully.');
+          toast.success('Chart imported successfully');
         } else {
           throw new Error('Invalid format');
         }
       } catch {
-        toast.error('Invalid file format.');
+        toast.error('Invalid file format');
       }
     };
     reader.readAsText(file);
   };
 
-  const handleCommitAndSave = () => {
+  const handleCommitAndSave = async () => {
+    setIsSaving(true);
     const commitAction = commitType === 'local' ? addLocalCommit : addGlobalCommit;
     commitAction(commitMessage);
-    saveToDb();
+    await handleSaveToDb();
     setShowCommitModal(false);
     setCommitMessage('');
   };
 
-  const handleSaveWithoutCommit = () => {
-    saveToDb();
-    toast.success('Saved without commit.');
+  const handleSaveWithoutCommit = async () => {
+    setIsSaving(true);
+    await handleSaveToDb();
+  };
+
+  const handleSaveToDb = async () => {
+    const toastId = toast.loading('Saving chart...');
+    setIsSaving(true);
+    try {
+      await saveToDb(Object.values(chartInstances));
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Minimum 2 second delay
+      setLastSavedAt(new Date());
+      console.log("saved to db!")
+      toast.success('Chart saved successfully', { id: toastId });
+    } catch (error) {
+      console.error(error)
+      toast.error('Failed to save chart', { id: toastId });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePublishTab = () => {
+    try {
+      publishTab();
+      toast.success('Tab published successfully');
+    } catch (error) {
+      toast.error('Failed to publish tab');
+    }
   };
 
   const NodeButton = ({ Icon, nodeType, tooltip }) => (
-    <div className="tooltip" data-tip={tooltip}>
+    <div className="relative group">
       <div
-        className="cursor-pointer rounded border p-2 btn flex items-center justify-center"
+        className="cursor-pointer rounded border p-2 btn btn-sm btn-ghost flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700"
         onDragStart={(event) => handleDragStart(event, nodeType)}
         draggable
       >
-        <Icon size={24} />
+        <Icon size={20} />
+      </div>
+      <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-[9999] whitespace-nowrap">
+        {tooltip}
+      </div>
+    </div>
+  );
+
+  const ActionButton = ({ Icon, onClick, tooltip, disabled = false }) => (
+    <div className="relative group">
+      <button
+        className="btn btn-sm btn-ghost w-full"
+        onClick={onClick}
+        disabled={disabled}
+      >
+        {Icon}
+      </button>
+      <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-[9999] whitespace-nowrap">
+        {tooltip}
       </div>
     </div>
   );
@@ -105,51 +164,48 @@ const Sidebar = () => {
     { Icon: CircleDot, nodeType: 'singleChoice', tooltip: 'Single Choice Question' },
     { Icon: List, nodeType: 'multipleChoice', tooltip: 'Multiple Choice Question' },
     { Icon: HelpCircle, nodeType: 'yesNo', tooltip: 'Yes/No Question' },
-    { Icon: FunctionSquare, nodeType: 'functionNode', tooltip: 'Function Node' }, // Added Function Node
+    { Icon: FunctionSquare, nodeType: 'functionNode', tooltip: 'Function Node' },
   ];
 
+  const currentInstance = chartInstances[currentDashboardTab];
+  const hasUnsavedChanges = currentInstance?.hasUnsavedChanges || false;
+
   return (
-    <aside className="flex flex-col h-full justify-between p-4 pt-20">
-      <section className="flex flex-col space-y-4">
+    <aside className="flex flex-col h-full w-16 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto z-[100]">
+      <section className="flex flex-col space-y-2 p-2">
         {nodes.map(({ Icon, nodeType, tooltip }) => (
           <NodeButton key={nodeType} Icon={Icon} nodeType={nodeType} tooltip={tooltip} />
         ))}
       </section>
 
-      <section className="flex flex-col mt-auto" id="buttons">
-        <div className="flex justify-between">
-          <div className="tooltip w-full" data-tip="Save without commit">
-            <button className="btn" onClick={handleSaveWithoutCommit}>
-              <Save />
-            </button>
-          </div>
-          <div className="tooltip w-full" data-tip="Save with commit">
-            <button className="btn" onClick={() => setShowCommitModal(true)}>
-              <MessageSquare />
-            </button>
-          </div>
-        </div>
-
-        <div className="flex w-full justify-between pt-4">
-          <div className="tooltip" data-tip="Export as JSON">
-            <button className="btn btn-ghost" onClick={exportToJSON}>
-              <Download />
-            </button>
-          </div>
-          <div className="tooltip" data-tip="Import from JSON">
-            <button
-              className="btn btn-ghost"
-              onClick={() => (fileInputRef.current as any).click()}
-            >
-              <Upload />
-            </button>
-          </div>
-          <div className="tooltip" data-tip="Publish the current tab">
-            <button className="btn btn-ghost" onClick={publishTab}>
-              <BookmarkPlus />
-            </button>
-          </div>
-        </div>
+      <section className="flex flex-col mt-auto p-2 space-y-2" id="buttons">
+        <ActionButton
+          Icon={isSaving ? <span className="loading loading-spinner loading-sm"></span> : <Save size={20} />}
+          onClick={handleSaveWithoutCommit}
+          tooltip="Save without commit"
+          disabled={isSaving}
+        />
+        <ActionButton
+          Icon={<MessageSquare size={20} />}
+          onClick={() => setShowCommitModal(true)}
+          tooltip="Save with commit"
+          disabled={isSaving}
+        />
+        <ActionButton
+          Icon={<Download size={20} />}
+          onClick={exportToJSON}
+          tooltip="Export as JSON"
+        />
+        <ActionButton
+          Icon={<Upload size={20} />}
+          onClick={() => (fileInputRef.current as any).click()}
+          tooltip="Import from JSON"
+        />
+        <ActionButton
+          Icon={<BookmarkPlus size={20} />}
+          onClick={handlePublishTab}
+          tooltip="Publish the current tab"
+        />
 
         <input
           type="file"
@@ -158,10 +214,19 @@ const Sidebar = () => {
           style={{ display: 'none' }}
           onChange={importFromJSON}
         />
+
+        {lastSavedAt && (
+          <div className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
+            Last saved:<br />{lastSavedAt.toLocaleString()}
+          </div>
+        )}
+        {hasUnsavedChanges && (
+          <div className="text-xs text-warning text-center">Unsaved Changes</div>
+        )}
       </section>
 
       {showCommitModal && (
-        <dialog open className="modal">
+        <dialog open className="modal z-[9999]">
           <div className="modal-box">
             <h3 className="text-lg font-bold">Commit and Save</h3>
             <div className="mt-4">
@@ -198,8 +263,9 @@ const Sidebar = () => {
               <button
                 className="btn btn-success"
                 onClick={handleCommitAndSave}
+                disabled={isSaving}
               >
-                Save
+                {isSaving ? <span className="loading loading-spinner loading-sm"></span> : 'Save'}
               </button>
             </div>
           </div>

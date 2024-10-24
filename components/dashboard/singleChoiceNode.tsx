@@ -1,66 +1,17 @@
-import React, { useEffect, useState } from "react";
-import { Handle, Position, useReactFlow } from "reactflow";
-import useStore from "@/lib/store";
+import React, { useState, useEffect } from "react";
+import { Handle, Position } from "reactflow";
+import NodeWrapper from './NodeWrapper';
 import { Trash2 } from "lucide-react";
-import { v4 as uuidv4 } from 'uuid'; // To generate unique IDs
+import { v4 as uuidv4 } from 'uuid';
 
 const SingleChoiceNode = ({ id, data, isConnectable }) => {
   const [label, setLabel] = useState(data.label);
-  const [nodeBg, setNodeBg] = useState(data.style?.backgroundColor || "#eee");
-  const [nodeHidden, setNodeHidden] = useState(data.hidden || false);
   const [options, setOptions] = useState(data.options || []);
-  const [showRemoveButton, setShowRemoveButton] = useState(false);
-
-  const { removeNode } = useStore((state) => ({
-    removeNode: state.removeNode,
-  }));
-  const currentTab = useStore((state) => state.currentDashboardTab);
-  const { getEdges, setNodes, setEdges } = useReactFlow();
 
   useEffect(() => {
-    // Update the data object with the current state values
     data.label = label;
-    data.style = { ...data.style, backgroundColor: nodeBg };
-    data.hidden = nodeHidden;
-
-    // Update nextNodeId for options based on current edges
-    const edges = getEdges().filter((edge) => edge.source === id);
-    const updatedOptions = options.map((option) => {
-      const correspondingEdge = edges.find((edge) => edge.sourceHandle === `SCN-${id}-${option.id}-next`);
-      return {
-        ...option,
-        nextNodeId: correspondingEdge ? correspondingEdge.target : null,
-      };
-    });
-
-    // Only update state if options have changed to prevent infinite loop
-    if (JSON.stringify(updatedOptions) !== JSON.stringify(options)) {
-      setOptions(updatedOptions);
-    }
-
-    data.options = updatedOptions;
-  }, [label, nodeBg, nodeHidden, options, data, id, getEdges]);
-
-  const handleRemoveClick = () => {
-    const edges = getEdges().filter(
-      (edge) => edge.source === id || edge.target === id,
-    );
-    if (edges.length > 0) {
-      if (confirm("Are you sure you want to delete this node?")) {
-        removeNode(currentTab, id);
-        setNodes((nds) => nds.filter((node) => node.id !== id));
-        setEdges((eds) =>
-          eds.filter((edge) => edge.source !== id && edge.target !== id),
-        );
-      }
-    } else {
-      removeNode(currentTab, id);
-      setNodes((nds) => nds.filter((node) => node.id !== id));
-      setEdges((eds) =>
-        eds.filter((edge) => edge.source !== id && edge.target !== id),
-      );
-    }
-  };
+    data.options = options;
+  }, [label, options, data]);
 
   const handleOptionChange = (index, newValue) => {
     const newOptions = [...options];
@@ -69,8 +20,7 @@ const SingleChoiceNode = ({ id, data, isConnectable }) => {
   };
 
   const handleAddOption = () => {
-    const newOption = { id: uuidv4(), label: "", nextNodeId: null }; // Add unique ID to option
-    setOptions([...options, newOption]);
+    setOptions([...options, { id: uuidv4(), label: "", nextNodeId: null }]);
   };
 
   const handleRemoveOption = (index) => {
@@ -79,19 +29,7 @@ const SingleChoiceNode = ({ id, data, isConnectable }) => {
   };
 
   return (
-    <div
-      className={`relative bg-white dark:bg-gray-800 rounded border-2 p-4 ${nodeHidden ? "hidden" : ""}`}
-      onMouseEnter={() => setShowRemoveButton(true)}
-      onMouseLeave={() => setShowRemoveButton(false)}
-    >
-      {showRemoveButton && (
-        <button
-          className="absolute right-0 top-0 m-1 rounded bg-red-500 p-1 text-xs text-white"
-          onClick={handleRemoveClick}
-        >
-          <Trash2 size={16} />
-        </button>
-      )}
+    <NodeWrapper id={id} hidden={data.hidden} style={data.style}>
       <Handle
         type="target"
         position={Position.Top}
@@ -134,7 +72,7 @@ const SingleChoiceNode = ({ id, data, isConnectable }) => {
       >
         Add Option
       </button>
-    </div>
+    </NodeWrapper>
   );
 };
 

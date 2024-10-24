@@ -19,7 +19,7 @@ export default async function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="flex h-screen w-screen flex-col bg-white dark:bg-gray-900 dark:text-white text-black">
+      <body className="flex h-screen w-screen flex-col bg-white b dark:bg-slate-800 dark:text-white text-black">
         <Suspense fallback="...">
           <Nav />
         </Suspense>

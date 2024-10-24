@@ -1,26 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Handle, Position, useReactFlow } from 'reactflow';
-import useStore from '@/lib/store';
+import NodeWrapper from './NodeWrapper';
 import { Trash2 } from 'lucide-react';
 
 const MultipleChoiceNode = ({ id, data, isConnectable }) => {
   const [label, setLabel] = useState(data.label);
-  const [nodeBg, setNodeBg] = useState(data.style?.backgroundColor || '#eee');
-  const [nodeHidden, setNodeHidden] = useState(data.hidden || false);
   const [options, setOptions] = useState(data.options || []);
-  const [showRemoveButton, setShowRemoveButton] = useState(false);
-
-  const { removeNode } = useStore((state) => ({
-    removeNode: state.removeNode,
-  }));
-  const currentTab = useStore((state) => state.currentDashboardTab);
-  const { getEdges, setNodes, setEdges } = useReactFlow();
+  const { getEdges } = useReactFlow();
 
   useEffect(() => {
-    // Update the data object with current state values
     data.label = label;
-    data.style = { ...data.style, backgroundColor: nodeBg };
-    data.hidden = nodeHidden;
 
     const edges = getEdges().filter((edge) => edge.source === id || edge.target === id);
     const mainSourceEdge = edges.find((edge) => edge.source === id && edge.sourceHandle === 'main');
@@ -29,49 +18,29 @@ const MultipleChoiceNode = ({ id, data, isConnectable }) => {
     const mainNextNodeId = mainSourceEdge ? mainSourceEdge.target : null;
     const mainPrevNodeId = mainTargetEdge ? mainTargetEdge.source : null;
 
-    // Check if the options already contain a DEFAULT option
     let updatedOptions = [...options];
     const defaultOptionIndex = updatedOptions.findIndex(option => option.label === "DEFAULT");
 
     if (defaultOptionIndex !== -1) {
-      // Update existing DEFAULT option
       updatedOptions[defaultOptionIndex] = {
         label: "DEFAULT",
         nextNodeId: mainNextNodeId,
       };
     } else {
-      // Add DEFAULT option if not present
       updatedOptions.push({
         label: "DEFAULT",
         nextNodeId: mainNextNodeId,
       });
     }
 
-    // Ensure other options have nextNodeId set to "-1"
     updatedOptions = updatedOptions.map(option => option.label === "DEFAULT" ? option : { ...option, nextNodeId: "-1" });
 
-    // Only update state if options have changed to avoid infinite loop
     if (JSON.stringify(updatedOptions) !== JSON.stringify(options)) {
       setOptions(updatedOptions);
     }
 
     data.options = updatedOptions;
-  }, [label, nodeBg, nodeHidden, options, data, id, getEdges]);
-
-  const handleRemoveClick = () => {
-    const edges = getEdges().filter((edge) => edge.source === id || edge.target === id);
-    if (edges.length > 0) {
-      if (confirm('Are you sure you want to delete this node?')) {
-        removeNode(currentTab, id);
-        setNodes((nds) => nds.filter((node) => node.id !== id));
-        setEdges((eds) => eds.filter((edge) => edge.source !== id && edge.target !== id));
-      }
-    } else {
-      removeNode(currentTab, id);
-      setNodes((nds) => nds.filter((node) => node.id !== id));
-      setEdges((eds) => eds.filter((edge) => edge.source !== id && edge.target !== id));
-    }
-  };
+  }, [label, options, data, id, getEdges]);
 
   const handleOptionChange = (index, newValue) => {
     const newOptions = [...options];
@@ -89,20 +58,7 @@ const MultipleChoiceNode = ({ id, data, isConnectable }) => {
   };
 
   return (
-    <div
-      className={`relative bg-white rounded border-2 dark:bg-gray-800 p-4 ${nodeHidden ? 'hidden' : ''}`}
-      onMouseEnter={() => setShowRemoveButton(true)}
-      onMouseLeave={() => setShowRemoveButton(false)}
-    >
-      {showRemoveButton && (
-        <button
-          className="absolute right-0 top-0 m-1 rounded bg-red-500 p-1 text-xs text-white"
-          onClick={handleRemoveClick}
-        >
-          <Trash2 size={16} />
-        </button>
-      )}
-      {/* Main Target Handle */}
+    <NodeWrapper id={id} hidden={data.hidden} style={data.style}>
       <Handle type="target" position={Position.Top} id="main" className="bg-green-500 h-4 w-4" isConnectable={isConnectable} />
 
       <input
@@ -139,7 +95,6 @@ const MultipleChoiceNode = ({ id, data, isConnectable }) => {
           </div>
         </div>
       ))}
-      {/* Main Source Handle */}
       <Handle
         type="source"
         position={Position.Bottom}
@@ -150,7 +105,7 @@ const MultipleChoiceNode = ({ id, data, isConnectable }) => {
       <button className="mt-2 w-full rounded bg-blue-500 p-2 text-white" onClick={handleAddOption}>
         Add Option
       </button>
-    </div>
+    </NodeWrapper>
   );
 };
 

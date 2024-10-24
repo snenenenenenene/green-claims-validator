@@ -1,66 +1,24 @@
 import React, { useEffect, useState } from "react";
-import { Handle, Position, useReactFlow } from "reactflow";
-import useStore from "@/lib/store";
-import { Trash2 } from "lucide-react";
+import { Handle, Position } from "reactflow";
+import { useStores } from "@/hooks/useStores";
+import NodeWrapper from './NodeWrapper';
 
 const EndNode = ({ id, data, isConnectable }) => {
   const [label, setLabel] = useState(data.label);
-  const [nodeBg, setNodeBg] = useState(data.style?.backgroundColor || "#eee");
-  const [nodeHidden, setNodeHidden] = useState(data.hidden || false);
   const [endType, setEndType] = useState(data.endType || "end");
   const [redirectTab, setRedirectTab] = useState(data.redirectTab || "");
-  const [showRemoveButton, setShowRemoveButton] = useState(false);
 
-  const chartInstances = useStore((state) => state.chartInstances);
-  const { removeNode } = useStore((state) => ({
-    removeNode: state.removeNode,
-  }));
-  const currentTab = useStore((state) => state.currentDashboardTab);
-  const { getEdges, setNodes, setEdges } = useReactFlow();
+  const { chartStore } = useStores();
+  const chartInstances = chartStore.chartInstances;
 
   useEffect(() => {
     data.label = label;
-    data.style = { ...data.style, backgroundColor: nodeBg };
-    data.hidden = nodeHidden;
     data.endType = endType;
     data.redirectTab = redirectTab;
-  }, [label, nodeBg, nodeHidden, endType, redirectTab, data]);
-
-  const handleRemoveClick = () => {
-    const edges = getEdges().filter(
-      (edge) => edge.source === id || edge.target === id,
-    );
-    if (edges.length > 0) {
-      if (confirm("Are you sure you want to delete this node?")) {
-        removeNode(currentTab, id);
-        setNodes((nds) => nds.filter((node) => node.id !== id));
-        setEdges((eds) =>
-          eds.filter((edge) => edge.source !== id && edge.target !== id),
-        );
-      }
-    } else {
-      removeNode(currentTab, id);
-      setNodes((nds) => nds.filter((node) => node.id !== id));
-      setEdges((eds) =>
-        eds.filter((edge) => edge.source !== id && edge.target !== id),
-      );
-    }
-  };
+  }, [label, endType, redirectTab, data]);
 
   return (
-    <div
-      className={`relative bg-white dark:bg-gray-800 rounded border-2 p-4 ${nodeHidden ? "hidden" : ""}`}
-      onMouseEnter={() => setShowRemoveButton(true)}
-      onMouseLeave={() => setShowRemoveButton(false)}
-    >
-      {showRemoveButton && (
-        <button
-          className="absolute right-0 top-0 m-1 rounded bg-red-500 p-1 text-xs text-white"
-          onClick={handleRemoveClick}
-        >
-          <Trash2 size={16} />
-        </button>
-      )}
+    <NodeWrapper id={id} hidden={data.hidden} style={data.style}>
       <Handle
         type="target"
         position={Position.Top}
@@ -100,7 +58,7 @@ const EndNode = ({ id, data, isConnectable }) => {
           </select>
         </div>
       )}
-    </div>
+    </NodeWrapper>
   );
 };
 
