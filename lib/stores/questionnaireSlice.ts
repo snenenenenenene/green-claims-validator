@@ -25,13 +25,19 @@ const createQuestionnaireSlice: StateCreator<QuestionnaireState> = (set, get) =>
 
         let options = [];
 
-        if (node.type === "startNode") {
+        if (node.type === "functionNode") {
+          // For function nodes, map all handles to their target nodes
+          options = nodeEdges.map(edge => ({
+            label: edge.sourceHandle || "DEFAULT",
+            nextNodeId: edge.target
+          }));
+          console.log(`Function node ${node.id} options:`, options);
+        } else if (node.type === "startNode") {
           // Start nodes should use their first outgoing edge
           const nextEdge = nodeEdges[0];
-          console.log(`Start node ${node.id} using edge:`, nextEdge);
           options = [{
             label: "DEFAULT",
-            nextNodeId: nextEdge ? nextEdge.target : null  // Directly use the target
+            nextNodeId: nextEdge ? nextEdge.target : null
           }];
         } else if (node.type === "yesNo") {
           const yesEdge = nodeEdges.find(edge => edge.sourceHandle === "yes");
@@ -75,8 +81,6 @@ const createQuestionnaireSlice: StateCreator<QuestionnaireState> = (set, get) =>
             nextNodeId: nextEdge ? nextEdge.target : null
           }];
         }
-
-        console.log(`Final options for node ${node.id}:`, options);
 
         return {
           ...node,
@@ -123,23 +127,40 @@ const createQuestionnaireSlice: StateCreator<QuestionnaireState> = (set, get) =>
   },
 
   processFunctionNode: (node) => {
+    console.log('Processing function node:', node);
     const { variables } = get();
-    const { sequences, selectedVariable } = node;
+    const sequences = node.data?.sequences || [];
+    const selectedVariable = node.data?.selectedVariable;
+
+    console.log('Current variables:', variables);
+    console.log('Found sequences:', sequences);
+    console.log('Selected variable:', selectedVariable);
 
     let result = variables[selectedVariable] || 0;
+    console.log('Initial result value:', result);
 
     for (const seq of sequences) {
+      console.log('Processing sequence:', seq);
+      
       if (seq.type === 'if') {
+        console.log(`Evaluating condition: ${result} ${seq.condition} ${seq.value}`);
         const condition = eval(`${result} ${seq.condition} ${seq.value}`);
+        console.log('Condition result:', condition);
+        
         if (condition) {
+          console.log('Condition true, returning handleId:', seq.handleId);
           return seq.handleId;
         } else if (seq.children && seq.children.length > 0) {
+          console.log('Condition false, checking else blocks');
           const elseBlock = seq.children.find((child) => child.type === 'else');
           if (elseBlock) {
+            console.log('Found else block, returning handleId:', elseBlock.handleId);
             return elseBlock.handleId;
           }
         }
       } else {
+        console.log(`Performing ${seq.type} operation with value:`, seq.value);
+        const oldResult = result;
         switch (seq.type) {
           case 'addition':
             result += seq.value;
@@ -154,9 +175,11 @@ const createQuestionnaireSlice: StateCreator<QuestionnaireState> = (set, get) =>
             result /= seq.value;
             break;
         }
+        console.log(`${seq.type}: ${oldResult} -> ${result}`);
       }
     }
 
+    console.log('Updating variables with final result:', result);
     set((state) => ({
       variables: {
         ...state.variables,
@@ -164,6 +187,7 @@ const createQuestionnaireSlice: StateCreator<QuestionnaireState> = (set, get) =>
       },
     }));
 
+    console.log('No conditions met, returning default');
     return 'default';
   },
 
