@@ -20,12 +20,12 @@ export default async function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="flex h-screen w-screen flex-col bg-white b dark:bg-slate-800 dark:text-white text-black">
+      <body className="flex min-h-screen h-full w-screen flex-col bg-white b dark:bg-slate-800 dark:text-white text-black">
         <Suspense fallback="...">
           <Nav />
         </Suspense>
         <Providers>
-          <main className="text-display flex h-full min-h-full w-full flex-col pt-20">
+          <main className="text-display flex h-full w-full flex-col pt-20">
             {children}
           </main>
         </Providers>

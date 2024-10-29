@@ -1,166 +1,113 @@
-import { NextResponse } from 'next/server'
-import Stripe from 'stripe'
-import { createPrintfulOrder } from '@/utils/printful'
-import { sendOrderConfirmationEmail } from '@/utils/emailService'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '../../auth/[...nextauth]/options'
-
-import prisma from '@/lib/prisma'
+// app/api/stripe/webhook/route.ts
+import { NextResponse } from 'next/server';
+import Stripe from 'stripe';
+import prisma from '@/lib/prisma';
+import { headers } from 'next/headers';
+import { sendPaymentSuccessEmail } from '@/lib/mail-service';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-06-20'
+  apiVersion: '2024-06-20',
 });
 
 export async function POST(req: Request) {
-  const payload = await req.text();
-  const signature = req.headers.get('stripe-signature');
-
-  if (!signature) {
-    return NextResponse.json({ error: 'No signature found' }, { status: 400 });
-  }
+  const body = await req.text();
+  const signature = headers().get('stripe-signature') as string;
 
   let event: Stripe.Event;
 
   try {
     event = stripe.webhooks.constructEvent(
-      payload,
+      body,
       signature,
       process.env.STRIPE_WEBHOOK_SECRET!
     );
   } catch (err: any) {
-    return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
+    return NextResponse.json(
+      { error: `Webhook Error: ${err.message}` },
+      { status: 400 }
+    );
   }
 
   try {
-    if (event.type === 'charge.succeeded') {
-      const charge = event.data.object as Stripe.Charge;
-      const paymentIntent = await stripe.paymentIntents.retrieve(charge.payment_intent as string);
-      
-      let session = null;
-      if (!paymentIntent.metadata.cartItems) {
-        const sessions = await stripe.checkout.sessions.list({
-          payment_intent: paymentIntent.id,
-          limit: 1,
-        });
-        session = sessions.data[0];
-      }
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const userEmail = session.customer_details?.email;
 
-      // Create Printful order
-      const printfulOrder = await createPrintfulOrder(charge, paymentIntent, session);
+        // Get credit amount from metadata
+        const creditAmount = session.metadata?.creditAmount 
+          ? parseInt(session.metadata.creditAmount) 
+          : 0;
 
-      // Try to get current logged in user first
-      const serverSession = await getServerSession(authOptions);
-      let user = null;
-
-      if (serverSession?.user?.email) {
-        user = await prisma.user.findUnique({
-          where: { email: serverSession.user.email }
-        });
-      }
-
-      // If no logged in user, try to find or create by email from the charge
-      if (!user) {
-        const email = charge.billing_details.email || session?.customer_details?.email;
-        if (email) {
-          user = await prisma.user.findUnique({
-            where: { email }
-          });
-
-          if (!user) {
-            user = await prisma.user.create({
-              data: {
-                email: email,
-                name: charge.billing_details.name || session?.customer_details?.name || 'Guest User',
-              }
-            });
-          }
-        } else {
-          // Create guest user if no email available
-          user = await prisma.user.create({
-            data: {
-              email: `guest_${Date.now()}@example.com`,
-              name: 'Guest User',
-            }
-          });
+        // Create payment record
+        const payment = await prisma.payment.create({
+          data: {
+            stripeSessionId: session.id,
+            amount: session.amount_total! / 100,
+            currency: session.currency,
+            status: 'completed',
+            user: {
+              connect: {
+                email: userEmail,
+              },
+            },
+            creditAmount,
+          },
+        }).then((payment) =>{
+          console.log("Payment DB created: ", payment);
         }
-      }
+        ).catch((error) => {
+          console.error("Error creating payment DB: ", error);
+        })
 
-      // Parse cart items
-      const cartItems = JSON.parse(session?.metadata?.cartItems || paymentIntent.metadata.cartItems);
-      
-      // Ensure all products exist
-      await Promise.all(
-        cartItems.map((item: any) =>
-          prisma.product.upsert({
-            where: { id: item.id },
-            update: {},
-            create: {
-              id: item.id,
-              name: item.name,
-              description: item.name,
-              price: item.price,
-              image: item.image,
-              inStock: 1
-            }
-          })
-        )
-      );
+        // Update user credits
+        const updatedUser = await prisma.user.update({
+          where: { email: userEmail! },
+          data: {
+            credits: {
+              increment: creditAmount,
+            },
+          },
+        });
 
-      // Create the order
-      const order = await prisma.order.create({
-        data: {
-          userId: user.id,
-          status: 'processing',
-          total: charge.amount / 100,
-          stripeSessionId: session?.id,
-          stripePaymentId: paymentIntent.id,
-          printfulId: printfulOrder?.id,
-          orderItems: {
-            create: cartItems.map((item: any) => ({
-              quantity: item.quantity,
-              price: item.price,
-              product: {
-                connect: {
-                  id: item.id
-                }
-              }
-            }))
-          }
-        },
-        include: {
-          orderItems: {
-            include: {
-              product: true
-            }
-          }
-        }
-      });
-
-      // Send confirmation email
-      const email = charge.billing_details.email || session?.customer_details?.email;
-      if (email) {
-        await sendOrderConfirmationEmail(
-          email,
-          order.id,
-          order.orderItems,
-          order.total,
-          printfulOrder
+        // Send email notifications
+        await sendPaymentSuccessEmail(
+          userEmail!,
+          payment.amount,
+          creditAmount,
+          payment.id
         );
+
+        break;
       }
 
-      return NextResponse.json({ 
-        received: true, 
-        orderId: order.id,
-        printfulOrder 
-      });
+      case 'payment_intent.payment_failed': {
+        const paymentIntent = event.data.object as Stripe.PaymentIntent;
+        
+        await prisma.payment.create({
+          data: {
+            stripeSessionId: paymentIntent.id,
+            amount: paymentIntent.amount / 100,
+            currency: paymentIntent.currency,
+            status: 'failed',
+            user: {
+              connect: {
+                email: paymentIntent.receipt_email!,
+              },
+            },
+            creditAmount: 0,
+          },
+        });
+        break;
+      }
     }
 
     return NextResponse.json({ received: true });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error processing webhook:', error);
-    return NextResponse.json({ 
-      error: 'Failed to process webhook', 
-      details: error.message 
-    }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to process webhook' },
+      { status: 500 }
+    );
   }
 }

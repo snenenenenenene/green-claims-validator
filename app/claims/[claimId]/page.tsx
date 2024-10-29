@@ -45,6 +45,8 @@ export default function ClaimPage() {
 		);
 	}
 
+	console.log(claim)
+
 	if (!claim) {
 		return <div>Claim not found</div>;
 	}

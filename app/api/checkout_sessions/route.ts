@@ -1,60 +1,57 @@
-import {  CURRENCY } from "@/lib/constants";
-import { formatAmountForStripe } from "@/lib/stripe-helper";
-import { NextResponse } from "next/server";
-import Stripe from "stripe";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/options";
-import prisma from "@/lib/prisma";
+// app/api/checkout_sessions/route.ts
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../auth/[...nextauth]/options';
+import Stripe from 'stripe';
+import { formatAmountForStripe } from '@/lib/stripe-helper';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-06-20",
+  apiVersion: '2024-06-20',
 });
 
-export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
-  const {user} = session!;
+export async function POST(req: Request) {
   try {
-    const amount: number = 5;
-    if (!user) {
-      return NextResponse.json({ statusCode: 401, message: "Unauthorized" });
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Not authenticated' },
+        { status: 401 }
+      );
     }
 
-    const params: Stripe.Checkout.SessionCreateParams = {
-      submit_type: "pay",
-      payment_method_types: ["card", "bancontact", "ideal"],
-      mode: "payment",
-      customer_email: user.email as string,
+    const { amount, creditAmount } = await req.json();
+
+    const checkoutSession = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      submit_type: 'pay',
+      payment_method_types: ['card'],
+      customer_email: session.user.email,
+      metadata: {
+        creditAmount: creditAmount.toString(),
+      },
       line_items: [
         {
-          quantity: 1,
           price_data: {
-            unit_amount: formatAmountForStripe(amount, CURRENCY),
-            currency: CURRENCY,
+            currency: 'eur',
+            unit_amount: formatAmountForStripe(amount, 'eur'),
             product_data: {
-              name: "Credits",
+              name: `${creditAmount} Credits`,
+              description: 'Credits for Green Claims Validator',
             },
           },
+          quantity: 1,
         },
       ],
-      success_url: `${request.headers.get("origin")}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${request.headers.get("origin")}/payment`,
-    }
+      success_url: `${req.headers.get('origin')}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${req.headers.get('origin')}/payments`,
+    });
 
-    const checkoutSession = await stripe.checkout.sessions.create(params)
-
-    //TODO: Add a webhook with stripe to check if payment is successful
-      await prisma.user.update({
-        where: { email: user.email as string },
-        data: {
-          credits: {
-            increment: amount,
-          },
-        },
-      });
-
-      return NextResponse.json(checkoutSession);
-  } catch (err: any) {
-    console.error(err);
-    return NextResponse.json({ statusCode: 500, message: err.message });
+    return NextResponse.json(checkoutSession);
+  } catch (error) {
+    console.error('Error creating checkout session:', error);
+    return NextResponse.json(
+      { error: 'Failed to create checkout session' },
+      { status: 500 }
+    );
   }
 }

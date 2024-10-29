@@ -72,8 +72,8 @@ export default function NavBar({ session }: { session: Session | null }) {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         className={`fixed top-0 flex w-full justify-center ${scrolled
-            ? "bg-white/50 backdrop-blur-xl border-b border-gray-200/50"
-            : "bg-white/0"
+          ? "bg-white/50 backdrop-blur-xl border-b border-gray-200/50"
+          : "bg-white/0"
           } z-30 transition-all duration-300`}
       >
         <div className="mx-5 flex h-16 w-full max-w-screen-xl items-center justify-between">
@@ -89,56 +89,56 @@ export default function NavBar({ session }: { session: Session | null }) {
             </Link>
 
             {session && isDashboardRoute && (
-  <div className="hidden md:flex items-center gap-3">
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/50 backdrop-blur-sm border border-gray-200/50 shadow-sm">
-      <LayoutGrid className="h-4 w-4 text-gray-500" />
-      <span className="text-sm text-gray-600 font-medium">Charts</span>
-    </div>
-    <div className="h-6 w-px bg-gray-200" />
-    <div className="flex items-center gap-2">
-      {chartInstances.map((instance) => (
-        <motion.div
-          key={instance.id}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <Link
-            href={`/dashboard/${instance.id}`}
-            className={`
+              <div className="hidden md:flex items-center gap-3">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/50 backdrop-blur-sm border border-gray-200/50 shadow-sm">
+                  <LayoutGrid className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-600 font-medium">Charts</span>
+                </div>
+                <div className="h-6 w-px bg-gray-200" />
+                <div className="flex items-center gap-2">
+                  {chartInstances.map((instance) => (
+                    <motion.div
+                      key={instance.id}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Link
+                        href={`/dashboard/${instance.id}`}
+                        className={`
               px-4 py-1.5 rounded-full text-sm font-medium 
               transition-all duration-300 ease-in-out
               shadow-sm hover:shadow-md
-              ${currentTab === instance.id 
-                ? "ring-2 ring-offset-2" 
-                : "hover:ring-2 hover:ring-offset-1"
-              }
+              ${currentTab === instance.id
+                            ? "ring-2 ring-offset-2"
+                            : "hover:ring-2 hover:ring-offset-1"
+                          }
             `}
-            onClick={() => {
-              if (currentTab !== instance.id) {
-                setCurrentTab(instance.id);
-              }
-            }}
-            style={{
-              backgroundColor: instance.color,
-              color: "#fff",
-              ringColor: instance.color
-            }}
-          >
-            {instance.name}
-          </Link>
-        </motion.div>
-      ))}
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={handleAddNewTab}
-        className="p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200 flex items-center justify-center shadow-sm hover:shadow-md"
-      >
-        <Plus size={16} className="text-gray-600" />
-      </motion.button>
-    </div>
-  </div>
-)}
+                        onClick={() => {
+                          if (currentTab !== instance.id) {
+                            setCurrentTab(instance.id);
+                          }
+                        }}
+                        style={{
+                          backgroundColor: instance.color,
+                          color: "#fff",
+                          ringColor: instance.color
+                        }}
+                      >
+                        {instance.name}
+                      </Link>
+                    </motion.div>
+                  ))}
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleAddNewTab}
+                    className="p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200 flex items-center justify-center shadow-sm hover:shadow-md"
+                  >
+                    <Plus size={16} className="text-gray-600" />
+                  </motion.button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-3">

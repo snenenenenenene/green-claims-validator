@@ -96,7 +96,7 @@ function FooterContent() {
           </div>
         </div>
 
-        <div className="divider border-t border-gray-200"></div>
+        <div className="border-t border-gray-200"></div>
 
         <div className="footer-row flex flex-col md:flex-row justify-between items-center py-8">
           <div className="footer-2-left text-gray-600 text-sm mb-4 md:mb-0">

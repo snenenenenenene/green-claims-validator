@@ -104,6 +104,8 @@ export default function ClaimsPage() {
     router.push(`/claims/${claim.id}`);
   };
 
+  console.log(sortedClaims)
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">

@@ -152,8 +152,8 @@ const MetricCard = ({ title, value, change, trend, category, description, index 
       )}
       <div className="mt-4 flex items-center gap-2">
         <span className={`px-2 py-1 text-xs font-medium rounded-full ${category === 'evidence' ? 'bg-blue-50 text-blue-600' :
-            category === 'impact' ? 'bg-purple-50 text-purple-600' :
-              'bg-emerald-50 text-emerald-600'
+          category === 'impact' ? 'bg-purple-50 text-purple-600' :
+            'bg-emerald-50 text-emerald-600'
           }`}>
           {category}
         </span>
@@ -175,8 +175,8 @@ const InsightCard = ({ title, description, severity, impact, index }: InsightCar
   >
     <div className="flex items-start gap-4">
       <div className={`p-2 rounded-lg ${severity === 'high' ? 'bg-red-50 text-red-500' :
-          severity === 'medium' ? 'bg-amber-50 text-amber-500' :
-            'bg-green-50 text-green-500'
+        severity === 'medium' ? 'bg-amber-50 text-amber-500' :
+          'bg-green-50 text-green-500'
         }`}>
         <Target className="w-5 h-5" />
       </div>
@@ -184,8 +184,8 @@ const InsightCard = ({ title, description, severity, impact, index }: InsightCar
         <div className="flex justify-between items-start">
           <h4 className="text-lg font-semibold text-gray-800">{title}</h4>
           <span className={`text-sm px-2 py-1 rounded-full ${severity === 'high' ? 'bg-red-50 text-red-500' :
-              severity === 'medium' ? 'bg-amber-50 text-amber-500' :
-                'bg-green-50 text-green-500'
+            severity === 'medium' ? 'bg-amber-50 text-amber-500' :
+              'bg-green-50 text-green-500'
             }`}>
             {severity} priority
           </span>
@@ -322,8 +322,7 @@ export default function Results() {
   }, []);
 
   return (
-    <div className="relative min-h-screen bg-gray-50 overflow-hidden">
-      <ScrollProgress />
+    <div className="relative min-h-screen overflow-hidden">
 
       <div
         ref={containerRef}
