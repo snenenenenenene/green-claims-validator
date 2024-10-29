@@ -1,5 +1,6 @@
 import "./globals.css";
 import Nav from "@/components/layout/nav";
+import Footer from "@/components/layout/footer";
 import { Suspense } from "react";
 import { Analytics as VercelAnalytics } from "@vercel/analytics/react";
 import { SessionProvider } from "next-auth/react";
@@ -28,7 +29,7 @@ export default async function RootLayout({
             {children}
           </main>
         </Providers>
-        {/* <Footer /> */}
+        <Footer />
         <VercelAnalytics />
       </body>
     </html>

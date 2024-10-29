@@ -8,8 +8,9 @@ import useScroll from "@/lib/hooks/use-scroll";
 import { useSignInModal } from "./sign-in-modal";
 import UserDropdown from "./user-dropdown";
 import { Session } from "next-auth";
-import { Coins, Plus } from "lucide-react";
+import { Coins, Plus, FileText, ChevronRight, LayoutGrid } from "lucide-react";
 import { useStores } from "@/hooks/useStores";
+import { motion } from "framer-motion";
 
 export default function NavBar({ session }: { session: Session | null }) {
   const { SignInModal, setShowSignInModal } = useSignInModal();
@@ -55,87 +56,133 @@ export default function NavBar({ session }: { session: Session | null }) {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>; // Or any loading indicator you prefer
+    return (
+      <div className="fixed top-0 w-full h-16 bg-white/50 backdrop-blur-xl z-30">
+        <div className="mx-5 flex h-16 w-full items-center justify-between">
+          <div className="animate-pulse bg-gray-200 h-8 w-32 rounded-full" />
+        </div>
+      </div>
+    );
   }
 
   return (
     <>
       <SignInModal />
-      <div
+      <motion.div
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
         className={`fixed top-0 flex w-full justify-center ${scrolled
-            ? "bg-white/50 dark:bg-gray-900/50 backdrop-blur-xl"
-            : "bg-white/0 dark:bg-gray-900/0"
-          } z-30 transition-all`}
+            ? "bg-white/50 backdrop-blur-xl border-b border-gray-200/50"
+            : "bg-white/0"
+          } z-30 transition-all duration-300`}
       >
-        <div className="mx-5 flex h-24 w-full items-center justify-between">
-          <Link href="/" className="flex items-center font-roboto text-4xl">
-            <Image
-              src="/logo.png"
-              alt="Green Claims Validator logo"
-              width="120"
-              height="120"
-              className="mr-0 rounded-sm"
-            />
+        <div className="mx-5 flex h-16 w-full max-w-screen-xl items-center justify-between">
+          <div className="flex items-center gap-8">
+            <Link href="/" className="flex items-center">
+              <Image
+                src="/logo.png"
+                alt="Green Claims Validator logo"
+                width="100"
+                height="100"
+                className="rounded-sm"
+              />
+            </Link>
+
+            {session && isDashboardRoute && (
+  <div className="hidden md:flex items-center gap-3">
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/50 backdrop-blur-sm border border-gray-200/50 shadow-sm">
+      <LayoutGrid className="h-4 w-4 text-gray-500" />
+      <span className="text-sm text-gray-600 font-medium">Charts</span>
+    </div>
+    <div className="h-6 w-px bg-gray-200" />
+    <div className="flex items-center gap-2">
+      {chartInstances.map((instance) => (
+        <motion.div
+          key={instance.id}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <Link
+            href={`/dashboard/${instance.id}`}
+            className={`
+              px-4 py-1.5 rounded-full text-sm font-medium 
+              transition-all duration-300 ease-in-out
+              shadow-sm hover:shadow-md
+              ${currentTab === instance.id 
+                ? "ring-2 ring-offset-2" 
+                : "hover:ring-2 hover:ring-offset-1"
+              }
+            `}
+            onClick={() => {
+              if (currentTab !== instance.id) {
+                setCurrentTab(instance.id);
+              }
+            }}
+            style={{
+              backgroundColor: instance.color,
+              color: "#fff",
+              ringColor: instance.color
+            }}
+          >
+            {instance.name}
           </Link>
-          {isDashboardRoute && (
-            <div className="flex-grow mx-4">
-              <nav className="flex flex-wrap gap-2 items-center">
-                {chartInstances.map((instance) => (
-                  <Link
-                    key={instance.id}
-                    href={`/dashboard/${instance.id}`}
-                    className={`px-4 py-2 rounded-full transition-all duration-300 ease-in-out ${currentTab === instance.id
-                        ? "ring-2 ring-offset-2 font-semibold"
-                        : "hover:ring-2 hover:ring-offset-2"
-                      }`}
-                    onClick={() => {
-                      if (currentTab !== instance.id) {
-                        setCurrentTab(instance.id);
-                      }
-                    }}
-                    style={{
-                      backgroundColor: instance.color,
-                      color: "#fff",
-                      ringColor: instance.color,
-                      ringOffsetColor: "white",
-                    }}
-                  >
-                    {instance.name}
-                  </Link>
-                ))}
-                <button
-                  onClick={handleAddNewTab}
-                  className="px-4 py-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-300 ease-in-out flex items-center justify-center"
+        </motion.div>
+      ))}
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={handleAddNewTab}
+        className="p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200 flex items-center justify-center shadow-sm hover:shadow-md"
+      >
+        <Plus size={16} className="text-gray-600" />
+      </motion.button>
+    </div>
+  </div>
+)}
+          </div>
+
+          <div className="flex items-center gap-3">
+            {session ? (
+              <div className="flex items-center gap-3">
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  <Plus size={20} className="text-black dark:text-white" />
-                </button>
-              </nav>
-            </div>
-          )}
-          <section className="flex items-center gap-4 text-lg font-medium">
-            <div className="flex items-center gap-4">
-              {session ? (
-                <>
-                  <Link href={"/payments"} className="flex btn font-medium">
-                    <span className="text-xl font-roboto">
+                  <Link
+                    href="/payments"
+                    className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/50 backdrop-blur-sm border border-gray-200/50 transition-all duration-200 hover:shadow-sm"
+                  >
+                    <span className="text-sm font-medium text-gray-900">
                       {(session.user as any).credits}
                     </span>
-                    <Coins className="text-xl" />
+                    <Coins className="h-4 w-4 text-gray-600" />
                   </Link>
-                  <UserDropdown session={session} />
-                </>
-              ) : (
-                <button
-                  className="rounded-full p-1.5 px-8 py-4 font-roboto text-xl text-gray-400 transition-all duration-200 hover:text-black dark:hover:text-white hover:underline"
-                  onClick={() => setShowSignInModal(true)}
-                >
-                  Log in
-                </button>
-              )}
-            </div>
-          </section>
+                </motion.div>
+                <div className="h-6 w-px bg-gray-200" />
+                <UserDropdown session={session} />
+              </div>
+            ) : (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowSignInModal(true)}
+                className="flex items-center gap-2 px-6 py-1.5 rounded-full bg-gradient-to-r from-blue-500 to-violet-500 text-white text-sm font-medium transition-all duration-200 hover:shadow-md"
+              >
+                Log in
+                <ChevronRight className="h-4 w-4" />
+              </motion.button>
+            )}
+          </div>
         </div>
-      </div>
+      </motion.div>
     </>
   );
+}
+
+// Helper function to adjust color brightness
+function adjustColor(color: string, amount: number): string {
+  return color.replace(/^#/, '').match(/.{2}/g)?.map(hex => {
+    const value = Math.min(255, Math.max(0, parseInt(hex, 16) + amount));
+    return value.toString(16).padStart(2, '0');
+  }).join('') || color;
 }

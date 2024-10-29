@@ -11,6 +11,7 @@
       "@/app/*": ["app/*"],
       "@/lib/*": ["lib/*"],
       "@/styles/*": ["styles/*"],
+      "@/types/*": ["types/*"],
       "@/hooks/*": ["lib/hooks/*"]
     },
     "strict": true,

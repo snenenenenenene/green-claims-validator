@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { signOut } from "next-auth/react";
-import { LayoutDashboard, LogOut, Users } from "lucide-react";
+import { LayoutDashboard, LogOut, Users, FileText } from "lucide-react";
 import Popover from "@/components/shared/popover";
 import Image from "next/image";
 import { Session } from "next-auth";
@@ -12,6 +12,7 @@ import { User } from "@prisma/client";
 export default function UserDropdown({ session }: { session: Session }) {
   const { email, image } = session?.user || {};
   const [openPopover, setOpenPopover] = useState(false);
+
   if (!email) return null;
 
   return (
@@ -29,6 +30,15 @@ export default function UserDropdown({ session }: { session: Session }) {
                 {session?.user?.email}
               </p>
             </div>
+
+            <Link
+              href="/claims"
+              className="hover:bg-primary-hover relative flex w-full items-center justify-start space-x-2 rounded-md p-2 text-left text-sm transition-all duration-75"
+            >
+              <FileText className="h-4 w-4" />
+              <p className="text-sm">My Claims</p>
+            </Link>
+
             {(session?.user as User).role === "admin" && (
               <>
                 <Link
@@ -48,6 +58,7 @@ export default function UserDropdown({ session }: { session: Session }) {
                 </Link>
               </>
             )}
+
             <button
               className="hover:bg-primary-hover relative flex w-full items-center justify-start space-x-2 rounded-md p-2 text-left text-sm transition-all duration-75"
               onClick={() => signOut()}

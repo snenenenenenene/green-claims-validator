@@ -69,66 +69,17 @@ export async function GET(request: Request) {
     });
 
     // Enrich claims with status and progress
-    const enrichedClaims = claims.map(claim => {
-      return {
-        ...claim,
-        status: 'IN_PROGRESS', // You'll need to determine this based on your actual logic
-        progress: 30, // You'll need to calculate this based on your actual logic
-      };
-    });
+    const enrichedClaims = claims.map(claim => ({
+      ...claim,
+      status: 'IN_PROGRESS', // You'll need logic to determine this
+      progress: 30, // You'll need logic to calculate this
+    }));
 
     return NextResponse.json({ claims: enrichedClaims });
   } catch (error) {
     console.error('Database error:', error);
     return NextResponse.json(
       { error: "Failed to fetch claims" },
-      { status: 500 }
-    );
-  }
-}
-
-export async function PUT(request: Request) {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user) {
-    return NextResponse.json(
-      { error: "Not authenticated" },
-      { status: 401 }
-    );
-  }
-
-  try {
-    const { id, status, progress } = await request.json();
-    
-    // Verify claim belongs to user
-    const claim = await prisma.claim.findFirst({
-      where: {
-        id,
-        userId: (session.user as any).id,
-      },
-    });
-
-    if (!claim) {
-      return NextResponse.json(
-        { error: "Claim not found" },
-        { status: 404 }
-      );
-    }
-
-    // Update claim
-    const updatedClaim = await prisma.claim.update({
-      where: { id },
-      data: {
-        updatedAt: new Date(),
-        // You can add additional fields to update here
-      },
-    });
-
-    return NextResponse.json({ claim: updatedClaim });
-  } catch (error) {
-    console.error('Database error:', error);
-    return NextResponse.json(
-      { error: "Failed to update claim" },
       { status: 500 }
     );
   }
