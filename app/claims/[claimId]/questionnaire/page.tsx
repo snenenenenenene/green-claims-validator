@@ -33,20 +33,46 @@ export default function QuestionnairePage() {
   const [error, setError] = useState(null);
   const [processingAnswer, setProcessingAnswer] = useState(false);
 
+  // First, load chart instances if they're not already loaded
+  useEffect(() => {
+    const loadChartInstances = async () => {
+      try {
+        if (!chartStore.chartInstances?.length) {
+          const response = await fetch('/api/load-chart');
+          if (response.ok) {
+            const data = await response.json();
+            if (data.content) {
+              const parsedContent = JSON.parse(data.content);
+              console.log("Loaded chart instances:", parsedContent);
+              chartStore.setChartInstances(parsedContent);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load chart instances:', error);
+        setError('Failed to load questionnaire data');
+      }
+    };
+
+    loadChartInstances();
+  }, [chartStore]);
+
+  // Then initialize the questionnaire once chart instances are loaded
   useEffect(() => {
     const initializeQuestionnaire = async () => {
       try {
+        if (!chartStore.chartInstances?.length) {
+          console.log("No chart instances available");
+          throw new Error('No chart instances available');
+        }
+
         // Fetch claim details
         const response = await fetch(`/api/claims/${params.claimId}`);
         if (!response.ok) throw new Error('Failed to fetch claim');
         const data = await response.json();
         setClaim(data.claim);
 
-        if (!chartStore.chartInstances?.length) {
-          console.log(chartStore.chartInstances)
-          throw new Error('No chart instances available');
-        }
-
+        console.log("Initializing questionnaire with chart instances:", chartStore.chartInstances);
         resetCurrentWeight();
         const generatedQuestions = generateQuestionsFromAllCharts();
         setAllQuestions(generatedQuestions);
@@ -79,7 +105,9 @@ export default function QuestionnairePage() {
       }
     };
 
-    initializeQuestionnaire();
+    if (chartStore.chartInstances?.length > 0) {
+      initializeQuestionnaire();
+    }
   }, [chartStore.chartInstances, params.claimId]);
 
   const processQuestionChain = (question) => {
@@ -244,8 +272,8 @@ export default function QuestionnairePage() {
       <div className="max-w-3xl mx-auto space-y-8">
         {/* Claim Title */}
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
           className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6"
         >
           <h1 className="text-xl font-semibold text-slate-900">{claim?.claim}</h1>
@@ -330,7 +358,10 @@ export default function QuestionnairePage() {
                     whileTap={{ scale: 0.98 }}
                     onClick={handleNextQuestion}
                     disabled={!selectedAnswer || processingAnswer}
-                    className="group flex items-center px-8 py-4 bg-gradient-to-r from-blue-500 to-violet-500 text-white rounded-xl font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:from-slate-400 disabled:to-slate-500"
+                    className={`
+                      group flex items-center px-8 py-4 bg-gradient-to-r from-blue-500 to-violet-500 text-white rounded-xl font-medium transition-all duration-200 
+                      disabled:opacity-50 disabled:cursor-not-allowed disabled:from-slate-400 disabled:to-slate-500
+                    `}
                   >
                     <span className="mr-2">Continue</span>
                     <motion.div
