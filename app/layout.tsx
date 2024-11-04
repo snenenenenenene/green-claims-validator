@@ -25,7 +25,7 @@ export default async function RootLayout({
           <Nav />
         </Suspense>
         <Providers>
-          <main className="text-display flex h-full w-full flex-col pt-20">
+          <main className="text-display flex h-screen w-full flex-col pt-20">
             {children}
           </main>
         </Providers>

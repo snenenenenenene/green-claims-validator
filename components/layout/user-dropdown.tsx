@@ -39,7 +39,7 @@ export default function UserDropdown({ session }: { session: Session }) {
               <p className="text-sm">My Claims</p>
             </Link>
 
-            {(session?.user as User).role === "admin" && (
+            {(session?.user as User).role === "ADMIN" && (
               <>
                 <Link
                   href="/dashboard"

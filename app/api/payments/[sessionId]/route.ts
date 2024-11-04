@@ -1,35 +1,67 @@
 // app/api/payments/[sessionId]/route.ts
-import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../../auth/[...nextauth]/options";
+import prisma from "@/lib/prisma";
+import Stripe from "stripe";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2024-06-20"
+});
 
 export async function GET(
-	request: Request,
-	{ params }: { params: { sessionId: string } }
+  request: Request,
+  { params }: { params: { sessionId: string } }
 ) {
-	try {
-		const payment = await prisma.payment.findUnique({
-			where: {
-				stripeSessionId: params.sessionId,
-			},
-		});
+  try {
+    const session = await getServerSession(authOptions);
 
-		if (!payment) {
-			return NextResponse.json(
-				{ error: 'Payment not found' },
-				{ status: 404 }
-			);
-		}
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Not authenticated" },
+        { status: 401 }
+      );
+    }
 
-		return NextResponse.json({
-			amount: payment.amount,
-			credits: payment.creditAmount,
-			date: payment.createdAt,
-		});
-	} catch (error) {
-		console.error('Error fetching payment:', error);
-		return NextResponse.json(
-			{ error: 'Failed to fetch payment details' },
-			{ status: 500 }
-		);
-	}
+    // First try to find payment in our database
+    const payment = await prisma.payment.findFirst({
+      where: {
+        stripeSessionId: params.sessionId,
+        userId: session.user.id,
+      }
+    });
+
+    if (payment) {
+      return NextResponse.json({
+        amount: payment.amount,
+        credits: payment.creditAmount,
+        date: payment.createdAt,
+        status: payment.status
+      });
+    }
+
+    // If not found in database, check Stripe directly
+    const stripeSession = await stripe.checkout.sessions.retrieve(params.sessionId);
+    
+    if (!stripeSession) {
+      return NextResponse.json(
+        { error: "Payment session not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      amount: stripeSession.amount_total ? stripeSession.amount_total / 100 : 0,
+      credits: stripeSession.metadata?.creditAmount ? parseInt(stripeSession.metadata.creditAmount) : 0,
+      date: new Date(stripeSession.created * 1000).toISOString(),
+      status: stripeSession.payment_status
+    });
+
+  } catch (error) {
+    console.error('Error fetching payment:', error);
+    return NextResponse.json(
+      { error: "Failed to fetch payment details" },
+      { status: 500 }
+    );
+  }
 }

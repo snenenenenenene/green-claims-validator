@@ -43,6 +43,7 @@ export default function QuestionnairePage() {
         setClaim(data.claim);
 
         if (!chartStore.chartInstances?.length) {
+          console.log(chartStore.chartInstances)
           throw new Error('No chart instances available');
         }
 
@@ -123,7 +124,7 @@ export default function QuestionnairePage() {
 
     if (node.endType === "end") {
       console.log("Quiz has ended. Redirecting to results.");
-      
+
       try {
         // Update claim as completed
         await fetch(`/api/claims/${params.claimId}`, {
