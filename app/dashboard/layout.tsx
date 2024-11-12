@@ -1,9 +1,19 @@
 "use client";
+import ImportExportModal from '@/components/ImportExportModal';
 import { LoadingSpinner } from "@/components/ui/base";
 import { useStores } from '@/hooks/useStores';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, ChevronUp, GitCommit, Save, Search } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  Download,
+  GitCommit,
+  Save,
+  Search,
+  Upload
+} from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { ReactFlowProvider } from 'reactflow';
@@ -73,6 +83,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [sidebarWidth, setSidebarWidth] = useState(280);
+  const [isImportExportModalOpen, setIsImportExportModalOpen] = useState(false);
 
   const handleDragStart = (event: React.DragEvent, nodeType: string) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
@@ -157,6 +168,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 ))}
               </div>
 
+              {/* Import/Export Section */}
+              <div className="border-t border-gray-200 p-3">
+                <button
+                  onClick={() => setIsImportExportModalOpen(true)}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium text-gray-700"
+                >
+                  <Upload className="h-4 w-4" />
+                  Import/Export
+                  <Download className="h-4 w-4" />
+                </button>
+              </div>
+
               {/* Resize Handle */}
               <div
                 className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-500/50 transition-colors"
@@ -181,7 +204,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 }}
               />
 
-              {/* Keyboard Shortcuts or Help */}
+              {/* Keyboard Shortcuts */}
               <div className="border-t border-gray-200 p-3">
                 <div className="text-xs text-gray-500 space-y-1">
                   <div className="flex items-center gap-2">
@@ -222,6 +245,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <DashboardFooter />
         </div>
       </div>
+
+      {/* Import/Export Modal */}
+      <ImportExportModal
+        isOpen={isImportExportModalOpen}
+        onClose={() => setIsImportExportModalOpen(false)}
+      />
 
       <style jsx global>{`
         .hide-scrollbar {
@@ -365,7 +394,7 @@ function DashboardFooter() {
                 className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900"
               >
                 {isSaving ? (
-                  <LoadingSpinner />
+                  <LoadingSpinner className="h-4 w-4" />
                 ) : (
                   <Save className="h-4 w-4" />
                 )}
@@ -377,10 +406,16 @@ function DashboardFooter() {
             <button
               onClick={handleCommitAndSave}
               disabled={isSaving || !commitMessage.trim()}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                "disabled:opacity-50 disabled:cursor-not-allowed",
+                isSaving || !commitMessage.trim()
+                  ? "bg-gray-100 text-gray-400"
+                  : "bg-blue-500 text-white hover:bg-blue-600"
+              )}
             >
               {isSaving ? (
-                <LoadingSpinner />
+                <LoadingSpinner className="h-4 w-4" />
               ) : (
                 <GitCommit className="h-4 w-4" />
               )}

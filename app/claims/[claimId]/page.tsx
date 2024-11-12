@@ -1,10 +1,8 @@
-// app/claims/[claimId]/page.tsx
 "use client";
 import DocumentGrid from "@/components/document/DocumentGrid";
 import { DocumentUpload } from "@/components/document/DocumentUpload";
 import { LoadingSpinner } from "@/components/ui/base";
 import { cn } from "@/lib/utils";
-import { Tab } from "@headlessui/react";
 import { motion } from "framer-motion";
 import {
 	BarChart,
@@ -44,6 +42,7 @@ export default function ClaimPage() {
 	const [claim, setClaim] = useState<Claim | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [uploading, setUploading] = useState(false);
+	const [activeTab, setActiveTab] = useState(0);
 
 	useEffect(() => {
 		const fetchClaim = async () => {
@@ -144,35 +143,36 @@ export default function ClaimPage() {
 						)}
 					</div>
 
-					{/* Tabs */}
-					<Tab.Group>
-						<Tab.List className="flex space-x-1 border-b border-gray-200">
-							<Tab
-								className={({ selected }) => cn(
+					{/* Custom Tabs */}
+					<div>
+						<div className="flex space-x-1 border-b border-gray-200">
+							<button
+								onClick={() => setActiveTab(0)}
+								className={cn(
 									"px-4 py-2.5 text-sm font-medium leading-5 text-gray-700",
 									"focus:outline-none",
-									selected
+									activeTab === 0
 										? "border-b-2 border-blue-500"
 										: "hover:text-gray-900 hover:border-gray-300"
 								)}
 							>
 								Questionnaire
-							</Tab>
-							<Tab
-								className={({ selected }) => cn(
+							</button>
+							<button
+								onClick={() => setActiveTab(1)}
+								className={cn(
 									"px-4 py-2.5 text-sm font-medium leading-5 text-gray-700",
 									"focus:outline-none",
-									selected
+									activeTab === 1
 										? "border-b-2 border-blue-500"
 										: "hover:text-gray-900 hover:border-gray-300"
 								)}
 							>
 								Supporting Documents
-							</Tab>
-						</Tab.List>
-						<Tab.Panels className="mt-4">
-							<Tab.Panel>
-								{/* Action Buttons */}
+							</button>
+						</div>
+						<div className="mt-4">
+							{activeTab === 0 && (
 								<div className="space-y-3">
 									{claim.status === 'COMPLETED' ? (
 										<>
@@ -217,8 +217,8 @@ export default function ClaimPage() {
 										</motion.button>
 									)}
 								</div>
-							</Tab.Panel>
-							<Tab.Panel>
+							)}
+							{activeTab === 1 && (
 								<div className="space-y-6">
 									{/* Document Upload */}
 									<div className="bg-gray-50 rounded-xl p-6">
@@ -237,12 +237,11 @@ export default function ClaimPage() {
 											Uploaded Documents
 										</h3>
 										<DocumentGrid documents={claim.documents || []} />
-
 									</div>
 								</div>
-							</Tab.Panel>
-						</Tab.Panels>
-					</Tab.Group>
+							)}
+						</div>
+					</div>
 				</div>
 			</div>
 		</motion.div>

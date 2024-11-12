@@ -1,5 +1,3 @@
-// types.ts
-
 import { Edge, Node } from "reactflow";
 
 export interface ChartInstance {
@@ -16,6 +14,29 @@ export interface ChartInstance {
     edges: Edge[];
   }[];
   variables: Variable[];
+}
+
+export interface ExportMetadata {
+  version: string;
+  exportDate: string;
+  type: "single" | "complete";
+  applicationVersion: string;
+}
+
+export interface FlowExport extends ExportMetadata {
+  flow: ChartInstance;
+}
+
+export interface CompleteExport extends ExportMetadata {
+  flows: ChartInstance[];
+  references: FlowReference[];
+}
+
+export interface FlowReference {
+  sourceFlowId: string;
+  targetFlowId: string;
+  nodeId: string;
+  type: "redirect" | "reference";
 }
 
 export interface Variable {
@@ -39,6 +60,7 @@ export interface ChartState {
   ) => void;
   removeNode: (instanceId: string, nodeId: string) => void;
   deleteTab: (tabId: string) => void;
+  updateChartInstance: (updatedInstance: ChartInstance) => void;
   updateChartInstanceName: (tabId: string, newName: string) => void;
   setCurrentTabColor: (tabId: string, color: string) => void;
   setOnePage: (tabId: string, value: boolean) => void;
@@ -48,7 +70,18 @@ export interface ChartState {
   getChartInstance: (tabId: string) => ChartInstance | undefined;
   getCurrentChartInstance: () => ChartInstance | undefined;
   setChartInstances: (instances: ChartInstance[]) => void;
-  updateChartInstance: (updatedInstance: ChartInstance) => void;
+
+  // New Import/Export methods
+  exportFlow: (instanceId: string) => void;
+  exportAllFlows: () => void;
+  importFlow: (file: File) => Promise<void>;
+  validateImport: (data: FlowExport | CompleteExport) => ValidationResult;
+}
+
+export interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
 }
 
 export interface QuestionnaireState {
@@ -75,7 +108,10 @@ export interface VariableState {
 }
 
 export interface ModalState {
-  // Define modal state and methods
+  modalContent: null;
+  isModalOpen: boolean;
+  openModal: (content: any) => void;
+  closeModal: () => void;
 }
 
 export interface UtilityState {

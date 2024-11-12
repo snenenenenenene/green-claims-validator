@@ -7,7 +7,7 @@ export const contentType = "image/png";
 
 export default async function OG() {
   const robotoBold = await fetch(
-    new URL("./fonts/Roboto-Bold.ttf", import.meta.url),
+    new URL("../public/fonts/Roboto-Bold.ttf", import.meta.url),
   ).then((res) => res.arrayBuffer());
 
   return new ImageResponse(
