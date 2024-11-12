@@ -28,6 +28,11 @@ Lutrify is a user-friendly platform for validating environmental claims. It prov
    - Admins review each document, with options to approve or reject.
    - View, download, and add review notes to uploaded documents.
 
+### 4. Question Flow Configuration
+   - **Dashboard-based Flow Creation**: Lutrify includes an intuitive dashboard where admins can create and configure question flows.
+   - **Node-based Flow Chart**: Questions are defined as nodes within flow charts, allowing the configuration of complex, logic-based questionnaires.
+   - **Questionnaire Translation**: Configured flows are translated into actual questionnaires, dynamically adjusting based on user responses.
+
 ## Installation
 
 To set up Lutrify locally, follow these steps:
@@ -122,3 +127,4 @@ To set up Lutrify locally, follow these steps:
 - User credit management and credit purchasing features.
 - Audit trail functionality for changes in configuration.
 
+---
