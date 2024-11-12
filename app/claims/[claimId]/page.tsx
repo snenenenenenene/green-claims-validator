@@ -1,25 +1,21 @@
 // app/claims/[claimId]/page.tsx
 "use client";
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
-import {LoadingSpinner} from "@/components/ui/base"
+import DocumentGrid from "@/components/document/DocumentGrid";
+import { DocumentUpload } from "@/components/document/DocumentUpload";
+import { LoadingSpinner } from "@/components/ui/base";
+import { cn } from "@/lib/utils";
+import { Tab } from "@headlessui/react";
+import { motion } from "framer-motion";
 import {
-	Loader2,
-	PlayCircle,
+	BarChart,
+	ChevronRight,
 	ClipboardCheck,
 	Clock,
-	ChevronRight,
-	BarChart,
-	FileText,
-	Upload
+	PlayCircle
 } from "lucide-react";
-import { DocumentUpload } from "@/components/document/DocumentUpload";
-import DocumentGrid from "@/components/document/DocumentGrid";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { Tab } from "@headlessui/react";
-import { cn } from "@/lib/utils";
 
 interface Claim {
 	id: string;
@@ -91,7 +87,7 @@ export default function ClaimPage() {
 	if (loading) {
 		return (
 			<div className="flex items-center justify-center h-64">
-				<LoadingSpinner/>
+				<LoadingSpinner />
 			</div>
 		);
 	}

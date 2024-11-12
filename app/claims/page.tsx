@@ -1,20 +1,19 @@
 // app/claims/page.tsx
 "use client";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { LoadingSpinner } from "@/components/ui/base";
 import { motion } from "framer-motion";
-import {LoadingSpinner} from "@/components/ui/base"
 import {
-  Search,
-  Clock,
-  CheckCircle,
+  AlertCircle,
   AlertTriangle,
-  ChevronRight,
-  Loader2,
   ArrowUpDown,
-  AlertCircle
+  CheckCircle,
+  ChevronRight,
+  Clock,
+  Search
 } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface Claim {
   id: string;
@@ -110,7 +109,7 @@ export default function ClaimsPage() {
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <LoadingSpinner/>
+        <LoadingSpinner />
       </div>
     );
   }

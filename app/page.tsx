@@ -242,7 +242,7 @@ export default function Home() {
                         className={`
                           flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium
                           transition-all duration-200
-                          ${isSubmitting 
+                          ${isSubmitting
                             ? 'bg-[#F5F5F5] dark:bg-[#3F4447] text-[#6B6B6B] dark:text-[#9B9B9B]'
                             : 'bg-[#2ecc71] hover:bg-[#27ae60] text-white'
                           }
@@ -251,7 +251,7 @@ export default function Home() {
                         `}
                       >
                         {isSubmitting ? (
-                          <LoadingSpinner/>
+                          <LoadingSpinner />
                         ) : (
                           <>
                             Validate

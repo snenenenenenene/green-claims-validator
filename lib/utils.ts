@@ -29,7 +29,7 @@ export function generateQuestionsFromChart(chartInstances) {
       visited.add(nodeId);
 
       const currentNode = chartInstances[currentChartIndex].initialNodes.find(
-        (node) => node.id === nodeId
+        (node) => node.id === nodeId,
       );
       if (!currentNode) return;
 
@@ -95,9 +95,12 @@ export function generateQuestionsFromChart(chartInstances) {
           questions.push(endQuestion);
 
           // Handle redirect to another chart
-          if (currentNode.data.endType === "redirect" && currentNode.data.redirectTab) {
+          if (
+            currentNode.data.endType === "redirect" &&
+            currentNode.data.redirectTab
+          ) {
             const redirectChartIndex = chartInstances.findIndex(
-              (instance) => instance.name === currentNode.data.redirectTab
+              (instance) => instance.name === currentNode.data.redirectTab,
             );
             if (redirectChartIndex >= 0) {
               traverse(currentNode.data.nextNodeId, redirectChartIndex);
@@ -114,7 +117,9 @@ export function generateQuestionsFromChart(chartInstances) {
         .filter((edge) => edge.source === nodeId)
         .map((edge) => edge.target);
 
-      nextNodes.forEach((nextNodeId) => traverse(nextNodeId, currentChartIndex));
+      nextNodes.forEach((nextNodeId) =>
+        traverse(nextNodeId, currentChartIndex),
+      );
     }
 
     traverse(startNode.id, index);
@@ -130,12 +135,12 @@ export function generateQuestionsFromAllCharts(chartInstances) {
     chartInstance.initialNodes.map((node) => {
       // Ensure options are filled correctly
       const options = node.data.options || [];
-      
+
       // Check for nextNodeId for nodes that might not have explicit options
       if (!options.length && node.data.nextNodeId) {
         options.push({
           label: "DEFAULT",
-          nextQuestionId: node.data.nextNodeId
+          nextQuestionId: node.data.nextNodeId,
         });
       }
 
@@ -143,6 +148,6 @@ export function generateQuestionsFromAllCharts(chartInstances) {
         ...JSON.parse(JSON.stringify(node)), // Deep copy to avoid mutations
         options, // Assign the processed options
       };
-    })
+    }),
   );
 }

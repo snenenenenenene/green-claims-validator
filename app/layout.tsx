@@ -1,16 +1,15 @@
-import "./globals.css";
-import Nav from "@/components/layout/nav";
 import Footer from "@/components/layout/footer";
-import { Suspense } from "react";
-import { Analytics as VercelAnalytics } from "@vercel/analytics/react";
-import { SessionProvider } from "next-auth/react";
+import Nav from "@/components/layout/nav";
 import Providers from "@/components/providers";
+import { Analytics as VercelAnalytics } from "@vercel/analytics/react";
+import { Suspense } from "react";
+import "./globals.css";
 
 export const metadata = {
   title: "Green Claims Validator - Greenwashing Verification",
   description:
     "Green Claims Validator is a platform that verifies the sustainability of products and services.",
-  // metadataBase: new URL("ADD PROD URL"),
+  metadataBase: new URL(`${process.env.VERCEL_URL}`),
 };
 
 export default async function RootLayout({

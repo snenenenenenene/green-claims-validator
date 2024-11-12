@@ -1,11 +1,11 @@
 // components/document/DocumentUpload.tsx
-import React, { useCallback, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { Upload, X, FileText, AlertCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'react-hot-toast';
-import axios from 'axios';
 import { cn } from '@/lib/utils';
+import axios from 'axios';
+import { AnimatePresence, motion } from 'framer-motion';
+import { FileText, Upload } from 'lucide-react';
+import { useCallback, useState } from 'react';
+import { useDropzone } from 'react-dropzone';
+import { toast } from 'react-hot-toast';
 
 interface DocumentUploadProps {
 	claimId: string;

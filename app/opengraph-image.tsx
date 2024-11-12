@@ -6,9 +6,9 @@ export const alt = "Green Claims Validator - Greenwashing Verification";
 export const contentType = "image/png";
 
 export default async function OG() {
-  // const sfPro = await fetch(
-  //   new URL("./fonts/SF-Pro-Display-Medium.otf", import.meta.url),
-  // ).then((res) => res.arrayBuffer());
+  const robotoBold = await fetch(
+    new URL("./fonts/Roboto-Bold.ttf", import.meta.url),
+  ).then((res) => res.arrayBuffer());
 
   return new ImageResponse(
     (
@@ -33,7 +33,7 @@ export default async function OG() {
         <h1
           style={{
             fontSize: "100px",
-            fontFamily: "SF Pro",
+            fontFamily: "Roboto Bold",
             background:
               "linear-gradient(to bottom right, #000000 21.66%, #78716c 86.47%)",
             backgroundClip: "text",
@@ -49,12 +49,12 @@ export default async function OG() {
     {
       width: 1200,
       height: 630,
-      // fonts: [
-      //   {
-      //     name: "SF Pro",
-      //     data: sfPro,
-      //   },
-      // ],
+      fonts: [
+        {
+          name: "Roboto Bold",
+          data: robotoBold,
+        },
+      ],
     },
   );
 }

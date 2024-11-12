@@ -1,10 +1,10 @@
-import { StateCreator } from 'zustand';
-import { UtilityState, ChartInstance } from './types';
+import { StateCreator } from "zustand";
+import { ChartInstance, UtilityState } from "./types";
 
 const createUtilitySlice: StateCreator<UtilityState> = (set, get) => ({
-  currentTab: '',
+  currentTab: "",
 
-  setCurrentTab: (tabId: string) => 
+  setCurrentTab: (tabId: string) =>
     set((state) => {
       if (state.currentTab !== tabId) {
         console.log(`Updating currentTab in utilitySlice to: ${tabId}`);
@@ -17,10 +17,10 @@ const createUtilitySlice: StateCreator<UtilityState> = (set, get) => ({
     try {
       console.log("saveToDb called with:", chartInstances);
 
-      const response = await fetch('/api/save-chart', {
-        method: 'POST',
+      const response = await fetch("/api/save-chart", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ content: chartInstances }),
       });
@@ -30,28 +30,30 @@ const createUtilitySlice: StateCreator<UtilityState> = (set, get) => ({
       if (!response.ok) {
         const errorData = await response.json();
         console.error("Error response:", errorData);
-        throw new Error(errorData.message || 'Failed to save to database');
+        throw new Error(errorData.message || "Failed to save to database");
       }
 
       const result = await response.json();
       console.log("Save result:", result);
-      
+
       if (result.success) {
         console.log("Chart saved successfully:", result.id);
       } else {
-        throw new Error(result.message || 'Unknown error occurred while saving');
+        throw new Error(
+          result.message || "Unknown error occurred while saving",
+        );
       }
     } catch (error) {
-      console.error('Error saving to database:', error);
+      console.error("Error saving to database:", error);
       throw error;
     }
   },
 
   loadSavedData: async () => {
     try {
-      const response = await fetch('/api/load-chart');
+      const response = await fetch("/api/load-chart");
       if (!response.ok) {
-        throw new Error('Failed to load saved data');
+        throw new Error("Failed to load saved data");
       }
       const data = await response.json();
       if (data.content) {
@@ -61,7 +63,7 @@ const createUtilitySlice: StateCreator<UtilityState> = (set, get) => ({
       }
       return null;
     } catch (error) {
-      console.error('Error loading saved data:', error);
+      console.error("Error loading saved data:", error);
       throw error;
     }
   },

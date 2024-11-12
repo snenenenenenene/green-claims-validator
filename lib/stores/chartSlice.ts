@@ -1,13 +1,13 @@
-import { StateCreator } from 'zustand';
-import { v4 as uuidv4 } from 'uuid';
-import { ChartState, ChartInstance, Node, Edge, NodeChange, EdgeChange } from './types';
-import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
+import { addEdge, applyEdgeChanges, applyNodeChanges } from "reactflow";
+import { v4 as uuidv4 } from "uuid";
+import { StateCreator } from "zustand";
+import { ChartInstance, ChartState, EdgeChange, NodeChange } from "./types";
 
 const createChartSlice: StateCreator<ChartState> = (set, get) => ({
   chartInstances: [],
   currentDashboardTab: "",
 
-  setCurrentDashboardTab: (tabId: string) => 
+  setCurrentDashboardTab: (tabId: string) =>
     set((state) => {
       if (state.currentDashboardTab !== tabId) {
         console.log(`Updating currentDashboardTab to: ${tabId}`);
@@ -34,57 +34,57 @@ const createChartSlice: StateCreator<ChartState> = (set, get) => ({
     return newTab.id;
   },
 
-  updateNodes: (instanceId: string, changes: NodeChange[]) => 
+  updateNodes: (instanceId: string, changes: NodeChange[]) =>
     set((state) => ({
       chartInstances: state.chartInstances.map((instance) =>
         instance.id === instanceId
           ? { ...instance, nodes: applyNodeChanges(changes, instance.nodes) }
-          : instance
+          : instance,
       ),
     })),
 
-  updateEdges: (instanceId: string, changes: EdgeChange[]) => 
+  updateEdges: (instanceId: string, changes: EdgeChange[]) =>
     set((state) => ({
       chartInstances: state.chartInstances.map((instance) =>
         instance.id === instanceId
           ? { ...instance, edges: applyEdgeChanges(changes, instance.edges) }
-          : instance
+          : instance,
       ),
     })),
 
-  addNode: (instanceId: string, newNode: Node) => 
+  addNode: (instanceId: string, newNode: Node) =>
     set((state) => ({
       chartInstances: state.chartInstances.map((instance) =>
         instance.id === instanceId
           ? { ...instance, nodes: [...instance.nodes, newNode] }
-          : instance
+          : instance,
       ),
     })),
 
-  addEdge: (instanceId: string, newEdge: Edge) => 
+  addEdge: (instanceId: string, newEdge: Edge) =>
     set((state) => ({
       chartInstances: state.chartInstances.map((instance) =>
         instance.id === instanceId
           ? { ...instance, edges: addEdge(newEdge, instance.edges) }
-          : instance
+          : instance,
       ),
     })),
 
-  updateNode: (instanceId: string, nodeId: string, newData: Partial<Node>) => 
+  updateNode: (instanceId: string, nodeId: string, newData: Partial<Node>) =>
     set((state) => ({
       chartInstances: state.chartInstances.map((instance) =>
         instance.id === instanceId
           ? {
               ...instance,
               nodes: instance.nodes.map((node) =>
-                node.id === nodeId ? { ...node, ...newData } : node
+                node.id === nodeId ? { ...node, ...newData } : node,
               ),
             }
-          : instance
+          : instance,
       ),
     })),
 
-  removeNode: (instanceId: string, nodeId: string) => 
+  removeNode: (instanceId: string, nodeId: string) =>
     set((state) => ({
       chartInstances: state.chartInstances.map((instance) =>
         instance.id === instanceId
@@ -92,56 +92,58 @@ const createChartSlice: StateCreator<ChartState> = (set, get) => ({
               ...instance,
               nodes: instance.nodes.filter((node) => node.id !== nodeId),
               edges: instance.edges.filter(
-                (edge) => edge.source !== nodeId && edge.target !== nodeId
+                (edge) => edge.source !== nodeId && edge.target !== nodeId,
               ),
             }
-          : instance
+          : instance,
       ),
     })),
 
-  deleteTab: (tabId: string) => 
+  deleteTab: (tabId: string) =>
     set((state) => {
       const updatedInstances = state.chartInstances.filter(
-        (instance) => instance.id !== tabId
+        (instance) => instance.id !== tabId,
       );
-      const newCurrentTab = updatedInstances.length > 0 ? updatedInstances[0].id : "";
+      const newCurrentTab =
+        updatedInstances.length > 0 ? updatedInstances[0].id : "";
       return {
         chartInstances: updatedInstances,
         currentDashboardTab: newCurrentTab,
       };
     }),
 
-  updateChartInstance: (updatedInstance: ChartInstance) => 
+  updateChartInstance: (updatedInstance: ChartInstance) =>
     set((state) => ({
       chartInstances: state.chartInstances.map((instance) =>
-        instance.id === updatedInstance.id ? updatedInstance : instance
+        instance.id === updatedInstance.id ? updatedInstance : instance,
       ),
     })),
 
-  setChartInstances: (newInstances: ChartInstance[]) => set({ chartInstances: newInstances }),
+  setChartInstances: (newInstances: ChartInstance[]) =>
+    set({ chartInstances: newInstances }),
 
-  updateChartInstanceName: (tabId: string, newName: string) => 
+  updateChartInstanceName: (tabId: string, newName: string) =>
     set((state) => ({
       chartInstances: state.chartInstances.map((instance) =>
-        instance.id === tabId ? { ...instance, name: newName } : instance
+        instance.id === tabId ? { ...instance, name: newName } : instance,
       ),
     })),
 
-  setCurrentTabColor: (tabId: string, color: string) => 
+  setCurrentTabColor: (tabId: string, color: string) =>
     set((state) => ({
       chartInstances: state.chartInstances.map((instance) =>
-        instance.id === tabId ? { ...instance, color } : instance
+        instance.id === tabId ? { ...instance, color } : instance,
       ),
     })),
 
-  setOnePage: (tabId: string, value: boolean) => 
+  setOnePage: (tabId: string, value: boolean) =>
     set((state) => ({
       chartInstances: state.chartInstances.map((instance) =>
-        instance.id === tabId ? { ...instance, onePageMode: value } : instance
+        instance.id === tabId ? { ...instance, onePageMode: value } : instance,
       ),
     })),
 
-  addPublishedVersion: (tabId: string, version: number, date: string) => 
+  addPublishedVersion: (tabId: string, version: number, date: string) =>
     set((state) => ({
       chartInstances: state.chartInstances.map((instance) =>
         instance.id === tabId
@@ -152,21 +154,29 @@ const createChartSlice: StateCreator<ChartState> = (set, get) => ({
                 { version, date },
               ],
             }
-          : instance
+          : instance,
       ),
     })),
 
-  revertToVersion: (tabId: string, version: number) => 
+  revertToVersion: (tabId: string, version: number) =>
     set((state) => {
-      const instance = state.chartInstances.find((instance) => instance.id === tabId);
+      const instance = state.chartInstances.find(
+        (instance) => instance.id === tabId,
+      );
       if (instance && instance.publishedVersions) {
-        const versionData = instance.publishedVersions.find((v) => v.version === version);
+        const versionData = instance.publishedVersions.find(
+          (v) => v.version === version,
+        );
         if (versionData) {
           return {
             chartInstances: state.chartInstances.map((instance) =>
               instance.id === tabId
-                ? { ...instance, nodes: versionData.nodes, edges: versionData.edges }
-                : instance
+                ? {
+                    ...instance,
+                    nodes: versionData.nodes,
+                    edges: versionData.edges,
+                  }
+                : instance,
             ),
           };
         }
@@ -174,9 +184,11 @@ const createChartSlice: StateCreator<ChartState> = (set, get) => ({
       return state;
     }),
 
-  publishTab: (tabId: string) => 
+  publishTab: (tabId: string) =>
     set((state) => {
-      const instance = state.chartInstances.find((instance) => instance.id === tabId);
+      const instance = state.chartInstances.find(
+        (instance) => instance.id === tabId,
+      );
       if (instance) {
         const newVersion = (instance.publishedVersions?.length || 0) + 1;
         return {
@@ -194,7 +206,7 @@ const createChartSlice: StateCreator<ChartState> = (set, get) => ({
                     },
                   ],
                 }
-              : instance
+              : instance,
           ),
         };
       }
@@ -208,11 +220,13 @@ const createChartSlice: StateCreator<ChartState> = (set, get) => ({
 
   getCurrentChartInstance: () => {
     const { chartInstances, currentDashboardTab } = get();
-    return chartInstances.find((instance) => instance.id === currentDashboardTab);
+    return chartInstances.find(
+      (instance) => instance.id === currentDashboardTab,
+    );
   },
 
   // New method to update node data
-  updateNodeData: (instanceId: string, nodeId: string, newData: any) => 
+  updateNodeData: (instanceId: string, nodeId: string, newData: any) =>
     set((state) => ({
       chartInstances: state.chartInstances.map((instance) =>
         instance.id === instanceId
@@ -221,10 +235,10 @@ const createChartSlice: StateCreator<ChartState> = (set, get) => ({
               nodes: instance.nodes.map((node) =>
                 node.id === nodeId
                   ? { ...node, data: { ...node.data, ...newData } }
-                  : node
+                  : node,
               ),
             }
-          : instance
+          : instance,
       ),
     })),
 });

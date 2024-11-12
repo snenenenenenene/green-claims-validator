@@ -14,7 +14,6 @@ export function Earth(props: any) {
   } = useGLTF("/models/earth.glb");
   const groupRef = useRef<any>();
   const { size, viewport } = useThree();
-  const aspect = size.width / viewport.width;
 
   const [targetPosition, setTargetPosition] = useState([0, 0, 0]);
   const [currentPosition, setCurrentPosition] = useState([0, 0, 0]);

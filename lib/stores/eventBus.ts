@@ -5,7 +5,7 @@ const listeners: { [key: string]: Listener[] } = {};
 export const eventBus = {
   emit: (event: string, data: any) => {
     if (listeners[event]) {
-      listeners[event].forEach(listener => listener(data));
+      listeners[event].forEach((listener) => listener(data));
     }
   },
   on: (event: string, callback: Listener) => {
@@ -16,8 +16,9 @@ export const eventBus = {
   },
   off: (event: string, callback: Listener) => {
     if (listeners[event]) {
-      listeners[event] = listeners[event].filter(listener => listener !== callback);
+      listeners[event] = listeners[event].filter(
+        (listener) => listener !== callback,
+      );
     }
   },
 };
-

@@ -1,18 +1,15 @@
 // app/api/load-chart/route.ts
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/options";
 import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { NextResponse } from "next/server";
+import { authOptions } from "../auth/[...nextauth]/options";
 
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const chartInstance = await prisma.chartInstance.findUnique({
@@ -32,12 +29,11 @@ export async function GET(request: Request) {
       success: true,
       content: chartInstance.content,
     });
-
   } catch (error) {
-    console.error('Error loading chart:', error);
+    console.error("Error loading chart:", error);
     return NextResponse.json(
       { error: "Failed to load chart" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

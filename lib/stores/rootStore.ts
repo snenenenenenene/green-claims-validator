@@ -1,13 +1,13 @@
 // stores/rootStore.ts
 
-import { create } from 'zustand';
-import createChartSlice from './chartSlice';
-import createQuestionnaireSlice from './questionnaireSlice';
-import createCommitSlice from './commitSlice';
-import createVariableSlice from './variableSlice';
-import createModalSlice from './modalSlice';
-import createUtilitySlice from './utilitySlice';
-import { RootState } from '../types';
+import { create } from "zustand";
+import { RootState } from "../types";
+import createChartSlice from "./chartSlice";
+import createCommitSlice from "./commitSlice";
+import createModalSlice from "./modalSlice";
+import createQuestionnaireSlice from "./questionnaireSlice";
+import createUtilitySlice from "./utilitySlice";
+import createVariableSlice from "./variableSlice";
 
 const useRootStore = create<RootState>((set, get) => ({
   ...createChartSlice(set, get),

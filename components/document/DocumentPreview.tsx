@@ -1,7 +1,5 @@
 // components/document/DocumentPreview.tsx
-import React from 'react';
-import { createPortal } from 'react-dom';
-import { X, Download, FileText } from 'lucide-react';
+import { Download, FileText, X } from 'lucide-react';
 
 interface DocumentPreviewProps {
   document: {
@@ -22,8 +20,8 @@ export const DocumentPreview = ({ document, isOpen, onClose }: DocumentPreviewPr
   if (!isOpen) return null;
 
   return (
-    <dialog 
-      open 
+    <dialog
+      open
       className="modal modal-open"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();

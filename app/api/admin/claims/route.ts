@@ -1,7 +1,7 @@
 // app/api/admin/claims/route.ts
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { NextResponse } from "next/server";
 import { authOptions } from "../../auth/[...nextauth]/options";
 
 export async function GET() {
@@ -47,17 +47,17 @@ export async function GET() {
             },
           },
           orderBy: {
-            createdAt: 'desc',
+            createdAt: "desc",
           },
         },
       },
       orderBy: {
-        updatedAt: 'desc',
+        updatedAt: "desc",
       },
     });
 
     // Transform the data to exclude sensitive information
-    const transformedClaims = claims.map(claim => ({
+    const transformedClaims = claims.map((claim) => ({
       id: claim.id,
       claim: claim.claim,
       status: claim.status,
@@ -65,7 +65,7 @@ export async function GET() {
       createdAt: claim.createdAt,
       updatedAt: claim.updatedAt,
       user: claim.user,
-      documents: claim.documents.map(doc => ({
+      documents: claim.documents.map((doc) => ({
         id: doc.id,
         name: doc.name,
         type: doc.type,
@@ -80,12 +80,11 @@ export async function GET() {
     }));
 
     return NextResponse.json({ claims: transformedClaims });
-
   } catch (error) {
-    console.error('Admin claims fetch error:', error);
+    console.error("Admin claims fetch error:", error);
     return NextResponse.json(
       { error: "Failed to fetch claims" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -26,13 +26,12 @@ export default function SingleChoiceQuestion({ question, options, onAnswer }: Si
           whileTap={{ scale: 0.99 }}
           onClick={() => handleSelect(option)}
           className={`w-full p-4 rounded-lg border-2 transition-all duration-200 flex items-center justify-between group
-            ${selected === option.label 
-              ? 'border-green-500 bg-green-50' 
+            ${selected === option.label
+              ? 'border-green-500 bg-green-50'
               : 'border-gray-200 hover:border-green-500 hover:bg-green-50'}`}
         >
-          <span className={`text-lg font-medium ${
-            selected === option.label ? 'text-green-600' : 'text-gray-700'
-          }`}>
+          <span className={`text-lg font-medium ${selected === option.label ? 'text-green-600' : 'text-gray-700'
+            }`}>
             {option.label}
           </span>
           {selected === option.label && (

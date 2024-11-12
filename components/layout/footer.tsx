@@ -1,9 +1,9 @@
 "use client";
 
+import { Coins, Mail, Shield } from "lucide-react";
+import { SessionProvider, useSession } from "next-auth/react";
 import Image from 'next/image';
 import Link from 'next/link';
-import { Github, Mail, Coins, Shield } from "lucide-react";
-import { useSession, SessionProvider } from "next-auth/react";
 
 function FooterContent() {
   const { data: session } = useSession();

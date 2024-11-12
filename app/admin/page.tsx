@@ -1,5 +1,6 @@
 // app/admin/page.tsx
 "use client";
+import { LoadingSpinner } from "@/components/ui/base";
 import { User } from "@prisma/client";
 import { motion } from "framer-motion";
 import {
@@ -14,7 +15,6 @@ import {
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import {LoadingSpinner} from "@/components/ui/base"
 
 const AdminDashboard = () => {
   const { data: session, status } = useSession();

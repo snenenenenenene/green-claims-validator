@@ -1,6 +1,6 @@
 // types.ts
 
-import { Node, Edge } from 'reactflow';
+import { Edge, Node } from "reactflow";
 
 export interface ChartInstance {
   id: string;
@@ -9,7 +9,12 @@ export interface ChartInstance {
   edges: Edge[];
   color: string;
   onePageMode: boolean;
-  publishedVersions: { version: number; date: string; nodes: Node[]; edges: Edge[] }[];
+  publishedVersions: {
+    version: number;
+    date: string;
+    nodes: Node[];
+    edges: Edge[];
+  }[];
   variables: Variable[];
 }
 
@@ -27,7 +32,11 @@ export interface ChartState {
   updateEdges: (instanceId: string, changes: EdgeChange[]) => void;
   addNode: (instanceId: string, newNode: Node) => void;
   addEdge: (instanceId: string, newEdge: Edge) => void;
-  updateNode: (instanceId: string, nodeId: string, newData: Partial<Node>) => void;
+  updateNode: (
+    instanceId: string,
+    nodeId: string,
+    newData: Partial<Node>,
+  ) => void;
   removeNode: (instanceId: string, nodeId: string) => void;
   deleteTab: (tabId: string) => void;
   updateChartInstanceName: (tabId: string, newName: string) => void;
@@ -55,10 +64,14 @@ export interface VariableState {
     global: Variable[];
     local: Variable[];
   };
-  setVariables: (variables: VariableState['variables']) => void;
-  addVariable: (scope: 'global' | 'local', variable: Variable) => void;
-  removeVariable: (scope: 'global' | 'local', index: number) => void;
-  updateVariable: (scope: 'global' | 'local', index: number, updatedVariable: Variable) => void;
+  setVariables: (variables: VariableState["variables"]) => void;
+  addVariable: (scope: "global" | "local", variable: Variable) => void;
+  removeVariable: (scope: "global" | "local", index: number) => void;
+  updateVariable: (
+    scope: "global" | "local",
+    index: number,
+    updatedVariable: Variable,
+  ) => void;
 }
 
 export interface ModalState {
@@ -72,13 +85,13 @@ export interface UtilityState {
   loadSavedData: () => Promise<ChartInstance[] | null>;
 }
 
-export interface RootState extends 
-  ChartState, 
-  QuestionnaireState, 
-  CommitState, 
-  VariableState, 
-  ModalState, 
-  UtilityState {
+export interface RootState
+  extends ChartState,
+    QuestionnaireState,
+    CommitState,
+    VariableState,
+    ModalState,
+    UtilityState {
   // Add any additional root-level state or methods here
 }
 

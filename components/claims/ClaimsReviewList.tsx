@@ -51,10 +51,10 @@ interface ClaimsReviewListProps {
   onReviewDocument?: (documentId: string, status: 'APPROVED' | 'REJECTED', note?: string) => Promise<void>;
 }
 
-export default function ClaimsReviewList ({ 
-  claims, 
+export default function ClaimsReviewList({
+  claims,
   isAdmin = false,
-  onReviewDocument 
+  onReviewDocument
 }: ClaimsReviewListProps) {
   const [expandedClaim, setExpandedClaim] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -73,16 +73,16 @@ export default function ClaimsReviewList ({
 
   const filteredAndSortedClaims = claims
     .filter(claim => {
-      const matchesSearch = 
+      const matchesSearch =
         claim.claim.toLowerCase().includes(searchQuery.toLowerCase()) ||
         claim.user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         claim.user.email.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const matchesStatus = statusFilter === 'ALL' || 
-        claim.documents.some(doc => 
+      const matchesStatus = statusFilter === 'ALL' ||
+        claim.documents.some(doc =>
           statusFilter === 'PENDING' ? doc.status === 'PENDING' :
-          statusFilter === 'APPROVED' ? doc.status === 'APPROVED' :
-          doc.status === 'REJECTED'
+            statusFilter === 'APPROVED' ? doc.status === 'APPROVED' :
+              doc.status === 'REJECTED'
         );
 
       return matchesSearch && matchesStatus;
@@ -93,7 +93,7 @@ export default function ClaimsReviewList ({
       if (sortConfig.key === 'pendingDocuments') {
         return (
           (b.documents.filter(d => d.status === 'PENDING').length -
-          a.documents.filter(d => d.status === 'PENDING').length) * direction
+            a.documents.filter(d => d.status === 'PENDING').length) * direction
         );
       }
 

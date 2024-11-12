@@ -1,5 +1,5 @@
-import { StateCreator } from 'zustand';
-import { CommitState, Commit } from './types';
+import { StateCreator } from "zustand";
+import { CommitState } from "./types";
 
 const createCommitSlice: StateCreator<CommitState> = (set, get) => ({
   localCommits: [],
@@ -8,7 +8,7 @@ const createCommitSlice: StateCreator<CommitState> = (set, get) => ({
   addLocalCommit: (message: string) => {
     const { chartInstances, currentDashboardTab } = get();
     const currentInstance = chartInstances.find(
-      (instance) => instance.id === currentDashboardTab
+      (instance) => instance.id === currentDashboardTab,
     );
     if (currentInstance) {
       set((state) => ({

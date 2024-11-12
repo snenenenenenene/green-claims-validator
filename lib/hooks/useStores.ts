@@ -1,7 +1,7 @@
 // hooks/useStores.ts
 
-import useRootStore from '../stores/rootStore';
-import { RootState } from '../types';
+import useRootStore from "../stores/rootStore";
+import { RootState } from "../types";
 
 type Stores = {
   [K in keyof RootState]: RootState;

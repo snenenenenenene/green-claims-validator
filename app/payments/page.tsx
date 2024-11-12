@@ -1,13 +1,13 @@
 // app/payments/page.tsx
 "use client";
-import { motion } from "framer-motion";
-import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import { Loader2, CreditCard, History, ArrowRight, CheckCircle2, XCircle } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { LoadingSpinner } from "@/components/ui/base";
 import getStripe from '@/lib/stripe-helper';
+import { motion } from "framer-motion";
+import { ArrowRight, CheckCircle2, CreditCard, History, XCircle } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import {LoadingSpinner} from "@/components/ui/base"
 
 interface Payment {
 	id: string;
@@ -126,7 +126,7 @@ export default function PaymentsPage() {
 
 	if (loading) {
 		return (
-			<LoadingSpinner/>
+			<LoadingSpinner />
 		);
 	}
 
@@ -145,8 +145,8 @@ export default function PaymentsPage() {
 					<button
 						onClick={() => setActiveTab('pricing')}
 						className={`flex items-center space-x-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'pricing'
-								? 'bg-green-500 text-white'
-								: 'text-gray-600 hover:bg-gray-100'
+							? 'bg-green-500 text-white'
+							: 'text-gray-600 hover:bg-gray-100'
 							}`}
 					>
 						<CreditCard className="h-4 w-4" />
@@ -155,8 +155,8 @@ export default function PaymentsPage() {
 					<button
 						onClick={() => setActiveTab('history')}
 						className={`flex items-center space-x-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'history'
-								? 'bg-green-500 text-white'
-								: 'text-gray-600 hover:bg-gray-100'
+							? 'bg-green-500 text-white'
+							: 'text-gray-600 hover:bg-gray-100'
 							}`}
 					>
 						<History className="h-4 w-4" />
@@ -195,7 +195,7 @@ export default function PaymentsPage() {
 										}`}
 								>
 									{processingPayment ? (
-										<LoadingSpinner/>
+										<LoadingSpinner />
 									) : (
 										<span className="flex items-center justify-center">
 											Purchase
@@ -236,8 +236,8 @@ export default function PaymentsPage() {
 												<td className="py-4">
 													<span
 														className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${payment.status === 'completed'
-																? 'bg-green-100 text-green-700'
-																: 'bg-red-100 text-red-700'
+															? 'bg-green-100 text-green-700'
+															: 'bg-red-100 text-red-700'
 															}`}
 													>
 														{payment.status === 'completed' ? (

@@ -1,36 +1,45 @@
-import { StateCreator } from 'zustand';
-import { VariableState } from './types';
+import { StateCreator } from "zustand";
+import { VariableState } from "./types";
 
 const createVariableSlice: StateCreator<VariableState> = (set, get) => ({
   variables: {
     global: [],
-    local: []
+    local: [],
   },
 
   setVariables: (variables) => set({ variables }),
 
-  addVariable: (scope: 'global' | 'local', variable: { name: string; value: string }) => 
+  addVariable: (
+    scope: "global" | "local",
+    variable: { name: string; value: string },
+  ) =>
     set((state) => ({
       variables: {
         ...state.variables,
-        [scope]: [...state.variables[scope], variable]
-      }
+        [scope]: [...state.variables[scope], variable],
+      },
     })),
 
-  removeVariable: (scope: 'global' | 'local', index: number) => 
+  removeVariable: (scope: "global" | "local", index: number) =>
     set((state) => ({
       variables: {
         ...state.variables,
-        [scope]: state.variables[scope].filter((_, i) => i !== index)
-      }
+        [scope]: state.variables[scope].filter((_, i) => i !== index),
+      },
     })),
 
-  updateVariable: (scope: 'global' | 'local', index: number, updatedVariable: { name: string; value: string }) => 
+  updateVariable: (
+    scope: "global" | "local",
+    index: number,
+    updatedVariable: { name: string; value: string },
+  ) =>
     set((state) => ({
       variables: {
         ...state.variables,
-        [scope]: state.variables[scope].map((v, i) => i === index ? updatedVariable : v)
-      }
+        [scope]: state.variables[scope].map((v, i) =>
+          i === index ? updatedVariable : v,
+        ),
+      },
     })),
 });
 

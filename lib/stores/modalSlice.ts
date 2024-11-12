@@ -1,5 +1,5 @@
-import { StateCreator } from 'zustand';
-import { ModalState } from './types';
+import { StateCreator } from "zustand";
+import { ModalState } from "./types";
 
 const createModalSlice: StateCreator<ModalState> = (set) => ({
   modalContent: null,

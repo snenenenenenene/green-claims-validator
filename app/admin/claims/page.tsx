@@ -1,12 +1,12 @@
 // app/admin/claims/page.tsx
 "use client";
 import ClaimsReviewList from "@/components/claims/ClaimsReviewList";
+import { LoadingSpinner } from "@/components/ui/base";
 import { CheckCircle, Clock, FileText, Users } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import {LoadingSpinner} from "@/components/ui/base"
 
 interface AdminClaim {
 	id: string;

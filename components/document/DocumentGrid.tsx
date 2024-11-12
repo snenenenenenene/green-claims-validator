@@ -1,19 +1,19 @@
 // components/document/DocumentGrid.tsx
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FileText, 
-  Image as ImageIcon, 
-  File, 
-  Clock, 
-  CheckCircle, 
-  XCircle,
-  Eye,
-  Download
-} from 'lucide-react';
-import { format } from 'date-fns';
-import {DocumentPreview} from './DocumentPreview';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { motion } from 'framer-motion';
+import {
+  CheckCircle,
+  Clock,
+  Download,
+  Eye,
+  File,
+  FileText,
+  Image as ImageIcon,
+  XCircle
+} from 'lucide-react';
+import { useState } from 'react';
+import { DocumentPreview } from './DocumentPreview';
 
 interface Document {
   id: string;
@@ -35,7 +35,7 @@ interface DocumentGridProps {
   isAdmin?: boolean;
 }
 
-export default function DocumentGrid ({ documents, onReview, isAdmin = false }: DocumentGridProps) {
+export default function DocumentGrid({ documents, onReview, isAdmin = false }: DocumentGridProps) {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [reviewNote, setReviewNote] = useState('');
   const [isReviewing, setIsReviewing] = useState(false);
@@ -74,7 +74,7 @@ export default function DocumentGrid ({ documents, onReview, isAdmin = false }: 
 
   const handleReview = async (documentId: string, status: 'APPROVED' | 'REJECTED') => {
     if (!onReview) return;
-    
+
     setIsReviewing(true);
     try {
       await onReview(documentId, status, reviewNote);

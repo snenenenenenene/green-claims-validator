@@ -5,10 +5,10 @@ import { FunctionNodeData, MultipleChoiceNodeData, SingleChoiceNodeData, WeightN
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowRight,
-  Ban,
   Check,
   CheckCircle2,
   CircleDot,
+  CircleSlashed,
   Flag,
   FunctionSquare,
   List,
@@ -21,7 +21,8 @@ import {
 } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Handle, NodeProps, Position } from 'reactflow';
-import { Modal, NodeWrapper } from './base/NodeWrapper';
+import { NodeWrapper } from './base/NodeWrapper';
+import { Modal } from './base/modal';
 
 export const StartNode = memo(({ id, data, selected }: NodeProps) => {
   const { chartStore } = useStores();
@@ -199,7 +200,7 @@ export const EndNode = memo(({ id, data, selected }: NodeProps) => {
                   </select>
                 ) : (
                   <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg text-sm text-gray-500">
-                    <Ban className="h-4 w-4" />
+                    <CircleSlashed className="h-4 w-4" />
                     <span>No other flows available</span>
                   </div>
                 )}
@@ -976,7 +977,7 @@ export const FunctionNode = memo(({ id, data, selected }: NodeProps<FunctionNode
           {/* Operations Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-            <h4 className="text-sm font-medium text-gray-700">Operations</h4>
+              <h4 className="text-sm font-medium text-gray-700">Operations</h4>
               <div className="flex items-center gap-2">
                 <select
                   value={currentOperation}

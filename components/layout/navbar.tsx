@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useStores } from "@/hooks/useStores";
+import useScroll from "@/lib/hooks/use-scroll";
+import { motion } from "framer-motion";
+import { ChevronRight, Coins, LayoutGrid, Plus } from "lucide-react";
+import { Session } from "next-auth";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import useScroll from "@/lib/hooks/use-scroll";
+import { useEffect, useState } from "react";
 import { useSignInModal } from "./sign-in-modal";
 import UserDropdown from "./user-dropdown";
-import { Session } from "next-auth";
-import { Coins, Plus, FileText, ChevronRight, LayoutGrid } from "lucide-react";
-import { useStores } from "@/hooks/useStores";
-import { motion } from "framer-motion";
 
 export default function NavBar({ session }: { session: Session | null }) {
   const { SignInModal, setShowSignInModal } = useSignInModal();

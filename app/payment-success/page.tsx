@@ -1,11 +1,11 @@
 // app/payment-success/page.tsx
 "use client";
-import { useEffect, useState } from 'react';
+import { LoadingSpinner } from "@/components/ui/base";
 import { motion } from 'framer-motion';
-import { Check, ArrowRight, Loader2, RefreshCcw } from 'lucide-react';
+import { ArrowRight, Check, RefreshCcw } from 'lucide-react';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import {LoadingSpinner} from "@/components/ui/base"
 
 interface PaymentDetails {
   amount: number;
@@ -48,7 +48,7 @@ export default function Success({ searchParams }: { searchParams: { session_id: 
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <LoadingSpinner/>
+          <LoadingSpinner />
           <p className="mt-4 text-gray-600">Loading payment details...</p>
         </div>
       </div>
@@ -99,7 +99,7 @@ export default function Success({ searchParams }: { searchParams: { session_id: 
             <h1 className="mb-2 text-center text-2xl font-bold text-gray-900">
               Payment Successful!
             </h1>
-            
+
             <p className="text-center text-gray-600">
               Thank you for your purchase. Your credits have been added to your account.
             </p>
@@ -142,7 +142,7 @@ export default function Success({ searchParams }: { searchParams: { session_id: 
                 View My Claims
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
-              
+
               <Link
                 href="/payments"
                 className="flex flex-1 items-center justify-center rounded-lg border border-gray-200 px-6 py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"

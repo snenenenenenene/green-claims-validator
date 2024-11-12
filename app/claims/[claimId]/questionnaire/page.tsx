@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, ArrowRight, BarChart } from "lucide-react";
-import { Toaster, toast } from "react-hot-toast";
-import { useStores } from "@/hooks/useStores";
-import YesNoQuestion from "@/components/questionnaire/yesNoQuestion";
-import SingleChoiceQuestion from "@/components/questionnaire/singleChoiceQuestion";
 import MultipleChoiceQuestion from "@/components/questionnaire/multipleChoiceQuestion";
-import {LoadingSpinner} from "@/components/ui/base"
+import SingleChoiceQuestion from "@/components/questionnaire/singleChoiceQuestion";
+import YesNoQuestion from "@/components/questionnaire/yesNoQuestion";
+import { LoadingSpinner } from "@/components/ui/base";
+import { useStores } from "@/hooks/useStores";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowRight, BarChart } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Toaster, toast } from "react-hot-toast";
 
 export default function QuestionnairePage() {
   const params = useParams();
@@ -241,7 +241,7 @@ export default function QuestionnairePage() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50">
         <div className="flex flex-col items-center gap-4">
-          <LoadingSpinner/>
+          <LoadingSpinner />
           <p className="text-slate-600 font-medium">Loading your questionnaire...</p>
         </div>
       </div>
