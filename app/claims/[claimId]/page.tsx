@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
+import {LoadingSpinner} from "@/components/ui/base"
 import {
 	Loader2,
 	PlayCircle,
@@ -90,7 +91,7 @@ export default function ClaimPage() {
 	if (loading) {
 		return (
 			<div className="flex items-center justify-center h-64">
-				<Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+				<LoadingSpinner/>
 			</div>
 		);
 	}

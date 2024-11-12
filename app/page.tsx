@@ -252,7 +252,7 @@ export default function Home() {
                         `}
                       >
                         {isSubmitting ? (
-                          <Loader2 className="h-5 w-5 animate-spin" />
+                          <LoadingSpinner/>
                         ) : (
                           <>
                             Validate

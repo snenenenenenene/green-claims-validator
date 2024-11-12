@@ -1,12 +1,12 @@
 // app/admin/claims/page.tsx
 "use client";
-import { useEffect, useState } from "react";
+import ClaimsReviewList from "@/components/claims/ClaimsReviewList";
+import { CheckCircle, Clock, FileText, Users } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import ClaimsReviewList from "@/components/claims/ClaimsReviewList";
-import { FileText, Users, CheckCircle, Clock } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import Loader from "@/components/shared/loader";
+import {LoadingSpinner} from "@/components/ui/base"
 
 interface AdminClaim {
 	id: string;
@@ -96,7 +96,7 @@ export default function AdminClaimsPage() {
 	};
 
 	if (status === "loading" || loading) {
-		return <Loader />;
+		return <LoadingSpinner />;
 	}
 
 	if (status === "authenticated" && session?.user?.role !== "ADMIN") {

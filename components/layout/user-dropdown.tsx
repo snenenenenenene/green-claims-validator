@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { signOut } from "next-auth/react";
-import { LayoutDashboard, LogOut, Users, FileText } from "lucide-react";
-import Popover from "@/components/shared/popover";
-import Image from "next/image";
-import { Session } from "next-auth";
-import Link from "next/link";
 import { User } from "@prisma/client";
+import { FileText, LayoutDashboard, LogOut, Users } from "lucide-react";
+import { Session } from "next-auth";
+import { signOut } from "next-auth/react";
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
+import { Popover } from '../ui/base/index';
 
 export default function UserDropdown({ session }: { session: Session }) {
   const { email, image } = session?.user || {};

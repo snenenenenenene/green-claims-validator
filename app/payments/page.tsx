@@ -7,6 +7,7 @@ import { Loader2, CreditCard, History, ArrowRight, CheckCircle2, XCircle } from 
 import { useRouter } from 'next/navigation';
 import getStripe from '@/lib/stripe-helper';
 import toast from 'react-hot-toast';
+import {LoadingSpinner} from "@/components/ui/base"
 
 interface Payment {
 	id: string;
@@ -125,9 +126,7 @@ export default function PaymentsPage() {
 
 	if (loading) {
 		return (
-			<div className="flex h-screen items-center justify-center">
-				<Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-			</div>
+			<LoadingSpinner/>
 		);
 	}
 
@@ -196,7 +195,7 @@ export default function PaymentsPage() {
 										}`}
 								>
 									{processingPayment ? (
-										<Loader2 className="mx-auto h-5 w-5 animate-spin" />
+										<LoadingSpinner/>
 									) : (
 										<span className="flex items-center justify-center">
 											Purchase

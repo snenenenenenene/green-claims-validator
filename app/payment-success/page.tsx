@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Check, ArrowRight, Loader2, RefreshCcw } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import {LoadingSpinner} from "@/components/ui/base"
 
 interface PaymentDetails {
   amount: number;
@@ -47,7 +48,7 @@ export default function Success({ searchParams }: { searchParams: { session_id: 
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <Loader2 className="mx-auto h-8 w-8 animate-spin text-gray-400" />
+          <LoadingSpinner/>
           <p className="mt-4 text-gray-600">Loading payment details...</p>
         </div>
       </div>

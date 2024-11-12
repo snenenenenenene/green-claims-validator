@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
+import {LoadingSpinner} from "@/components/ui/base"
 import {
   Search,
   Clock,
@@ -109,7 +110,7 @@ export default function ClaimsPage() {
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        <LoadingSpinner/>
       </div>
     );
   }

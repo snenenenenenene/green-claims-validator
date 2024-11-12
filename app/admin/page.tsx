@@ -1,22 +1,20 @@
 // app/admin/page.tsx
 "use client";
-import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { User } from "@prisma/client";
 import { motion } from "framer-motion";
 import {
-  Users,
-  FileText,
+  ArrowRight,
   ClipboardCheck,
+  FileText,
+  Search,
   Settings,
   UserCog,
-  ArrowRight,
-  Search,
-  Filter
+  Users
 } from "lucide-react";
-import { User } from "@prisma/client";
-import Loader from "@/components/shared/loader";
-import { cn } from "@/lib/utils";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import {LoadingSpinner} from "@/components/ui/base"
 
 const AdminDashboard = () => {
   const { data: session, status } = useSession();
@@ -71,11 +69,11 @@ const AdminDashboard = () => {
   });
 
   if (loading) {
-    return <Loader />;
+    return <LoadingSpinner />;
   }
 
   if (status === "loading") {
-    return <Loader />;
+    return <LoadingSpinner />;
   }
 
   if (status === "authenticated" && session?.user?.role !== "ADMIN") {

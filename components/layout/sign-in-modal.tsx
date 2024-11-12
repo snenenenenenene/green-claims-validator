@@ -1,14 +1,14 @@
-import Modal from "@/components/shared/modal";
 import { signIn } from "next-auth/react";
+import Image from "next/image";
 import {
-  useState,
   Dispatch,
   SetStateAction,
   useCallback,
   useMemo,
+  useState,
 } from "react";
-import { LoadingDots, Google } from "@/components/shared/icons";
-import Image from "next/image";
+import { Modal } from "../nodes/base/modal";
+import { LoadingSpinner } from "../ui/base";
 
 const SignInModal = ({
   showSignInModal,
@@ -20,7 +20,7 @@ const SignInModal = ({
   const [signInClicked, setSignInClicked] = useState(false);
 
   return (
-    <Modal showModal={showSignInModal} setShowModal={setShowSignInModal}>
+    <Modal isOpen={showSignInModal} onClose={() => setShowSignInModal(false)}>
       <div className="w-full overflow-hidden shadow-xl md:max-w-md md:rounded-2xl md:border md:border-gray-200">
         <div className="flex flex-col items-center justify-center space-y-3 border-b border-gray-200 bg-white px-4 py-6 pt-8 text-center md:px-16">
           <a>
@@ -53,10 +53,10 @@ const SignInModal = ({
             }}
           >
             {signInClicked ? (
-              <LoadingDots color="#808080" />
+              <LoadingSpinner />
             ) : (
               <>
-                <Google className="h-5 w-5" />
+                {/* <Google className="h-5 w-5" /> */}
                 <p>Sign In with Google</p>
               </>
             )}

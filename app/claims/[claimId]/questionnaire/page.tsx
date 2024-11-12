@@ -9,6 +9,7 @@ import { useStores } from "@/hooks/useStores";
 import YesNoQuestion from "@/components/questionnaire/yesNoQuestion";
 import SingleChoiceQuestion from "@/components/questionnaire/singleChoiceQuestion";
 import MultipleChoiceQuestion from "@/components/questionnaire/multipleChoiceQuestion";
+import {LoadingSpinner} from "@/components/ui/base"
 
 export default function QuestionnairePage() {
   const params = useParams();
@@ -240,7 +241,7 @@ export default function QuestionnairePage() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-slate-600" />
+          <LoadingSpinner/>
           <p className="text-slate-600 font-medium">Loading your questionnaire...</p>
         </div>
       </div>
