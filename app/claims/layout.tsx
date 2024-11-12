@@ -67,7 +67,7 @@ export default function ClaimsLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<div className="h-full flex flex-col">
+		<div className="h-full flex flex-col overflow-scroll">
 			<div className="relative z-10 h-full w-full container mx-auto px-4 py-8">
 				<Breadcrumbs />
 				<motion.div
