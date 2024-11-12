@@ -222,7 +222,7 @@ const AdminDashboard = () => {
                   <td className="py-4 px-4">
                     <div className="flex items-center">
                       <img
-                        src={user.image || `https://avatars.dicebear.com/api/micah/${user.email}.svg`}
+                        src={user.image || `https://api.dicebear.com/9.x/pixel-art/svg?seed=${claim.user.email}`}
                         alt=""
                         className="h-8 w-8 rounded-full"
                       />

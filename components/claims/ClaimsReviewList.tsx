@@ -1,21 +1,21 @@
 // components/claims/ClaimsReviewList.tsx
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ChevronDown, 
-  User, 
-  Calendar, 
-  FileText, 
-  CheckCircle, 
-  XCircle,
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  ArrowUpDown,
+  Calendar,
+  CheckCircle,
+  ChevronDown,
   Clock,
+  FileText,
   Filter,
   Search,
-  ArrowUpDown
+  User,
+  XCircle
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { useState } from 'react';
 import DocumentGrid from '../document/DocumentGrid';
-import { cn } from '@/lib/utils';
 
 interface ClaimWithUser {
   id: string;
@@ -177,7 +177,7 @@ export default function ClaimsReviewList ({
             >
               <div className="flex items-center gap-4">
                 <img
-                  src={claim.user.image || `https://avatars.dicebear.com/api/micah/${claim.user.email}.svg`}
+                  src={claim.user.image || `https://api.dicebear.com/9.x/pixel-art/svg?seed=${claim.user.email}`}
                   alt={claim.user.name || "User avatar"}
                   className="h-10 w-10 rounded-full"
                 />
