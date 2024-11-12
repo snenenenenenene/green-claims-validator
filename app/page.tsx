@@ -1,21 +1,20 @@
 // app/page.tsx
 "use client";
-import { useState, Suspense, useEffect, useRef } from "react";
-import { useRouter } from 'next/navigation';
+import { Earth } from "@/components/models/Earth";
 import { Environment, SoftShadows } from "@react-three/drei";
-import { Canvas } from "react-three-fiber";
-import { Model } from "@/components/home/model";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowRightIcon,
-  Loader2,
   ChevronRight,
   Command,
   Search,
   X
 } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
+import { Canvas } from "react-three-fiber";
 
 interface CommandMenuItem {
   label: string;
@@ -309,7 +308,7 @@ export default function Home() {
                 <SoftShadows samples={100} />
                 <Environment preset="sunset" />
                 <Suspense fallback={null}>
-                  <Model scale={3} position={[0, 0, 0]} />
+                  <Earth scale={3} position={[0, 0, 0]} />
                 </Suspense>
               </Canvas>
             </motion.div>

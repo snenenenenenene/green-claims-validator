@@ -1,10 +1,10 @@
-import React, { useRef, useState, useEffect } from "react";
 import { useGLTF } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
-import { useFrame } from "react-three-fiber";
 import gsap from "gsap";
+import { useEffect, useRef, useState } from "react";
+import { useFrame } from "react-three-fiber";
 
-export function Model(props: any) {
+export function Earth(props: any) {
   const {
     nodes,
     materials,
