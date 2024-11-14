@@ -1,6 +1,7 @@
 // app/page.tsx
 "use client";
 import { Earth } from "@/components/models/Earth";
+import { LoadingSpinner } from "@/components/ui/base";
 import { Environment, SoftShadows } from "@react-three/drei";
 import { AnimatePresence, motion } from "framer-motion";
 import {
