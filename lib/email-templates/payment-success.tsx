@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 // lib/email-templates/payment-success.tsx
 import {
 	Body,
