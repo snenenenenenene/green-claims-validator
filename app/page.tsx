@@ -304,7 +304,7 @@ export default function Home() {
               className="lg:w-1/2 h-[400px] lg:h-[600px] w-full relative z-10"
             >
               <Canvas className="w-full h-full">
-                <ambientLight intensity={1} />
+                <ambientLight />
                 <pointLight position={[10, 10, 10]} />
                 <SoftShadows samples={100} />
                 <Environment preset="sunset" />
