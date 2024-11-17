@@ -1,7 +1,9 @@
 // app/api/admin/users-with-claims/route.ts
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+export const dynamic = "force-dynamic";
+
 import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { NextResponse } from "next/server";
 import { authOptions } from "../../auth/[...nextauth]/options";
 
 export async function GET() {
@@ -33,28 +35,28 @@ export async function GET() {
             updatedAt: true,
           },
           orderBy: {
-            updatedAt: 'desc'
-          }
+            updatedAt: "desc",
+          },
         },
         _count: {
           select: {
             claims: true,
-          }
+          },
         },
         sessions: {
           orderBy: {
-            expires: 'desc'
+            expires: "desc",
           },
           take: 1,
         },
       },
       orderBy: {
-        email: 'asc'
+        email: "asc",
       },
     });
 
     // Transform the data for the frontend
-    const transformedUsers = users.map(user => ({
+    const transformedUsers = users.map((user) => ({
       id: user.id,
       name: user.name,
       email: user.email,
@@ -63,7 +65,7 @@ export async function GET() {
       emailVerified: user.emailVerified,
       totalClaims: user._count.claims,
       lastActive: user.sessions[0]?.expires ?? user.emailVerified ?? null,
-      claims: user.claims.map(claim => ({
+      claims: user.claims.map((claim) => ({
         id: claim.id,
         claim: claim.claim,
         createdAt: claim.createdAt,
@@ -73,21 +75,21 @@ export async function GET() {
       })),
     }));
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       users: transformedUsers,
       totalUsers: users.length,
       totalClaims: users.reduce((acc, user) => acc + user._count.claims, 0),
-      activeUsers: users.filter(user => 
-        user.sessions[0]?.expires && 
-        new Date(user.sessions[0].expires) > new Date()
+      activeUsers: users.filter(
+        (user) =>
+          user.sessions[0]?.expires &&
+          new Date(user.sessions[0].expires) > new Date(),
       ).length,
     });
-
   } catch (error) {
-    console.error('Admin users fetch error:', error);
+    console.error("Admin users fetch error:", error);
     return NextResponse.json(
       { error: "Failed to fetch users" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -113,7 +115,7 @@ export async function PUT(request: Request) {
     if (userId === sessionUser.id && role !== "ADMIN") {
       return NextResponse.json(
         { error: "Cannot demote yourself from admin" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -153,12 +155,11 @@ export async function PUT(request: Request) {
     };
 
     return NextResponse.json({ user: transformedUser });
-
   } catch (error) {
-    console.error('Admin user update error:', error);
+    console.error("Admin user update error:", error);
     return NextResponse.json(
       { error: "Failed to update user" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
