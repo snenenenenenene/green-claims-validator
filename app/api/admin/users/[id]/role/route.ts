@@ -4,9 +4,9 @@ import { getSession } from "next-auth/react";
 const prisma = new PrismaClient();
 
 export async function PUT(req: Request) {
-  const session = await getSession({ req });
+  const session = await getSession({ req } as any);
 
-  if (!session || session.user.role !== "admin") {
+  if (!session || (session.user as any).role !== "admin") {
     return new Response(JSON.stringify({ message: "Access denied" }), {
       status: 403,
       headers: {
@@ -15,7 +15,7 @@ export async function PUT(req: Request) {
     });
   }
 
-  const { id } = req.query;
+  const { id } = (req as any).query;
 
   try {
     const { role } = await req.json();
