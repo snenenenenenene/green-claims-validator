@@ -6,12 +6,33 @@ import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Loader2 } from 'lucide-react';
 import React, { Dispatch, forwardRef, ReactNode, SetStateAction, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Drawer } from "vaul";
 
 // Base loading animation used across components
 export const LoadingSpinner = () => (
 	<Loader2 className="h-4 w-4 animate-spin" />
 );
+
+interface ModalProps {
+	isOpen: boolean;
+	onClose: () => void;
+	children: React.ReactNode;
+}
+
+export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
+	if (!isOpen) return null;
+
+	return createPortal(
+		<div className="fixed inset-0 z-50 flex items-center justify-center">
+			<div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+			<div className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-auto bg-white rounded-xl shadow-xl">
+				{children}
+			</div>
+		</div>,
+		document.body
+	);
+};
 
 // Shared button variants following Notion's style
 const buttonVariants = cva(

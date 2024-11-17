@@ -1,3 +1,4 @@
+// stores/questionnaireSlice.ts
 import { StateCreator } from "zustand";
 import { QuestionnaireState } from "./types";
 
@@ -11,14 +12,40 @@ const createQuestionnaireSlice: StateCreator<QuestionnaireState> = (
   onePage: false,
   currentWeight: 1,
   variables: {},
+  chartContent: null,
+
+  initializeQuestionnaire: async () => {
+    try {
+      const response = await fetch("/api/gcv/active-chart");
+      if (!response.ok) throw new Error("Failed to fetch active chart");
+
+      const data = await response.json();
+      if (!data) {
+        console.error("No active chart found");
+        return false;
+      }
+
+      const chartContent = JSON.parse(data.content);
+      set({ chartContent });
+      get().generateQuestionsFromChart();
+      return true;
+    } catch (error) {
+      console.error("Error initializing questionnaire:", error);
+      return false;
+    }
+  },
 
   setOnePage: (value: boolean) => set({ onePage: value }),
 
-  generateQuestionsFromAllCharts: () => {
-    const chartInstances = get().chartInstances;
-    if (!chartInstances?.length) return [];
+  generateQuestionsFromChart: () => {
+    const chartContent = get().chartContent;
+    if (!chartContent) return [];
 
-    const processedQuestions = chartInstances.flatMap((chart) => {
+    // Get the flows from the chart content
+    const flows =
+      chartContent.type === "single" ? [chartContent.flow] : chartContent.flows;
+
+    const processedQuestions = flows.flatMap((chart) => {
       console.log(`Processing chart: ${chart.name}`);
 
       return chart.nodes.map((node) => {
@@ -29,14 +56,11 @@ const createQuestionnaireSlice: StateCreator<QuestionnaireState> = (
         let options = [];
 
         if (node.type === "functionNode") {
-          // For function nodes, map all handles to their target nodes
           options = nodeEdges.map((edge) => ({
             label: edge.sourceHandle || "DEFAULT",
             nextNodeId: edge.target,
           }));
-          console.log(`Function node ${node.id} options:`, options);
         } else if (node.type === "startNode") {
-          // Start nodes should use their first outgoing edge
           const nextEdge = nodeEdges[0];
           options = [
             {
@@ -62,7 +86,6 @@ const createQuestionnaireSlice: StateCreator<QuestionnaireState> = (
             };
           });
         } else if (node.type === "weightNode") {
-          // Weight nodes should use their first outgoing edge
           const nextEdge = nodeEdges[0];
           options = [
             {
@@ -74,8 +97,7 @@ const createQuestionnaireSlice: StateCreator<QuestionnaireState> = (
           node.type === "endNode" &&
           node.data?.endType === "redirect"
         ) {
-          // For redirect nodes, find the start node of the target chart
-          const redirectChart = chartInstances.find(
+          const redirectChart = flows.find(
             (c) => c.name === node.data.redirectTab,
           );
           if (redirectChart) {
@@ -90,7 +112,6 @@ const createQuestionnaireSlice: StateCreator<QuestionnaireState> = (
             ];
           }
         } else {
-          // Default case: use first edge if available
           const nextEdge = nodeEdges[0];
           options = [
             {

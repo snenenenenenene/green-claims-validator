@@ -1,5 +1,7 @@
+// app/admin/page.tsx
 "use client";
 
+import { ChartManagement } from "@/components/admin/ChartManagement";
 import { LoadingSpinner } from "@/components/ui/base";
 import { cn } from "@/lib/utils";
 import { User } from "@prisma/client";
@@ -41,7 +43,7 @@ const StatCard = ({ title, value, icon, iconBg, iconColor, index }: StatCardProp
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.4, delay: index * 0.1 }}
-    className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-300"
+    className="bg-white rounded-xl overflow-y-scroll h-full shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-300"
   >
     <div className="flex items-center justify-between">
       <div>
@@ -239,6 +241,9 @@ const AdminDashboard = () => {
                 <ActionCard key={index} {...action} index={index} />
               ))}
             </div>
+
+            {/* Chart Management Section */}
+            <ChartManagement />
 
             {/* Users Table */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

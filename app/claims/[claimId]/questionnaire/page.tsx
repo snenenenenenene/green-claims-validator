@@ -14,12 +14,12 @@ import { Toaster, toast } from "react-hot-toast";
 export default function QuestionnairePage() {
   const params = useParams();
   const router = useRouter();
-  const { questionnaireStore, chartStore } = useStores();
+  const { questionnaireStore } = useStores();
   const {
     resetCurrentWeight,
     getCurrentWeight,
     setCurrentWeight,
-    generateQuestionsFromAllCharts,
+    initializeQuestionnaire,
     processFunctionNode,
     getNextQuestion,
     getFirstQuestion,
@@ -34,59 +34,33 @@ export default function QuestionnairePage() {
   const [error, setError] = useState(null);
   const [processingAnswer, setProcessingAnswer] = useState(false);
 
-  // First, load chart instances if they're not already loaded
   useEffect(() => {
-    const loadChartInstances = async () => {
+    const initializeQuiz = async () => {
       try {
-        if (!chartStore.chartInstances?.length) {
-          const response = await fetch('/api/load-chart');
-          if (response.ok) {
-            const data = await response.json();
-            if (data.content) {
-              const parsedContent = JSON.parse(data.content);
-              console.log("Loaded chart instances:", parsedContent);
-              chartStore.setChartInstances(parsedContent);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load chart instances:', error);
-        setError('Failed to load questionnaire data');
-      }
-    };
-
-    loadChartInstances();
-  }, [chartStore]);
-
-  // Then initialize the questionnaire once chart instances are loaded
-  useEffect(() => {
-    const initializeQuestionnaire = async () => {
-      try {
-        if (!chartStore.chartInstances?.length) {
-          console.log("No chart instances available");
-          throw new Error('No chart instances available');
-        }
-
         // Fetch claim details
         const response = await fetch(`/api/claims/${params.claimId}`);
         if (!response.ok) throw new Error('Failed to fetch claim');
         const data = await response.json();
         setClaim(data.claim);
 
-        console.log("Initializing questionnaire with chart instances:", chartStore.chartInstances);
+        // Initialize questionnaire from active GCV chart
+        const initialized = await initializeQuestionnaire();
+        if (!initialized) {
+          throw new Error('No active questionnaire found');
+        }
+
         resetCurrentWeight();
-        const generatedQuestions = generateQuestionsFromAllCharts();
-        setAllQuestions(generatedQuestions);
-
-        const visualOnlyQuestions = generatedQuestions.filter(
-          (q) => !["weightNode", "startNode", "endNode", "functionNode"].includes(q.type)
-        );
-        setVisualQuestions(visualOnlyQuestions);
-
         const firstQuestion = getFirstQuestion();
         if (!firstQuestion) {
           throw new Error("No valid first question found");
         }
+
+        // Set the processed questions
+        const questions = questionnaireStore.questions;
+        const visualOnly = questionnaireStore.visualQuestions;
+        setAllQuestions(questions);
+        setVisualQuestions(visualOnly);
+
         processQuestionChain(firstQuestion);
 
         // Update claim status to in progress
@@ -106,10 +80,8 @@ export default function QuestionnairePage() {
       }
     };
 
-    if (chartStore.chartInstances?.length > 0) {
-      initializeQuestionnaire();
-    }
-  }, [chartStore.chartInstances, params.claimId]);
+    initializeQuiz();
+  }, [params.claimId, initializeQuestionnaire, questionnaireStore.questions, questionnaireStore.visualQuestions]);
 
   const processQuestionChain = (question) => {
     if (!question) {
@@ -172,17 +144,17 @@ export default function QuestionnairePage() {
         toast.error("Error completing questionnaire");
       }
     } else if (node.endType === "redirect" && node.redirectTab) {
-      console.log("Redirecting to another chart:", node.redirectTab);
-      const redirectChart = chartStore.chartInstances.find(chart => chart.name === node.redirectTab);
-      if (redirectChart) {
-        const startNode = redirectChart.nodes.find(n => n.type === "startNode");
+      console.log("Redirecting to another flow:", node.redirectTab);
+      const redirectFlow = questionnaireStore.chartContent.flows.find(flow => flow.name === node.redirectTab);
+      if (redirectFlow) {
+        const startNode = redirectFlow.nodes.find(n => n.type === "startNode");
         if (startNode) {
           processQuestionChain(startNode);
         } else {
-          setError("No valid start question found in the redirected chart.");
+          setError("No valid start question found in the redirected flow.");
         }
       } else {
-        setError("Redirect chart not found.");
+        setError("Redirect flow not found.");
       }
     } else {
       setError("Invalid end node configuration.");
@@ -264,9 +236,9 @@ export default function QuestionnairePage() {
     );
   }
 
-  const currentChartQuestions = visualQuestions.filter(q => q.chartId === currentQuestion?.chartId);
-  const currentQuestionIndex = currentChartQuestions.findIndex(q => q.id === currentQuestion?.id);
-  const progressPercentage = ((currentQuestionIndex + 1) / currentChartQuestions.length) * 100;
+  const currentFlowQuestions = visualQuestions.filter(q => q.chartId === currentQuestion?.chartId);
+  const currentQuestionIndex = currentFlowQuestions.findIndex(q => q.id === currentQuestion?.id);
+  const progressPercentage = ((currentQuestionIndex + 1) / currentFlowQuestions.length) * 100;
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4">

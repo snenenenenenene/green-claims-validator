@@ -1,7 +1,7 @@
 "use client";
 
 import { User } from "@prisma/client";
-import { FileText, LayoutDashboard, LogOut, Users } from "lucide-react";
+import { FileText, LogOut, Users } from "lucide-react";
 import { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -41,14 +41,6 @@ export default function UserDropdown({ session }: { session: Session }) {
 
             {(session?.user as User).role === "ADMIN" && (
               <>
-                <Link
-                  href="/dashboard"
-                  className="hover:bg-primary-hover relative flex w-full items-center justify-start space-x-2 rounded-md p-2 text-left text-sm transition-all duration-75"
-                >
-                  <LayoutDashboard className="h-4 w-4" />
-                  <p className="text-sm">Dashboard</p>
-                </Link>
-
                 <Link
                   href="/admin"
                   className="hover:bg-primary-hover relative flex w-full items-center justify-start space-x-2 rounded-md p-2 text-left text-sm transition-all duration-75"

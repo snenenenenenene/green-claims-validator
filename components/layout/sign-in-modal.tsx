@@ -7,8 +7,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { Modal } from "../nodes/base/modal";
-import { LoadingSpinner } from "../ui/base";
+import { LoadingSpinner, Modal } from "../ui/base";
 
 const SignInModal = ({
   showSignInModal,
@@ -43,8 +42,8 @@ const SignInModal = ({
           <button
             disabled={signInClicked}
             className={`${signInClicked
-                ? "cursor-not-allowed border-gray-200 bg-gray-100"
-                : "border border-gray-200 bg-white hover:bg-gray-50"
+              ? "cursor-not-allowed border-gray-200 bg-gray-100"
+              : "border border-gray-200 bg-white hover:bg-gray-50"
               } flex h-10 w-full items-center justify-center space-x-3 rounded-md border text-sm shadow-sm transition-all duration-75 focus:outline-none`}
             onClick={() => {
               setSignInClicked(true);
