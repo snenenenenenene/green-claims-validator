@@ -71,26 +71,26 @@ export function Earth(props: any) {
     <group ref={groupRef} {...props} dispose={null}>
       <group>
         <mesh
-          castShadow
-          receiveShadow
+          // castShadow
+          // receiveShadow
           geometry={nodes.Sphere002.geometry}
           material={materials["Material.009"]}
         />
         <mesh
-          castShadow
-          receiveShadow
+          // castShadow
+          // receiveShadow
           geometry={nodes.Sphere002_1.geometry}
           material={materials["Material.008"]}
         />
         <mesh
-          castShadow
-          receiveShadow
+          // castShadow
+          // receiveShadow
           geometry={nodes.Sphere002_2.geometry}
           material={materials["Material.010"]}
         />
         <mesh
-          castShadow
-          receiveShadow
+          // castShadow
+          // receiveShadow
           geometry={nodes.Sphere002_3.geometry}
           material={materials["Material.005"]}
         />
