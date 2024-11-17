@@ -9,7 +9,7 @@ export const metadata = {
   title: "Green Claims Validator - Greenwashing Verification",
   description:
     "Green Claims Validator is a platform that verifies the sustainability of products and services.",
-  metadataBase: new URL(`${process.env.VERCEL_URL}`),
+  metadataBase: new URL(`${process.env.VERCEL_URL}`) || "",
 };
 
 export default async function RootLayout({
