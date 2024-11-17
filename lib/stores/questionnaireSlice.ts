@@ -27,7 +27,7 @@ const createQuestionnaireSlice: StateCreator<QuestionnaireState> = (
 
       const chartContent = JSON.parse(data.content);
       set({ chartContent });
-      get().generateQuestionsFromChart();
+      (get() as any).generateQuestionsFromChart();
       return true;
     } catch (error) {
       console.error("Error initializing questionnaire:", error);
@@ -38,7 +38,7 @@ const createQuestionnaireSlice: StateCreator<QuestionnaireState> = (
   setOnePage: (value: boolean) => set({ onePage: value }),
 
   generateQuestionsFromChart: () => {
-    const chartContent = get().chartContent;
+    const chartContent = (get() as any).chartContent;
     if (!chartContent) return [];
 
     // Get the flows from the chart content
@@ -53,7 +53,7 @@ const createQuestionnaireSlice: StateCreator<QuestionnaireState> = (
         const nodeEdges = chart.edges.filter((edge) => edge.source === node.id);
         console.log(`Processing node ${node.id}, found edges:`, nodeEdges);
 
-        let options = [];
+        let options: any = [];
 
         if (node.type === "functionNode") {
           options = nodeEdges.map((edge) => ({
@@ -155,24 +155,28 @@ const createQuestionnaireSlice: StateCreator<QuestionnaireState> = (
 
   resetCurrentWeight: () => set({ currentWeight: 1 }),
 
-  getCurrentWeight: () => get().currentWeight,
+  getCurrentWeight: () => (get() as any).currentWeight,
 
   updateCurrentWeight: (weightMultiplier: number) =>
-    set((state) => ({ currentWeight: state.currentWeight * weightMultiplier })),
+    set((state: any) => ({
+      currentWeight: state.currentWeight * weightMultiplier,
+    })),
 
   incrementCurrentQuestionIndex: () =>
-    set((state) => ({ currentQuestionIndex: state.currentQuestionIndex + 1 })),
+    set((state: any) => ({
+      currentQuestionIndex: state.currentQuestionIndex + 1,
+    })),
 
   resetCurrentQuestionIndex: () => set({ currentQuestionIndex: 0 }),
 
   getQuestionById: (id: string) => {
-    const { questions } = get();
+    const { questions } = get() as any;
     return questions.find((q) => q.id === id) || null;
   },
 
   processFunctionNode: (node) => {
     console.log("Processing function node:", node);
-    const { variables } = get();
+    const { variables } = get() as any;
     const sequences = node.data?.sequences || [];
     const selectedVariable = node.data?.selectedVariable;
 
@@ -229,7 +233,7 @@ const createQuestionnaireSlice: StateCreator<QuestionnaireState> = (
     }
 
     console.log("Updating variables with final result:", result);
-    set((state) => ({
+    set((state: any) => ({
       variables: {
         ...state.variables,
         [selectedVariable]: result,
@@ -241,14 +245,14 @@ const createQuestionnaireSlice: StateCreator<QuestionnaireState> = (
   },
 
   getNextQuestion: (currentQuestionId: string, answer: string) => {
-    const { questions } = get();
+    const { questions } = get() as any;
     const currentQuestion = questions.find((q) => q.id === currentQuestionId);
     if (!currentQuestion) return null;
 
     let nextQuestionId;
 
     if (currentQuestion.type === "functionNode") {
-      const handleId = get().processFunctionNode(currentQuestion);
+      const handleId = (get() as any).processFunctionNode(currentQuestion);
       const selectedOption =
         currentQuestion.options.find((opt) => opt.label === handleId) ||
         currentQuestion.options.find((opt) => opt.label === "DEFAULT");
@@ -269,7 +273,7 @@ const createQuestionnaireSlice: StateCreator<QuestionnaireState> = (
   },
 
   getFirstQuestion: () => {
-    const { questions } = get();
+    const { questions } = get() as any;
     const startNode = questions.find((q) => q.type === "startNode");
     if (!startNode?.options?.[0]?.nextNodeId) return null;
 

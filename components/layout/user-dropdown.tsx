@@ -70,7 +70,7 @@ export default function UserDropdown({ session }: { session: Session }) {
         >
           <Image
             alt={email}
-            src={image || `https://api.dicebear.com/9.x/pixel-art/svg?seed=${claim.user.email}`}
+            src={image || `https://api.dicebear.com/9.x/pixel-art/svg?seed=${(session?.user as any).email}`}
             width={40}
             height={40}
           />

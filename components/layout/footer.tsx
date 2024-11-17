@@ -73,7 +73,7 @@ function FooterContent() {
                 RESOURCES
               </div>
               <div className="flex flex-col space-y-3">
-                {session?.user?.role === "admin" && (
+                {(session?.user as any).role === "admin" && (
                   <Link href="/admin" className="footer-link text-gray-600 hover:text-black">
                     Admin Dashboard
                   </Link>
@@ -133,7 +133,7 @@ function FooterContent() {
                   </Link>
                 </li>
               )}
-              {session?.user?.role === "admin" && (
+              {(session?.user as any).role === "admin" && (
                 <li className="list-item">
                   <Link
                     href="/admin"

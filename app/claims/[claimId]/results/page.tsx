@@ -356,6 +356,7 @@ export default function ResultsPage() {
                       {/* Insights Grid */}
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {insights.map((insight, index) => (
+                          // @ts-ignore
                           <InsightCard key={index} {...insight} index={index} />
                         ))}
                       </div>

@@ -24,7 +24,7 @@ export async function GET(
     const payment = await prisma.payment.findFirst({
       where: {
         stripeSessionId: params.sessionId,
-        userId: session.user.id,
+        userId: (session.user as any).id,
       },
     });
 

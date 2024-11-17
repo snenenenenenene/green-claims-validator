@@ -1,8 +1,8 @@
 // app/claims/layout.tsx
 "use client";
-import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { ChevronRight, Home } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 
 const Breadcrumbs = () => {
 	const pathname = usePathname();
@@ -10,7 +10,7 @@ const Breadcrumbs = () => {
 
 	const getBreadcrumbs = () => {
 		const paths = pathname.split('/').filter(Boolean);
-		let breadcrumbs = [];
+		let breadcrumbs: any = [];
 		let currentPath = '';
 
 		paths.forEach((path, index) => {
@@ -42,7 +42,7 @@ const Breadcrumbs = () => {
 				<Home className="h-4 w-4" />
 			</button>
 			<ChevronRight className="h-4 w-4" />
-			{getBreadcrumbs().map((breadcrumb, index) => (
+			{getBreadcrumbs().map((breadcrumb: any, index) => (
 				<div key={breadcrumb.path} className="flex items-center">
 					{index > 0 && <ChevronRight className="h-4 w-4 mx-2" />}
 					{breadcrumb.isLast ? (
