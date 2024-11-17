@@ -25,13 +25,15 @@ export default function QuestionnairePage() {
     getFirstQuestion,
   } = questionnaireStore;
 
-  const [claim, setClaim] = useState(null);
+  const [claim, setClaim] = useState<{
+    claim: string;
+  } | null>(null);
   const [allQuestions, setAllQuestions] = useState([]);
   const [visualQuestions, setVisualQuestions] = useState([]);
-  const [currentQuestion, setCurrentQuestion] = useState(null);
-  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [currentQuestion, setCurrentQuestion]: any = useState(null);
+  const [selectedAnswer, setSelectedAnswer] = useState<null | string>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<null | string>(null);
   const [processingAnswer, setProcessingAnswer] = useState(false);
 
   useEffect(() => {
@@ -72,7 +74,7 @@ export default function QuestionnairePage() {
             progress: 0
           })
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error('Initialization error:', error);
         setError(error.message);
       } finally {
@@ -170,7 +172,7 @@ export default function QuestionnairePage() {
       console.log("Selected answer:", selectedAnswer);
 
       // Update progress
-      const currentIndex = visualQuestions.findIndex(q => q.id === currentQuestion.id);
+      const currentIndex = visualQuestions.findIndex((q: any) => q.id === currentQuestion.id);
       const progress = Math.round(((currentIndex + 1) / visualQuestions.length) * 100);
 
       await fetch(`/api/claims/${params.claimId}`, {
@@ -236,8 +238,8 @@ export default function QuestionnairePage() {
     );
   }
 
-  const currentFlowQuestions = visualQuestions.filter(q => q.chartId === currentQuestion?.chartId);
-  const currentQuestionIndex = currentFlowQuestions.findIndex(q => q.id === currentQuestion?.id);
+  const currentFlowQuestions = visualQuestions.filter((q: any) => q.chartId === currentQuestion?.chartId);
+  const currentQuestionIndex = currentFlowQuestions.findIndex((q: any) => q.id === currentQuestion?.id);
   const progressPercentage = ((currentQuestionIndex + 1) / currentFlowQuestions.length) * 100;
 
   return (
@@ -314,7 +316,7 @@ export default function QuestionnairePage() {
                   <MultipleChoiceQuestion
                     question={currentQuestion.question}
                     options={currentQuestion.options}
-                    onAnswer={setSelectedAnswer}
+                    onAnswer={setSelectedAnswer as any}
                   />
                 ) : null}
               </div>
