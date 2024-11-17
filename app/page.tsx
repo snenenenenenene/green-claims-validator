@@ -118,7 +118,6 @@ export default function Home() {
       }
 
       const data = await response.json();
-      // router.push(`/questionnaire?claimId=${data.claim.id}`);
       router.push(`/claims/${data.claim.id}/questionnaire`);
 
     } catch (error) {
