@@ -59,7 +59,7 @@ export default function AdminClaimsPage() {
 			}
 		};
 
-		if (session?.user?.role === 'ADMIN') {
+		if ((session?.user as any).role === 'ADMIN') {
 			fetchClaims();
 		}
 	}, [session]);
@@ -99,7 +99,7 @@ export default function AdminClaimsPage() {
 		return <LoadingSpinner />;
 	}
 
-	if (status === "authenticated" && session?.user?.role !== "ADMIN") {
+	if (status === "authenticated" && (session?.user as any).role !== "ADMIN") {
 		return (
 			<div className="flex items-center justify-center min-h-screen">
 				<div className="text-center space-y-4">
