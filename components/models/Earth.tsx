@@ -73,25 +73,33 @@ export function Earth(props: any) {
         <mesh
           // castShadow
           // receiveShadow
+          // @ts-ignore
           geometry={nodes.Sphere002.geometry}
+          // @ts-ignore
           material={materials["Material.009"]}
         />
         <mesh
           // castShadow
           // receiveShadow
+          // @ts-ignore
           geometry={nodes.Sphere002_1.geometry}
+          // @ts-ignore
           material={materials["Material.008"]}
         />
         <mesh
           // castShadow
           // receiveShadow
+          // @ts-ignore
           geometry={nodes.Sphere002_2.geometry}
+          // @ts-ignore
           material={materials["Material.010"]}
         />
         <mesh
           // castShadow
           // receiveShadow
+          // @ts-ignore
           geometry={nodes.Sphere002_3.geometry}
+          // @ts-ignore
           material={materials["Material.005"]}
         />
       </group>
