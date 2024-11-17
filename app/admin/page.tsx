@@ -114,7 +114,7 @@ const AdminDashboard = () => {
         body: JSON.stringify({ userId, role: newRole }),
       });
 
-      setUsers((prevUsers) =>
+      setUsers((prevUsers: any) =>
         prevUsers.map((user) =>
           user.id === userId ? { ...user, role: newRole } : user
         )
@@ -124,7 +124,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const filteredUsers = users.filter(user => {
+  const filteredUsers = users.filter((user: any) => {
     const matchesSearch =
       user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase());
@@ -142,7 +142,7 @@ const AdminDashboard = () => {
     );
   }
 
-  if (status === "authenticated" && session?.user?.role !== "ADMIN") {
+  if (status === "authenticated" && (session?.user as any).role !== "ADMIN") {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -155,8 +155,8 @@ const AdminDashboard = () => {
   }
 
   const totalUsers = users.length;
-  const totalClaims = users.reduce((acc, user) => acc + (user._count?.claims || 0), 0);
-  const activeUsers = users.filter(user => user.lastActive && new Date(user.lastActive) > new Date(Date.now() - 24 * 60 * 60 * 1000)).length;
+  const totalClaims = users.reduce((acc, user: any) => acc + (user._count?.claims || 0), 0);
+  const activeUsers = users.filter((user: any) => user.lastActive && new Date(user.lastActive) > new Date(Date.now() - 24 * 60 * 60 * 1000)).length;
 
   const stats = [
     {
@@ -329,7 +329,7 @@ const AdminDashboard = () => {
                         </td>
                         <td className="py-4 px-4">
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {user._count?.claims || 0} claims
+                            {(user as any)._count?.claims || 0} claims
                           </span>
                         </td>
                         <td className="py-4 px-4">
