@@ -83,14 +83,7 @@ function FooterContent() {
                     Validation Dashboard
                   </Link>
                 )}
-                <a
-                  href="https://docs.anthropic.com/claude/docs"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="footer-link text-gray-600 hover:text-black"
-                >
-                  API Documentation
-                </a>
+
               </div>
             </div>
           </div>

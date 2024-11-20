@@ -24,7 +24,7 @@ const SignInModal = ({
         <div className="flex flex-col items-center justify-center space-y-3 border-b border-gray-200 bg-white px-4 py-6 pt-8 text-center md:px-16">
           <a>
             <Image
-              src="/logo.webp"
+              src="/logo.png"
               alt="Logo"
               className="h-10 w-10 rounded-full"
               width={20}
@@ -32,10 +32,6 @@ const SignInModal = ({
             />
           </a>
           <h3 className="font-bold font-display text-2xl">Sign In</h3>
-          <p className="text-sm text-gray-500">
-            This is strictly for demo purposes - only your email and profile
-            picture will be stored.
-          </p>
         </div>
 
         <div className="flex flex-col space-y-4 bg-gray-50 px-4 py-8 md:px-16">
